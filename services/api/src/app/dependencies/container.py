@@ -2,6 +2,7 @@ import structlog
 from dependency_injector import containers, providers
 
 from app.application.events import EventDispatcher, EventPublisher, EventRegistry, InMemoryEventBus
+from app.application.operational_state import OperationalStateService
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
 from app.infrastructure.firestore import FirestoreClient, FirestoreUnitOfWork, TransactionManager
@@ -48,6 +49,13 @@ class ApplicationContainer(containers.DeclarativeContainer):
     task_repository = providers.Factory(FirestoreTaskRepository, client=firestore_client)
     recommendation_repository = providers.Factory(FirestoreRecommendationRepository, client=firestore_client)
     operational_state_repository = providers.Factory(FirestoreOperationalStateRepository, client=firestore_client)
+
+    # Application Services
+    operational_state_service = providers.Factory(
+        OperationalStateService,
+        repository=operational_state_repository,
+        event_publisher=event_publisher,
+    )
 
     # Future Infrastructure/Service Providers (Placeholders for future milestones)
     gemini_client = providers.Singleton(lambda: None)
