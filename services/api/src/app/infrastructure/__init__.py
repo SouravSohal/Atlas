@@ -1,1 +1,3 @@
-"""Infrastructure layer containing database and external client implementations."""
+from app.infrastructure import auth
+
+__all__ = ["auth"]

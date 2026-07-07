@@ -1,1 +1,3 @@
-"""Application layer containing use cases, command, and query handlers."""
+from app.application import events
+
+__all__ = ["events"]

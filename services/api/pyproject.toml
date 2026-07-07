@@ -18,7 +18,8 @@ dependencies = [
     "pydantic-settings>=2.10.0",
     "dependency-injector>=4.48.0",
     "structlog>=25.4.0",
-    "atlas-core"
+    "atlas-core",
+    "firebase-admin>=7.0.0"
 ]
 
 [project.optional-dependencies]
@@ -61,3 +62,10 @@ disallow_untyped_defs = true
 disallow_any_generics = true
 check_untyped_defs = true
 no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = [
+    "firebase_admin",
+    "firebase_admin.*"
+]
+ignore_missing_imports = true
