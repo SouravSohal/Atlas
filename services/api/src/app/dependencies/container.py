@@ -1,0 +1,17 @@
+from dependency_injector import containers, providers
+
+from app.config.settings import Settings
+
+
+class Container(containers.DeclarativeContainer):
+    """Dependency injection container for the application."""
+
+    wiring_config = containers.WiringConfiguration(
+        modules=[
+            "app.presentation.health",
+            "app.presentation.version",
+            "app.main",
+        ]
+    )
+
+    config = providers.Singleton(Settings)

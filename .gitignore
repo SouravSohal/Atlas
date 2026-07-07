@@ -1,0 +1,62 @@
+# Python
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+.venv/
+.env
+
+.pytest_cache/
+
+.coverage
+
+htmlcov/
+
+.mypy_cache/
+
+.ruff_cache/
+
+# Node
+
+node_modules/
+
+dist/
+
+coverage/
+
+# IDE
+
+.vscode/
+
+.idea/
+
+# OS
+
+.DS_Store
+
+Thumbs.db
+
+# Logs
+
+*.log
+
+# Firebase
+
+serviceAccount.json
+
+firebase-key.json
+
+# Google Cloud
+
+*.pem
+
+*.key
+
+# Secrets
+
+.env.local
+
+.env.production
+
+.env.development
