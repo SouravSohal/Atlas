@@ -1,8 +1,13 @@
-from app.application.incidents.dtos import CreateIncidentRequest, IncidentResponse
+from app.application.incidents.dtos import (
+    CreateIncidentRequest,
+    IncidentResponse,
+    UpdateIncidentRequest,
+)
 from app.application.incidents.use_cases import (
     CreateIncidentUseCase,
     GetIncidentUseCase,
     ListIncidentsUseCase,
+    UpdateIncidentUseCase,
 )
 
 __all__ = [
@@ -11,4 +16,6 @@ __all__ = [
     "GetIncidentUseCase",
     "IncidentResponse",
     "ListIncidentsUseCase",
+    "UpdateIncidentRequest",
+    "UpdateIncidentUseCase",
 ]

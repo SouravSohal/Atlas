@@ -1,5 +1,4 @@
 from collections.abc import Iterator
-from datetime import UTC, datetime
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
@@ -12,7 +11,8 @@ from atlas_core.domain.value_objects.coordinates import Coordinates
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.application.operational_state import OperationalStateSnapshot
+from app.application.incidents.dtos import CreateIncidentRequest, UpdateIncidentRequest
+from app.application.incidents.use_cases import CreateIncidentUseCase, UpdateIncidentUseCase
 
 
 @pytest.fixture
@@ -21,38 +21,28 @@ def override_dependencies(client: TestClient) -> Iterator[tuple[MagicMock, Magic
     container = app.state.container
 
     mock_repo = MagicMock()
-    mock_state_service = MagicMock()
+    mock_state_repo = MagicMock()
     mock_publisher = MagicMock()
 
     container.incident_repository.override(mock_repo)
-    container.operational_state_service.override(mock_state_service)
+    container.operational_state_repository.override(mock_state_repo)
     container.event_publisher.override(mock_publisher)
 
-    yield mock_repo, mock_state_service, mock_publisher
+    yield mock_repo, mock_state_repo, mock_publisher
 
     container.reset_override()
+
 
 def test_create_incident_success(
     client: TestClient,
     override_dependencies: tuple[MagicMock, MagicMock, MagicMock],
 ) -> None:
     # Arrange
-    mock_repo, mock_state_service, mock_publisher = override_dependencies
+    mock_repo, mock_state_repo, mock_publisher = override_dependencies
     
-    # Mock Repository save
     mock_repo.save = AsyncMock()
-
-    # Mock Operational State get_state returning None, and update_state returning snapshot
-    mock_state_service.get_state = AsyncMock(return_value=None)
-    mock_snapshot = OperationalStateSnapshot(
-        zone_id=uuid4(),
-        density=0.0,
-        queue_waiting_minutes=0,
-        last_updated=datetime.now(UTC),
-    )
-    mock_state_service.update_state = AsyncMock(return_value=mock_snapshot)
-
-    # Mock event publisher
+    mock_state_repo.get_by_id = AsyncMock(return_value=None)
+    mock_state_repo.save = AsyncMock()
     mock_publisher.publish_many = AsyncMock()
 
     reporter_id = uuid4()
@@ -80,9 +70,10 @@ def test_create_incident_success(
     assert data["data"]["description"] == "Gate breach detected"
 
     mock_repo.save.assert_called_once()
-    mock_state_service.get_state.assert_called_once_with(zone_id)
-    mock_state_service.update_state.assert_called_once()
+    mock_state_repo.get_by_id.assert_called_once_with(zone_id)
+    mock_state_repo.save.assert_called_once()
     mock_publisher.publish_many.assert_called_once()
+
 
 def test_get_incident_success(
     client: TestClient,
@@ -115,6 +106,7 @@ def test_get_incident_success(
     assert data["data"]["description"] == "Gate breach detected"
     mock_repo.get_by_id.assert_called_once_with(incident_id)
 
+
 def test_get_incident_not_found(
     client: TestClient,
     override_dependencies: tuple[MagicMock, MagicMock, MagicMock],
@@ -133,6 +125,7 @@ def test_get_incident_not_found(
     data = response.json()
     assert data["success"] is False
     assert "not found" in data["error"].lower()
+
 
 def test_list_incidents(
     client: TestClient,
@@ -173,6 +166,7 @@ def test_list_incidents(
     assert data["data"][1]["description"] == "Injury B"
     mock_repo.list.assert_called_once()
 
+
 def test_create_incident_value_error(
     client: TestClient,
     override_dependencies: tuple[MagicMock, MagicMock, MagicMock],
@@ -204,3 +198,140 @@ def test_create_incident_value_error(
     data = response.json()
     assert data["success"] is False
     assert data["error"] == "Invalid severity"
+
+
+def test_update_incident_success(
+    client: TestClient,
+    override_dependencies: tuple[MagicMock, MagicMock, MagicMock],
+) -> None:
+    # Arrange
+    mock_repo, _, mock_publisher = override_dependencies
+    incident_id = uuid4()
+    reporter_id = uuid4()
+    mock_incident = Incident(
+        id=incident_id,
+        incident_type=IncidentType.SECURITY,
+        severity=Severity.HIGH,
+        description="Breach",
+        location=Coordinates(latitude=10.0, longitude=20.0),
+        reporter_id=reporter_id,
+    )
+    mock_repo.get_by_id = AsyncMock(return_value=mock_incident)
+    mock_repo.save = AsyncMock()
+    mock_publisher.publish_many = AsyncMock()
+
+    payload = {
+        "resolved": True,
+        "severity": "low",
+        "description": "Breach resolved",
+    }
+
+    # Act
+    with client:
+        response = client.patch(f"/incidents/{incident_id}", json=payload)
+
+    # Assert
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["data"]["resolved"] is True
+    assert data["data"]["severity"] == "low"
+    assert data["data"]["description"] == "Breach resolved"
+    mock_repo.save.assert_called_once()
+
+
+def test_update_incident_not_found(
+    client: TestClient,
+    override_dependencies: tuple[MagicMock, MagicMock, MagicMock],
+) -> None:
+    # Arrange
+    mock_repo, _, _ = override_dependencies
+    incident_id = uuid4()
+    mock_repo.get_by_id = AsyncMock(return_value=None)
+
+    payload = {"resolved": True}
+
+    # Act
+    with client:
+        response = client.patch(f"/incidents/{incident_id}", json=payload)
+
+    # Assert
+    assert response.status_code == 404
+    data = response.json()
+    assert data["success"] is False
+    assert "not found" in data["error"].lower()
+
+
+@pytest.mark.asyncio
+async def test_create_incident_use_case_logic() -> None:
+    # Arrange
+    mock_repo = MagicMock()
+    mock_state_repo = MagicMock()
+    mock_publisher = MagicMock()
+
+    mock_repo.save = AsyncMock()
+    mock_state_repo.get_by_id = AsyncMock(return_value=None)
+    mock_state_repo.save = AsyncMock()
+    mock_publisher.publish_many = AsyncMock()
+
+    use_case = CreateIncidentUseCase(mock_repo, mock_state_repo, mock_publisher)
+
+    reporter_id = uuid4()
+    zone_id = uuid4()
+    req = CreateIncidentRequest(
+        incident_type="security",
+        severity="high",
+        description="Breach",
+        latitude=34.05,
+        longitude=-118.25,
+        reporter_id=reporter_id,
+        zone_id=zone_id,
+    )
+
+    # Act
+    res = await use_case.execute(req)
+
+    # Assert
+    assert res.description == "Breach"
+    assert res.severity == "high"
+    mock_repo.save.assert_called_once()
+    mock_state_repo.get_by_id.assert_called_once_with(zone_id)
+    mock_state_repo.save.assert_called_once()
+    mock_publisher.publish_many.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_update_incident_use_case_logic() -> None:
+    # Arrange
+    mock_repo = MagicMock()
+    mock_publisher = MagicMock()
+
+    incident_id = uuid4()
+    reporter_id = uuid4()
+    mock_incident = Incident(
+        id=incident_id,
+        incident_type=IncidentType.SECURITY,
+        severity=Severity.HIGH,
+        description="Breach",
+        location=Coordinates(latitude=10.0, longitude=20.0),
+        reporter_id=reporter_id,
+    )
+
+    mock_repo.get_by_id = AsyncMock(return_value=mock_incident)
+    mock_repo.save = AsyncMock()
+    mock_publisher.publish_many = AsyncMock()
+
+    use_case = UpdateIncidentUseCase(mock_repo, mock_publisher)
+
+    req = UpdateIncidentRequest(resolved=True, severity="low", description="Updated description")
+
+    # Act
+    res = await use_case.execute(incident_id, req)
+
+    # Assert
+    assert res is not None
+    assert res.resolved is True
+    assert res.severity == "low"
+    assert res.description == "Updated description"
+    mock_repo.get_by_id.assert_called_once_with(incident_id)
+    mock_repo.save.assert_called_once()

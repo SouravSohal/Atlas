@@ -9,6 +9,8 @@ from app.application.incidents import (
     GetIncidentUseCase,
     IncidentResponse,
     ListIncidentsUseCase,
+    UpdateIncidentRequest,
+    UpdateIncidentUseCase,
 )
 from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
@@ -51,3 +53,19 @@ async def list_incidents(
     """List all incidents recorded in the system."""
     response_dtos = await use_case.execute()
     return ApiResponse(success=True, data=list(response_dtos))
+
+@router.patch("/{id}", response_model=ApiResponse[IncidentResponse])
+@inject
+async def update_incident(
+    id: UUID,
+    request: UpdateIncidentRequest,
+    use_case: UpdateIncidentUseCase = Depends(Provide[ApplicationContainer.update_incident_use_case]),
+) -> ApiResponse[IncidentResponse]:
+    """Update or resolve an incident in the system."""
+    response_dto = await use_case.execute(id, request)
+    if not response_dto:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Incident with ID {id} not found.",
+        )
+    return ApiResponse(success=True, data=response_dto)

@@ -6,6 +6,7 @@ from app.application.incidents import (
     CreateIncidentUseCase,
     GetIncidentUseCase,
     ListIncidentsUseCase,
+    UpdateIncidentUseCase,
 )
 from app.application.operational_state import OperationalStateService
 from app.config import get_settings
@@ -68,7 +69,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
     create_incident_use_case = providers.Factory(
         CreateIncidentUseCase,
         repository=incident_repository,
-        operational_state_service=operational_state_service,
+        state_repository=operational_state_repository,
+        event_publisher=event_publisher,
+    )
+    update_incident_use_case = providers.Factory(
+        UpdateIncidentUseCase,
+        repository=incident_repository,
         event_publisher=event_publisher,
     )
     get_incident_use_case = providers.Factory(GetIncidentUseCase, repository=incident_repository)

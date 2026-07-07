@@ -15,6 +15,15 @@ class CreateIncidentRequest(BaseModel):
     reporter_id: UUID = Field(..., description="Unique ID of the user reporting the incident.")
     zone_id: UUID = Field(..., description="Unique ID of the stadium zone where the incident occurred.")
 
+
+class UpdateIncidentRequest(BaseModel):
+    """Request payload for patching/updating an existing incident."""
+
+    resolved: bool | None = Field(None, description="Resolution status of the incident.")
+    severity: str | None = Field(None, description="Severity level of the incident.")
+    description: str | None = Field(None, description="Detailed description of the incident.")
+
+
 class IncidentResponse(BaseModel):
     """Standardized incident details response payload."""
 
