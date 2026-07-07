@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import pytest
 from atlas_core.domain.entities.base import BaseEntity
@@ -73,7 +74,7 @@ async def test_base_repository_get_by_id_success(firestore_client: FirestoreClie
 
     with patch.object(repo.collection_ref, "document", return_value=mock_doc):
         # Act
-        entity = await repo.get_by_id("550e8400-e29b-41d4-a716-446655440000")
+        entity = await repo.get_by_id(UUID("550e8400-e29b-41d4-a716-446655440000"))
 
     # Assert
     assert entity is not None
@@ -94,7 +95,7 @@ async def test_base_repository_get_by_id_not_found(firestore_client: FirestoreCl
 
     with patch.object(repo.collection_ref, "document", return_value=mock_doc):
         # Act
-        entity = await repo.get_by_id("missing_id")
+        entity = await repo.get_by_id(UUID("550e8400-e29b-41d4-a716-446655440001"))
 
     # Assert
     assert entity is None
@@ -109,17 +110,26 @@ async def test_base_repository_save_and_delete(firestore_client: FirestoreClient
     mock_doc.set = AsyncMock()
     mock_doc.delete = AsyncMock()
 
+    mock_snapshot = MagicMock()
+    mock_snapshot.exists = False
+    mock_doc.get = AsyncMock(return_value=mock_snapshot)
+
+    mock_tx = MagicMock(spec=AsyncTransaction)
+    mock_tx.__aenter__ = AsyncMock(return_value=mock_tx)
+    mock_tx.__aexit__ = AsyncMock(return_value=False)
+
     from uuid import uuid4
     entity = MockDomainEntity(id=uuid4(), name="Savable")
 
-    with patch.object(repo.collection_ref, "document", return_value=mock_doc):
+    with patch.object(repo.collection_ref, "document", return_value=mock_doc), \
+         patch.object(firestore_client.client, "transaction", return_value=mock_tx):
         # Act: Save
         await repo.save(entity)
         # Assert
-        mock_doc.set.assert_called_once()
+        mock_tx.set.assert_called_once()
 
         # Act: Delete
-        await repo.delete(str(entity.id))
+        await repo.delete(entity.id)
         # Assert
         mock_doc.delete.assert_called_once()
 
@@ -132,16 +142,20 @@ async def test_base_repository_save_and_delete_with_transaction(firestore_client
     mock_doc = MagicMock()
     mock_tx = MagicMock(spec=AsyncTransaction)
 
+    mock_snapshot = MagicMock()
+    mock_snapshot.exists = False
+    mock_doc.get = AsyncMock(return_value=mock_snapshot)
+
     from uuid import uuid4
     entity = MockDomainEntity(id=uuid4(), name="Savable")
 
     with patch.object(repo.collection_ref, "document", return_value=mock_doc):
         # Act: Save with transaction
         await repo.save(entity, transaction=mock_tx)
-        mock_tx.set.assert_called_once_with(mock_doc, {"id": str(entity.id), "name": "Savable"})
+        mock_tx.set.assert_called_once_with(mock_doc, {"id": str(entity.id), "name": "Savable", "version": 1})
 
         # Act: Delete with transaction
-        await repo.delete(str(entity.id), transaction=mock_tx)
+        await repo.delete(entity.id, transaction=mock_tx)
         mock_tx.delete.assert_called_once_with(mock_doc)
 
 @pytest.mark.asyncio

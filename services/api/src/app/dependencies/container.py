@@ -5,6 +5,13 @@ from app.application.events import EventDispatcher, EventPublisher, EventRegistr
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
 from app.infrastructure.firestore import FirestoreClient, FirestoreUnitOfWork, TransactionManager
+from app.infrastructure.repositories import (
+    FirestoreEventRepository,
+    FirestoreIncidentRepository,
+    FirestoreOperationalStateRepository,
+    FirestoreRecommendationRepository,
+    FirestoreTaskRepository,
+)
 
 
 class ApplicationContainer(containers.DeclarativeContainer):
@@ -34,6 +41,13 @@ class ApplicationContainer(containers.DeclarativeContainer):
     firestore_client = providers.Singleton(FirestoreClient, settings=config)
     transaction_manager = providers.Singleton(TransactionManager, client=firestore_client)
     firestore_uow = providers.Factory(FirestoreUnitOfWork, client=firestore_client)
+
+    # Repository Adapters
+    event_repository = providers.Factory(FirestoreEventRepository, client=firestore_client)
+    incident_repository = providers.Factory(FirestoreIncidentRepository, client=firestore_client)
+    task_repository = providers.Factory(FirestoreTaskRepository, client=firestore_client)
+    recommendation_repository = providers.Factory(FirestoreRecommendationRepository, client=firestore_client)
+    operational_state_repository = providers.Factory(FirestoreOperationalStateRepository, client=firestore_client)
 
     # Future Infrastructure/Service Providers (Placeholders for future milestones)
     gemini_client = providers.Singleton(lambda: None)
