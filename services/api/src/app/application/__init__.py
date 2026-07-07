@@ -1,3 +1,3 @@
-from app.application import events, operational_state
+from app.application import events, operational_state, incidents
 
-__all__ = ["events", "operational_state"]
+__all__ = ["events", "operational_state", "incidents"]

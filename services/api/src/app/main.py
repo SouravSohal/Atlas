@@ -12,6 +12,7 @@ from app.presentation.exception_handlers import register_exception_handlers
 from app.presentation.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
 from app.presentation.routers.health import router as health_router
 from app.presentation.routers.version import router as version_router
+from app.presentation.routers.incidents import router as incidents_router
 
 logger = structlog.get_logger()
 
@@ -79,6 +80,7 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(health_router)
     app.include_router(version_router)
+    app.include_router(incidents_router)
 
     return app
 

@@ -15,6 +15,8 @@ from app.infrastructure.repositories import (
 )
 
 
+from app.application.incidents import CreateIncidentUseCase, GetIncidentUseCase, ListIncidentsUseCase
+
 class ApplicationContainer(containers.DeclarativeContainer):
     """Core dependency injection container for the ATLAS backend service."""
 
@@ -22,6 +24,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         modules=[
             "app.presentation.routers.health",
             "app.presentation.routers.version",
+            "app.presentation.routers.incidents",
             "app.dependencies.auth",
             "app.main",
         ]
@@ -56,6 +59,16 @@ class ApplicationContainer(containers.DeclarativeContainer):
         repository=operational_state_repository,
         event_publisher=event_publisher,
     )
+
+    # Incident Use Cases
+    create_incident_use_case = providers.Factory(
+        CreateIncidentUseCase,
+        repository=incident_repository,
+        operational_state_service=operational_state_service,
+        event_publisher=event_publisher,
+    )
+    get_incident_use_case = providers.Factory(GetIncidentUseCase, repository=incident_repository)
+    list_incidents_use_case = providers.Factory(ListIncidentsUseCase, repository=incident_repository)
 
     # Future Infrastructure/Service Providers (Placeholders for future milestones)
     gemini_client = providers.Singleton(lambda: None)
