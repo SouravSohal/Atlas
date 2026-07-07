@@ -1,14 +1,16 @@
 from uuid import UUID
+
+from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, status
-from dependency_injector.wiring import inject, Provide
-from app.dependencies.container import ApplicationContainer
+
 from app.application.incidents import (
     CreateIncidentRequest,
-    IncidentResponse,
     CreateIncidentUseCase,
     GetIncidentUseCase,
+    IncidentResponse,
     ListIncidentsUseCase,
 )
+from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])

@@ -2,7 +2,7 @@ from typing import Any
 
 import structlog
 from atlas_core.domain.exceptions.domain_error import DomainException
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -12,6 +12,19 @@ logger = structlog.get_logger()
 
 def register_exception_handlers(app: FastAPI) -> None:
     """Registers global exception handlers for the FastAPI application."""
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        logger.warning("HTTP exception occurred", status_code=exc.status_code, error_message=exc.detail)
+        response_data = ApiResponse[None](
+            success=False,
+            error=str(exc.detail),
+            request_id=request.headers.get("X-Request-ID"),
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=response_data.model_dump(),
+        )
 
     @app.exception_handler(DomainException)
     async def domain_exception_handler(request: Request, exc: DomainException) -> JSONResponse:

@@ -2,6 +2,11 @@ import structlog
 from dependency_injector import containers, providers
 
 from app.application.events import EventDispatcher, EventPublisher, EventRegistry, InMemoryEventBus
+from app.application.incidents import (
+    CreateIncidentUseCase,
+    GetIncidentUseCase,
+    ListIncidentsUseCase,
+)
 from app.application.operational_state import OperationalStateService
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
@@ -14,8 +19,6 @@ from app.infrastructure.repositories import (
     FirestoreTaskRepository,
 )
 
-
-from app.application.incidents import CreateIncidentUseCase, GetIncidentUseCase, ListIncidentsUseCase
 
 class ApplicationContainer(containers.DeclarativeContainer):
     """Core dependency injection container for the ATLAS backend service."""

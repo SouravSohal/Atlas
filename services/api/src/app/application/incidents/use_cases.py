@@ -1,14 +1,16 @@
 from collections.abc import Sequence
 from uuid import UUID
+
 import structlog
 from atlas_core.domain.entities.incident import Incident
 from atlas_core.domain.enums.incident_type import IncidentType
 from atlas_core.domain.enums.severity import Severity
 from atlas_core.domain.repositories.incident_repository import IncidentRepository
 from atlas_core.domain.value_objects.coordinates import Coordinates
+
 from app.application.events import EventPublisher
-from app.application.operational_state import OperationalStateService
 from app.application.incidents.dtos import CreateIncidentRequest, IncidentResponse
+from app.application.operational_state import OperationalStateService
 
 logger = structlog.get_logger()
 

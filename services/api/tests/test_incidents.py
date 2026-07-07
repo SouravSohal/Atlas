@@ -1,18 +1,24 @@
+from collections.abc import Iterator
+from datetime import UTC, datetime
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock
-import pytest
 from uuid import uuid4
-from datetime import datetime, UTC
-from fastapi.testclient import TestClient
+
+import pytest
 from atlas_core.domain.entities.incident import Incident
 from atlas_core.domain.enums.incident_type import IncidentType
 from atlas_core.domain.enums.severity import Severity
 from atlas_core.domain.value_objects.coordinates import Coordinates
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 from app.application.operational_state import OperationalStateSnapshot
-from app.presentation.responses import ApiResponse
+
 
 @pytest.fixture
-def override_dependencies(client: TestClient) -> tuple[MagicMock, MagicMock, MagicMock]:
-    container = client.app.state.container
+def override_dependencies(client: TestClient) -> Iterator[tuple[MagicMock, MagicMock, MagicMock]]:
+    app = cast(FastAPI, client.app)
+    container = app.state.container
 
     mock_repo = MagicMock()
     mock_state_service = MagicMock()
@@ -24,7 +30,7 @@ def override_dependencies(client: TestClient) -> tuple[MagicMock, MagicMock, Mag
 
     yield mock_repo, mock_state_service, mock_publisher
 
-    container.unoverride()
+    container.reset_override()
 
 def test_create_incident_success(
     client: TestClient,
@@ -166,3 +172,35 @@ def test_list_incidents(
     assert data["data"][0]["description"] == "Intrusion A"
     assert data["data"][1]["description"] == "Injury B"
     mock_repo.list.assert_called_once()
+
+def test_create_incident_value_error(
+    client: TestClient,
+    override_dependencies: tuple[MagicMock, MagicMock, MagicMock],
+) -> None:
+    # Arrange
+    _, _, _ = override_dependencies
+    app = cast(FastAPI, client.app)
+    container = app.state.container
+    mock_use_case = MagicMock()
+    mock_use_case.execute = AsyncMock(side_effect=ValueError("Invalid severity"))
+    container.create_incident_use_case.override(mock_use_case)
+
+    payload = {
+        "incident_type": "security",
+        "severity": "invalid",
+        "description": "Breach",
+        "latitude": 34.05,
+        "longitude": -118.25,
+        "reporter_id": str(uuid4()),
+        "zone_id": str(uuid4()),
+    }
+
+    # Act
+    with client:
+        response = client.post("/incidents", json=payload)
+
+    # Assert
+    assert response.status_code == 400
+    data = response.json()
+    assert data["success"] is False
+    assert data["error"] == "Invalid severity"
