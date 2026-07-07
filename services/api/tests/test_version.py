@@ -9,5 +9,6 @@ def test_get_version(client: TestClient) -> None:
     # Assert
     assert response.status_code == 200
     data = response.json()
-    assert "version" in data
-    assert "environment" in data
+    assert data["success"] is True
+    assert "version" in data["data"]
+    assert "environment" in data["data"]

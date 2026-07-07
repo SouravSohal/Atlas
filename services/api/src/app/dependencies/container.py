@@ -9,8 +9,8 @@ class ApplicationContainer(containers.DeclarativeContainer):
 
     wiring_config = containers.WiringConfiguration(
         modules=[
-            "app.presentation.health",
-            "app.presentation.version",
+            "app.presentation.routers.health",
+            "app.presentation.routers.version",
             "app.main",
         ]
     )

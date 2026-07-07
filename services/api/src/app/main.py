@@ -3,11 +3,15 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.config import Environment, Settings, configure_logging, get_settings
 from app.dependencies import ApplicationContainer
-from app.presentation.health import router as health_router
-from app.presentation.version import router as version_router
+from app.presentation.exception_handlers import register_exception_handlers
+from app.presentation.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
+from app.presentation.routers.health import router as health_router
+from app.presentation.routers.version import router as version_router
 
 logger = structlog.get_logger()
 
@@ -57,6 +61,22 @@ def create_app() -> FastAPI:
 
     app.state.container = container
 
+    # Register Middlewares (Request ID should wrap all, followed by security headers, gzip, and CORS)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.api.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(RequestIdMiddleware)
+
+    # Register Global Exception Handlers
+    register_exception_handlers(app)
+
+    # Include routers
     app.include_router(health_router)
     app.include_router(version_router)
 
