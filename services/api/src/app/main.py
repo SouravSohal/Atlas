@@ -5,7 +5,7 @@ import structlog
 from fastapi import FastAPI
 
 from app.config import Settings, configure_logging
-from app.dependencies.container import Container
+from app.dependencies import ApplicationContainer
 from app.presentation.health import router as health_router
 from app.presentation.version import router as version_router
 
@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 def create_app() -> FastAPI:
     """Application factory for the FastAPI backend service."""
-    container = Container()
+    container = ApplicationContainer()
 
     settings: Settings = container.config()
     configure_logging(settings)

@@ -1,14 +1,14 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies.container import Container
+from app.dependencies import ApplicationContainer
 from app.main import create_app
 
 
 @pytest.fixture
-def container() -> Container:
+def container() -> ApplicationContainer:
     """Fixture returning the DI container."""
-    return Container()
+    return ApplicationContainer()
 
 @pytest.fixture
 def client() -> TestClient:
