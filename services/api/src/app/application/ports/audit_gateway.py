@@ -11,14 +11,17 @@ class AuditGateway(ABC):
     Responsibilities:
         - Record audit log entry.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton.
+
+    Failure Behavior:
+        - ConnectionError: If connection to audit backend fails.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        - ConnectionError: If connection to audit backend fails.
+    Usage Examples:
+        >>> await audit.log_action("create_incident", "user-12", "incident-45")
     """
 
     @abstractmethod

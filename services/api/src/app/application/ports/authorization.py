@@ -11,15 +11,20 @@ class AuthorizationService(ABC):
     Responsibilities:
         - Authorize user actions based on roles or resource scopes.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton or Scoped.
+
+    Failure Behavior:
+        - PermissionError: If authorization fails.
+        - ValueError: If user ID is invalid.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        - PermissionError: If authorization fails.
-        - ValueError: If user ID is invalid.
+    Usage Examples:
+        >>> allowed = await auth_service.authorize(user_id, "operator")
+        >>> if not allowed:
+        >>>     raise PermissionError()
     """
 
     @abstractmethod

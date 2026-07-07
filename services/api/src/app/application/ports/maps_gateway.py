@@ -12,15 +12,18 @@ class MapsGateway(ABC):
     Responsibilities:
         - Calculate routing distance/time between coordinates.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton.
+
+    Failure Behavior:
+        - ValueError: If coordinate inputs are invalid.
+        - ConnectionError: If connection to map API fails.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        - ValueError: If coordinate inputs are invalid.
-        - ConnectionError: If connection to map API fails.
+    Usage Examples:
+        >>> distance = await maps.calculate_distance_meters(origin, dest)
     """
 
     @abstractmethod

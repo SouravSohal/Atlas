@@ -14,15 +14,18 @@ class AiGateway(ABC):
         - Invoke LLMs with dynamic prompt variables.
         - Parse and validate output against Pydantic models.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton.
+
+    Failure Behavior:
+        - ValueError: If prompt parameters or schema validation fails.
+        - ConnectionError: If connection to AI model endpoints fails.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        - ValueError: If prompt parameters or schema validation fails.
-        - ConnectionError: If connection to AI model endpoints fails.
+    Usage Examples:
+        >>> parsed = await ai.generate("threat_eval", context_data, ThreatSchema)
     """
 
     @abstractmethod

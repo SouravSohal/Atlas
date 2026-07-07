@@ -11,15 +11,18 @@ class NotificationGateway(ABC):
     Responsibilities:
         - Dispatch messages to recipients.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton.
+
+    Failure Behavior:
+        - ConnectionError: If connection to notification provider fails.
+        - ValueError: If payload or recipient metadata is invalid.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        - ConnectionError: If connection to notification provider fails.
-        - ValueError: If payload or recipient metadata is invalid.
+    Usage Examples:
+        >>> await gateway.send_notification("user@test.com", "Alert", "Incident detected!")
     """
 
     @abstractmethod

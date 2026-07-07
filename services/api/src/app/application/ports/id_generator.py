@@ -11,14 +11,17 @@ class IdGenerator(ABC):
     Responsibilities:
         - Generate unique identifiers.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton. Stateless.
+
+    Failure Behavior:
+        Should not raise exceptions under normal operations.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        Should not raise exceptions under normal operations.
+    Usage Examples:
+        >>> new_id = await id_generator.generate()
     """
 
     @abstractmethod

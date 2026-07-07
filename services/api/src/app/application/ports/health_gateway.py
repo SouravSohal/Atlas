@@ -10,14 +10,18 @@ class HealthGateway(ABC):
     Responsibilities:
         - Report component health status.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton.
+
+    Failure Behavior:
+        Should return health details without throwing exceptions to calling health endpoints.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        Should return health details without throwing exceptions to calling health endpoints.
+    Usage Examples:
+        >>> report = await health.check_health()
+        >>> # report -> {"firestore": True, "gemini": True}
     """
 
     @abstractmethod

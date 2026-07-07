@@ -13,15 +13,20 @@ class Transaction(ABC):
         - Control transaction boundaries.
         - Support async context manager protocol.
 
-    Lifecycle:
+    Expected Lifecycle:
         Scoped / Transient. Created per database transaction block.
+
+    Failure Behavior:
+        - ValueError: If commit/rollback is called outside of an active transaction.
+        - Exception: Database/infrastructure connection failures.
 
     Thread Safety:
         Not thread-safe. Must be used within a single asynchronous task/thread context.
 
-    Error Expectations:
-        - ValueError: If commit/rollback is called outside of an active transaction.
-        - Exception: Database/infrastructure connection failures.
+    Usage Examples:
+        >>> async with transaction as tx:
+        >>>     # perform operations
+        >>>     await tx.commit()
     """
 
     @abstractmethod
@@ -55,14 +60,20 @@ class TransactionManager(ABC):
     Responsibilities:
         - Initialize and return Transaction instances.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton.
+
+    Failure Behavior:
+        - ConnectionError: If unable to connect to the database.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        - ConnectionError: If unable to connect to the database.
+    Usage Examples:
+        >>> transaction = await transaction_manager.begin()
+        >>> async with transaction:
+        >>>     # transactional operations
+        >>>     pass
     """
 
     @abstractmethod

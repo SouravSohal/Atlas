@@ -12,14 +12,17 @@ class CurrentUserProvider(ABC):
         - Retrieve current authenticated user ID.
         - Retrieve current user roles.
 
-    Lifecycle:
+    Expected Lifecycle:
         Scoped. Typically instantiated per HTTP request or task execution context.
+
+    Failure Behavior:
+        - AttributeError: If no user is authenticated in the current context.
 
     Thread Safety:
         Must be thread-safe within the task context (e.g. using contextvars).
 
-    Error Expectations:
-        - AttributeError: If no user is authenticated in the current context.
+    Usage Examples:
+        >>> current_user_id = await user_provider.get_user_id()
     """
 
     @abstractmethod

@@ -10,15 +10,18 @@ class TranslationGateway(ABC):
     Responsibilities:
         - Translate text from a source language to a target language.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton.
+
+    Failure Behavior:
+        - ValueError: If inputs are invalid.
+        - ConnectionError: If connection to external translation service fails.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        - ValueError: If inputs are invalid.
-        - ConnectionError: If connection to external translation service fails.
+    Usage Examples:
+        >>> french_text = await translator.translate("Hello", "fr")
     """
 
     @abstractmethod

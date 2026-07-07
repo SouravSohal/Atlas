@@ -12,15 +12,18 @@ class StorageGateway(ABC):
         - Generate public or signed download links.
         - Delete stored files.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton.
+
+    Failure Behavior:
+        - FileNotFoundError: If requested file doesn't exist.
+        - ConnectionError: If cloud connection fails.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        - FileNotFoundError: If requested file doesn't exist.
-        - ConnectionError: If cloud connection fails.
+    Usage Examples:
+        >>> url = await storage.upload("my-bucket", "image.jpg", image_bytes)
     """
 
     @abstractmethod

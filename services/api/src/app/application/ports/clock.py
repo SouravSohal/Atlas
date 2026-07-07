@@ -6,20 +6,24 @@ class Clock(ABC):
     """Abstract interface for system clock operations.
 
     Purpose:
-        Decouple the application from the system clock to allow deterministic testing
-        and timezone consistency.
+        Decouple the application from the system clock to allow timezone consistency
+        and deterministic testing.
 
     Responsibilities:
         - Provide current timezone-aware timestamp.
 
-    Lifecycle:
+    Expected Lifecycle:
         Singleton. Stateless and safe to share across the application lifecycle.
+
+    Failure Behavior:
+        Should not raise exceptions under normal operations.
 
     Thread Safety:
         Must be thread-safe.
 
-    Error Expectations:
-        Should not raise exceptions under normal operations.
+    Usage Examples:
+        >>> # Inside a use case handler:
+        >>> current_time = await clock.now()
     """
 
     @abstractmethod
