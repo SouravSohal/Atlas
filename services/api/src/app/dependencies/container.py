@@ -4,6 +4,7 @@ from dependency_injector import containers, providers
 from app.application.events import EventDispatcher, EventPublisher, EventRegistry, InMemoryEventBus
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
+from app.infrastructure.firestore import FirestoreClient, FirestoreUnitOfWork, TransactionManager
 
 
 class ApplicationContainer(containers.DeclarativeContainer):
@@ -29,8 +30,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
     event_bus = providers.Singleton(InMemoryEventBus, dispatcher=event_dispatcher)
     event_publisher = providers.Singleton(EventPublisher, event_bus=event_bus)
 
+    # Firestore Database Infrastructure
+    firestore_client = providers.Singleton(FirestoreClient, settings=config)
+    transaction_manager = providers.Singleton(TransactionManager, client=firestore_client)
+    firestore_uow = providers.Factory(FirestoreUnitOfWork, client=firestore_client)
+
     # Future Infrastructure/Service Providers (Placeholders for future milestones)
-    firestore_client = providers.Singleton(lambda: None)
     gemini_client = providers.Singleton(lambda: None)
     firebase_app = providers.Singleton(lambda: None)
     maps_client = providers.Singleton(lambda: None)

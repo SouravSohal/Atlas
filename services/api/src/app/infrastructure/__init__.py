@@ -1,3 +1,3 @@
-from app.infrastructure import auth
+from app.infrastructure import auth, firestore
 
-__all__ = ["auth"]
+__all__ = ["auth", "firestore"]
