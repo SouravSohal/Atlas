@@ -11,12 +11,23 @@ from app.intelligence.prompt_builder import PromptBuilder
 from app.intelligence.prompt_registry import PromptRegistry
 from app.intelligence.prompt_version import PromptVersion
 from app.intelligence.response_validator import ResponseValidator
-from app.intelligence.structured_output import AIStructuredOutput
+from app.intelligence.structured_output import (
+    AIExplanation,
+    AIPrediction,
+    AIRecommendation,
+    AIResponse,
+    AISummary,
+    ResponseEnvelope,
+)
 
 __all__ = [
     "AIException",
+    "AIExplanation",
     "AIOrchestrator",
-    "AIStructuredOutput",
+    "AIPrediction",
+    "AIRecommendation",
+    "AIResponse",
+    "AISummary",
     "ContextRetriever",
     "ModelGateway",
     "ModelGatewayException",
@@ -24,6 +35,7 @@ __all__ = [
     "PromptNotFoundException",
     "PromptRegistry",
     "PromptVersion",
+    "ResponseEnvelope",
     "ResponseValidator",
     "ValidationException",
 ]
