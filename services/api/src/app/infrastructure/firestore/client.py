@@ -1,9 +1,13 @@
 import os
+from typing import TYPE_CHECKING
 
 import structlog
 from google.cloud import firestore
 
 from app.config import Settings
+
+if TYPE_CHECKING:
+    from app.infrastructure.firestore.session import FirestoreSession
 
 logger = structlog.get_logger()
 
@@ -36,3 +40,8 @@ class FirestoreClient:
         """Closes the Firestore client connection."""
         await self.client.close()  # type: ignore[no-untyped-call]
         logger.info("Closed Firestore AsyncClient connection")
+
+    def session(self) -> "FirestoreSession":
+        """Creates a new FirestoreSession wrapper around this client."""
+        from app.infrastructure.firestore.session import FirestoreSession
+        return FirestoreSession(self.client)

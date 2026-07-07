@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
@@ -13,6 +14,7 @@ from app.infrastructure.firestore import (
     BaseRepository,
     CollectionMapper,
     FirestoreClient,
+    FirestoreTransaction,
     FirestoreUnitOfWork,
     TransactionManager,
 )
@@ -192,3 +194,168 @@ async def test_firestore_uow(firestore_client: FirestoreClient) -> None:
     # Assert
     mock_tx.__aenter__.assert_called_once()
     mock_tx.__aexit__.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_firestore_session_operations(firestore_client: FirestoreClient) -> None:
+    # Arrange
+    mock_doc = MagicMock()
+    mock_doc.get = AsyncMock()
+    mock_snapshot = MagicMock()
+    mock_snapshot.exists = True
+    mock_snapshot.to_dict.return_value = {"id": "123", "data": "value"}
+    mock_doc.get.return_value = mock_snapshot
+
+    mock_doc.set = AsyncMock()
+    mock_doc.update = AsyncMock()
+    mock_doc.delete = AsyncMock()
+
+    mock_collection = MagicMock()
+    mock_collection.document.return_value = mock_doc
+
+    # Act
+    with patch.object(firestore_client.client, "collection", return_value=mock_collection), \
+         patch.object(firestore_client.client, "batch") as mock_batch:
+        session = firestore_client.session()
+        
+        doc = await session.get("col", "doc-123")
+        await session.set("col", "doc-123", {"data": "value"})
+        await session.update("col", "doc-123", {"data": "new"})
+        await session.delete("col", "doc-123")
+        _ = session.batch()
+
+        # Assert
+        assert doc == {"id": "123", "data": "value"}
+        mock_doc.get.assert_called_once()
+        mock_doc.set.assert_called_once_with({"data": "value"})
+        mock_doc.update.assert_called_once_with({"data": "new"})
+        mock_doc.delete.assert_called_once()
+        mock_batch.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_firestore_transaction_operations() -> None:
+    # Arrange
+    mock_tx = MagicMock(spec=AsyncTransaction)
+    mock_doc = MagicMock()
+    mock_doc.get = AsyncMock()
+    
+    tx = FirestoreTransaction(mock_tx)
+
+    # Act
+    await tx.get(mock_doc)
+    tx.set(mock_doc, {"version": 1})
+    tx.update(mock_doc, {"version": 2})
+    tx.delete(mock_doc)
+
+    # Assert
+    mock_doc.get.assert_called_once_with(transaction=mock_tx)
+    mock_tx.set.assert_called_once_with(mock_doc, {"version": 1})
+    mock_tx.update.assert_called_once_with(mock_doc, {"version": 2})
+    mock_tx.delete.assert_called_once_with(mock_doc)
+
+
+def test_collection_resolver() -> None:
+    # Arrange & Act & Assert
+    from app.infrastructure.firestore import CollectionResolver
+    
+    assert CollectionResolver.resolve("Incident") == "incidents"
+    assert CollectionResolver.resolve("OperationalState") == "operational_states"
+    assert CollectionResolver.resolve("Category") == "categories"
+    assert CollectionResolver.resolve("Task") == "tasks"
+
+
+def test_timestamp_mapper() -> None:
+    # Arrange & Act & Assert
+    from datetime import datetime
+
+    from app.infrastructure.firestore import TimestampMapper
+
+    now_tz = datetime.now(UTC)
+    now_naive = datetime.now()
+
+    # to_datetime
+    assert TimestampMapper.to_datetime(None) is None
+    assert TimestampMapper.to_datetime(now_tz) == now_tz
+    assert TimestampMapper.to_datetime(now_naive).tzinfo == UTC  # type: ignore[union-attr]
+
+    # GCP Timestamp mock
+    class MockGcpTimestamp:
+        def to_datetime(self) -> datetime:
+            return now_naive
+            
+    assert TimestampMapper.to_datetime(MockGcpTimestamp()) == now_naive.replace(tzinfo=UTC)
+
+    # ISO string parsing
+    iso_str = "2026-07-08T00:00:00Z"
+    parsed = TimestampMapper.to_datetime(iso_str)
+    assert parsed is not None
+    assert parsed.year == 2026
+
+    # to_timestamp
+    assert TimestampMapper.to_timestamp(None) is None
+    assert TimestampMapper.to_timestamp(now_tz) == now_tz
+    assert TimestampMapper.to_timestamp(now_naive).tzinfo == UTC  # type: ignore[union-attr]
+
+
+def test_optimistic_lock() -> None:
+    # Arrange & Act & Assert
+    from app.infrastructure.firestore import ConcurrencyException, OptimisticLock
+
+    data = {"name": "test", "version": 2}
+    incremented = OptimisticLock.increment_version(data)
+    assert incremented["version"] == 3
+
+    # Success check
+    OptimisticLock.check_version(data, 2)
+    OptimisticLock.check_version(None, None)
+
+    # Failure checks
+    with pytest.raises(ConcurrencyException, match="Document does not exist"):
+        OptimisticLock.check_version(None, 1)
+
+    with pytest.raises(ConcurrencyException, match="Expected version 5, but found 2"):
+        OptimisticLock.check_version(data, 5)
+
+
+@pytest.mark.asyncio
+async def test_retry_strategy_success() -> None:
+    # Arrange
+    from app.infrastructure.firestore import RetryStrategy
+    calls = 0
+
+    async def sample_func() -> str:
+        nonlocal calls
+        calls += 1
+        return "success"
+
+    # Act
+    res = await RetryStrategy.execute(sample_func)
+
+    # Assert
+    assert res == "success"
+    assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_retry_strategy_transient_failure_retries() -> None:
+    # Arrange
+    from google.api_core.exceptions import ServiceUnavailable
+
+    from app.infrastructure.firestore import RetryStrategy
+    calls = 0
+
+    async def sample_func() -> str:
+        nonlocal calls
+        calls += 1
+        if calls < 2:
+            raise ServiceUnavailable("Temporary Service Down")  # type: ignore[no-untyped-call]
+        return "success"
+
+    # Act
+    res = await RetryStrategy.execute(sample_func, min_seconds=0.01, max_seconds=0.05)
+
+    # Assert
+    assert res == "success"
+    assert calls == 2
+

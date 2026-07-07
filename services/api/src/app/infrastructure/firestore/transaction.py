@@ -1,5 +1,5 @@
 from collections.abc import Awaitable, Callable
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import structlog
 from google.cloud import firestore
@@ -10,6 +10,29 @@ from app.infrastructure.firestore.client import FirestoreClient
 logger = structlog.get_logger()
 
 T_res = TypeVar("T_res")
+
+class FirestoreTransaction:
+    """Wrapper around Firestore AsyncTransaction to provide transaction boundaries and helpers."""
+
+    def __init__(self, tx: AsyncTransaction) -> None:
+        self.tx = tx
+
+    async def get(self, doc_ref: Any) -> Any:
+        """Gets a document snapshot within the transaction context."""
+        return await doc_ref.get(transaction=self.tx)
+
+    def set(self, doc_ref: Any, data: dict[str, Any]) -> None:
+        """Sets document data in the transaction."""
+        self.tx.set(doc_ref, data)
+
+    def update(self, doc_ref: Any, data: dict[str, Any]) -> None:
+        """Updates document data in the transaction."""
+        self.tx.update(doc_ref, data)
+
+    def delete(self, doc_ref: Any) -> None:
+        """Deletes document in the transaction."""
+        self.tx.delete(doc_ref)
+
 
 class TransactionManager:
     """Manages Firestore transaction boundaries and handles automatic retry logic."""
