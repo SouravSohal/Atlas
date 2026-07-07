@@ -19,7 +19,8 @@ dependencies = [
     "dependency-injector>=4.48.0",
     "structlog>=25.4.0",
     "atlas-core",
-    "firebase-admin>=7.0.0"
+    "firebase-admin>=7.0.0",
+    "google-genai>=0.1.1"
 ]
 
 [project.optional-dependencies]
@@ -66,6 +67,9 @@ no_implicit_optional = true
 [[tool.mypy.overrides]]
 module = [
     "firebase_admin",
-    "firebase_admin.*"
+    "firebase_admin.*",
+    "google",
+    "google.genai",
+    "google.genai.*"
 ]
 ignore_missing_imports = true

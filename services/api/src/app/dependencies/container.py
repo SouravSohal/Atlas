@@ -18,6 +18,7 @@ from app.infrastructure.repositories import (
     FirestoreRecommendationRepository,
     FirestoreTaskRepository,
 )
+from app.intelligence import AIOrchestrator, ModelGateway, PromptVersionManager
 
 
 class ApplicationContainer(containers.DeclarativeContainer):
@@ -72,6 +73,15 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     get_incident_use_case = providers.Factory(GetIncidentUseCase, repository=incident_repository)
     list_incidents_use_case = providers.Factory(ListIncidentsUseCase, repository=incident_repository)
+
+    # AI Intelligence Foundation
+    prompt_version_manager = providers.Singleton(PromptVersionManager)
+    model_gateway = providers.Singleton(ModelGateway, api_key=config.provided.gemini.api_key)
+    ai_orchestrator = providers.Singleton(
+        AIOrchestrator,
+        gateway=model_gateway,
+        version_manager=prompt_version_manager,
+    )
 
     # Future Infrastructure/Service Providers (Placeholders for future milestones)
     gemini_client = providers.Singleton(lambda: None)
