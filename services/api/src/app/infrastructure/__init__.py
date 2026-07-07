@@ -1,6 +1,6 @@
 from app.infrastructure import (
-    ai,
     auth,
+    common,
     config,
     firebase,
     firestore,
@@ -9,11 +9,12 @@ from app.infrastructure import (
     monitoring,
     repositories,
     storage,
+    vertex_ai,
 )
 
 __all__ = [
-    "ai",
     "auth",
+    "common",
     "config",
     "firebase",
     "firestore",
@@ -22,4 +23,5 @@ __all__ = [
     "monitoring",
     "repositories",
     "storage",
+    "vertex_ai",
 ]

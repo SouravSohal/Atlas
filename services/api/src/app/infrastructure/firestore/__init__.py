@@ -1,6 +1,7 @@
 from app.infrastructure.firestore.client import FirestoreClient
 from app.infrastructure.firestore.exceptions import ConcurrencyException
 from app.infrastructure.firestore.factory import FirestoreClientFactory
+from app.infrastructure.firestore.health import FirestoreHealthCheck
 from app.infrastructure.firestore.lock import OptimisticLock
 from app.infrastructure.firestore.mapper import CollectionMapper, DocumentMapper, TimestampMapper
 from app.infrastructure.firestore.repository import BaseRepository
@@ -18,6 +19,7 @@ __all__ = [
     "DocumentMapper",
     "FirestoreClient",
     "FirestoreClientFactory",
+    "FirestoreHealthCheck",
     "FirestoreSession",
     "FirestoreTransaction",
     "FirestoreUnitOfWork",

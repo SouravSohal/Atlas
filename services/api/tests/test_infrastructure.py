@@ -3,17 +3,50 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.config import Settings
-from app.infrastructure.ai import AiClient, AiClientFactory, AiException
-from app.infrastructure.config import ConfigClient, ConfigClientFactory
-from app.infrastructure.firebase import FirebaseClient, FirebaseClientFactory, FirebaseException
-from app.infrastructure.firestore import FirestoreClient, FirestoreClientFactory
-from app.infrastructure.logging import LoggingClient, LoggingClientFactory
-from app.infrastructure.maps import MapsClient, MapsClientFactory
+from app.infrastructure.common import (
+    CommonInfrastructureClient,
+    CommonInfrastructureClientFactory,
+    CommonInfrastructureHealthCheck,
+)
+from app.infrastructure.config import (
+    ConfigClient,
+    ConfigClientFactory,
+    ConfigHealthCheck,
+)
+from app.infrastructure.firebase import (
+    FirebaseClient,
+    FirebaseClientFactory,
+    FirebaseException,
+    FirebaseHealthCheck,
+)
+from app.infrastructure.firestore import (
+    FirestoreClient,
+    FirestoreClientFactory,
+    FirestoreHealthCheck,
+)
+from app.infrastructure.logging import (
+    LoggingClient,
+    LoggingClientFactory,
+    LoggingHealthCheck,
+)
+from app.infrastructure.maps import MapsClient, MapsClientFactory, MapsHealthCheck
 from app.infrastructure.monitoring import (
     MonitoringClient,
     MonitoringClientFactory,
+    MonitoringHealthCheck,
 )
-from app.infrastructure.storage import StorageClient, StorageClientFactory, StorageException
+from app.infrastructure.storage import (
+    StorageClient,
+    StorageClientFactory,
+    StorageException,
+    StorageHealthCheck,
+)
+from app.infrastructure.vertex_ai import (
+    VertexAiClient,
+    VertexAiClientFactory,
+    VertexAiException,
+    VertexAiHealthCheck,
+)
 
 
 # 1. Config tests
@@ -34,6 +67,20 @@ def test_config_client_and_factory() -> None:
         assert default_val == "default"
 
 
+@pytest.mark.asyncio
+async def test_config_health_check() -> None:
+    # Arrange
+    mock_settings = MagicMock()
+    client = ConfigClient(mock_settings)
+    check = ConfigHealthCheck(client)
+
+    # Act & Assert
+    assert await check.check_health() is True
+
+    client.settings = None  # type: ignore[assignment]
+    assert await check.check_health() is False
+
+
 # 2. Logging tests
 def test_logging_client_and_factory() -> None:
     # Act
@@ -45,16 +92,28 @@ def test_logging_client_and_factory() -> None:
     assert logger is not None
 
 
+@pytest.mark.asyncio
+async def test_logging_health_check() -> None:
+    # Arrange
+    client = LoggingClientFactory.create()
+    check = LoggingHealthCheck(client)
+
+    # Act & Assert
+    assert await check.check_health() is True
+
+
 # 3. Monitoring tests
 @pytest.mark.asyncio
 async def test_monitoring_client_and_factory() -> None:
     # Act
     client = MonitoringClientFactory.create()
+    check = MonitoringHealthCheck(client)
 
     # Assert
     assert isinstance(client, MonitoringClient)
     # Should not raise exception
     await client.record_metric("cpu_usage", 85.5, {"env": "prod"})
+    assert await check.check_health() is True
 
 
 # 4. Firebase tests
@@ -123,6 +182,20 @@ def test_firebase_client_and_factory_exception() -> None:
         FirebaseClientFactory.create(mock_settings)
 
 
+@pytest.mark.asyncio
+async def test_firebase_health_check() -> None:
+    # Arrange
+    mock_app = MagicMock()
+    client = FirebaseClient(mock_app)
+    check = FirebaseHealthCheck(client)
+
+    # Act & Assert
+    assert await check.check_health() is True
+
+    client.app = None
+    assert await check.check_health() is False
+
+
 # 5. Firestore tests
 def test_firestore_client_factory() -> None:
     # Arrange
@@ -140,28 +213,62 @@ def test_firestore_client_factory() -> None:
         mock_async_client.assert_called_once()
 
 
-# 6. AI tests
-def test_ai_client_and_factory() -> None:
+@pytest.mark.asyncio
+async def test_firestore_health_check() -> None:
+    # Arrange
+    mock_client = MagicMock()
+    from collections.abc import AsyncGenerator
+    
+    async def mock_collections() -> AsyncGenerator[None, None]:
+        if False:
+            yield
+
+    mock_client.client.collections.return_value = mock_collections()
+    check = FirestoreHealthCheck(mock_client)
+
+    # Act & Assert
+    assert await check.check_health() is True
+
+    # Error path
+    mock_client.client.collections.side_effect = Exception("Db failure")
+    assert await check.check_health() is False
+
+
+# 6. Vertex AI tests
+def test_vertex_ai_client_and_factory() -> None:
     # Arrange
     mock_settings = MagicMock()
     mock_settings.gemini.api_key = "test-gemini-key"
 
     with patch("google.genai.Client") as mock_genai_client:
         # Act
-        client = AiClientFactory.create(mock_settings)
+        client = VertexAiClientFactory.create(mock_settings)
 
         # Assert
-        assert isinstance(client, AiClient)
+        assert isinstance(client, VertexAiClient)
         mock_genai_client.assert_called_once_with(api_key="test-gemini-key")
 
-def test_ai_client_factory_missing_key() -> None:
+def test_vertex_ai_client_factory_missing_key() -> None:
     # Arrange
     mock_settings = MagicMock()
     mock_settings.gemini.api_key = None
 
     # Act & Assert
-    with pytest.raises(AiException, match="Gemini API key is not configured"):
-        AiClientFactory.create(mock_settings)
+    with pytest.raises(VertexAiException, match="Gemini/Vertex AI API key is not configured"):
+        VertexAiClientFactory.create(mock_settings)
+
+
+@pytest.mark.asyncio
+async def test_vertex_ai_health_check() -> None:
+    # Arrange
+    mock_client = MagicMock()
+    check = VertexAiHealthCheck(mock_client)
+
+    # Act & Assert
+    assert await check.check_health() is True
+
+    mock_client.client = None
+    assert await check.check_health() is False
 
 
 # 7. Maps tests
@@ -176,6 +283,16 @@ def test_maps_client_and_factory() -> None:
     # Assert
     assert isinstance(client, MapsClient)
     assert client.api_key == "test-maps-key"
+
+
+@pytest.mark.asyncio
+async def test_maps_health_check() -> None:
+    # Arrange
+    client = MapsClient("key")
+    check = MapsHealthCheck(client)
+
+    # Act & Assert
+    assert await check.check_health() is True
 
 
 # 8. Storage tests
@@ -200,3 +317,35 @@ def test_storage_client_factory_exception() -> None:
     with patch("google.cloud.storage.Client", side_effect=Exception("Storage init error")), \
          pytest.raises(StorageException, match="Failed to initialize StorageClient"):
         StorageClientFactory.create(mock_settings)
+
+
+@pytest.mark.asyncio
+async def test_storage_health_check() -> None:
+    # Arrange
+    mock_client = MagicMock()
+    check = StorageHealthCheck(mock_client)
+
+    # Act & Assert
+    assert await check.check_health() is True
+
+    mock_client.client = None
+    assert await check.check_health() is False
+
+
+# 9. Common infrastructure tests
+def test_common_infrastructure_client_and_factory() -> None:
+    # Act
+    client = CommonInfrastructureClientFactory.create()
+
+    # Assert
+    assert isinstance(client, CommonInfrastructureClient)
+
+
+@pytest.mark.asyncio
+async def test_common_health_check() -> None:
+    # Arrange
+    client = CommonInfrastructureClientFactory.create()
+    check = CommonInfrastructureHealthCheck(client)
+
+    # Act & Assert
+    assert await check.check_health() is True
