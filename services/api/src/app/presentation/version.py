@@ -1,7 +1,7 @@
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 
-from app.config.settings import Settings
+from app.config import Settings
 from app.dependencies.container import Container
 
 router = APIRouter(tags=["System"])
@@ -13,6 +13,6 @@ async def get_version(
 ) -> dict[str, str]:
     """Version check endpoint returning current release metadata."""
     return {
-        "version": settings.app_version,
-        "environment": settings.environment,
+        "version": settings.app.version,
+        "environment": settings.app.environment,
     }

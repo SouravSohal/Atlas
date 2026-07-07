@@ -1,6 +1,6 @@
 from dependency_injector import containers, providers
 
-from app.config.settings import Settings
+from app.config import get_settings
 
 
 class Container(containers.DeclarativeContainer):
@@ -14,4 +14,4 @@ class Container(containers.DeclarativeContainer):
         ]
     )
 
-    config = providers.Singleton(Settings)
+    config = providers.Callable(get_settings)

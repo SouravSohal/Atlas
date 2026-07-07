@@ -4,9 +4,11 @@ from typing import Any
 
 import structlog
 
+from app.config.settings import Settings
 
-def configure_logging(environment: str = "development") -> None:
-    """Configures structured logging using structlog."""
+
+def configure_logging(settings: Settings) -> None:
+    """Configures structured logging using the provided Settings configuration."""
     shared_processors: list[Any] = [
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
@@ -14,7 +16,9 @@ def configure_logging(environment: str = "development") -> None:
         structlog.processors.TimeStamper(fmt="iso"),
     ]
 
-    if environment == "production":
+    log_level = getattr(logging, settings.logging.level.upper(), logging.INFO)
+
+    if settings.logging.json_format or settings.app.environment == "production":
         processors = [
             *shared_processors,
             structlog.processors.dict_tracebacks,
@@ -35,5 +39,5 @@ def configure_logging(environment: str = "development") -> None:
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
-        level=logging.INFO,
+        level=log_level,
     )

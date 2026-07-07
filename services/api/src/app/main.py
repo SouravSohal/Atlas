@@ -4,11 +4,10 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI
 
-from app.config.settings import Settings
+from app.config import Settings, configure_logging
 from app.dependencies.container import Container
 from app.presentation.health import router as health_router
 from app.presentation.version import router as version_router
-from app.shared.logging import configure_logging
 
 logger = structlog.get_logger()
 
@@ -24,12 +23,12 @@ def create_app() -> FastAPI:
     container = Container()
 
     settings: Settings = container.config()
-    configure_logging(settings.environment)
+    configure_logging(settings)
 
     app = FastAPI(
-        title=settings.app_name,
+        title=settings.app.name,
         description="Modular Monolith API Gateway and Orchestrator for the ATLAS Stadium Intelligence System.",
-        version=settings.app_version,
+        version=settings.app.version,
         lifespan=lifespan,
     )
 
