@@ -8,7 +8,7 @@ from app.application.incidents import (
     ListIncidentsUseCase,
     UpdateIncidentUseCase,
 )
-from app.application.operational_state import OperationalStateService
+from app.application.operational_state import OperationalStateService, SituationSummaryAgent
 from app.application.recommendations import RecommendationAgent
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
@@ -98,6 +98,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     recommendation_agent = providers.Singleton(
         RecommendationAgent,
+        orchestrator=ai_orchestrator,
+    )
+    situation_summary_agent = providers.Singleton(
+        SituationSummaryAgent,
         orchestrator=ai_orchestrator,
     )
 
