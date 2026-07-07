@@ -300,28 +300,28 @@ def test_timestamp_mapper() -> None:
 
 def test_optimistic_lock() -> None:
     # Arrange & Act & Assert
-    from app.infrastructure.firestore import ConcurrencyException, OptimisticLock
+    from app.infrastructure.firestore import ConcurrencyException, OptimisticLockManager
 
     data = {"name": "test", "version": 2}
-    incremented = OptimisticLock.increment_version(data)
+    incremented = OptimisticLockManager.increment_version(data)
     assert incremented["version"] == 3
 
     # Success check
-    OptimisticLock.check_version(data, 2)
-    OptimisticLock.check_version(None, None)
+    OptimisticLockManager.check_version(data, 2)
+    OptimisticLockManager.check_version(None, None)
 
     # Failure checks
     with pytest.raises(ConcurrencyException, match="Document does not exist"):
-        OptimisticLock.check_version(None, 1)
+        OptimisticLockManager.check_version(None, 1)
 
     with pytest.raises(ConcurrencyException, match="Expected version 5, but found 2"):
-        OptimisticLock.check_version(data, 5)
+        OptimisticLockManager.check_version(data, 5)
 
 
 @pytest.mark.asyncio
 async def test_retry_strategy_success() -> None:
     # Arrange
-    from app.infrastructure.firestore import RetryStrategy
+    from app.infrastructure.firestore import RetryPolicy
     calls = 0
 
     async def sample_func() -> str:
@@ -330,7 +330,7 @@ async def test_retry_strategy_success() -> None:
         return "success"
 
     # Act
-    res = await RetryStrategy.execute(sample_func)
+    res = await RetryPolicy.execute(sample_func)
 
     # Assert
     assert res == "success"
@@ -342,7 +342,7 @@ async def test_retry_strategy_transient_failure_retries() -> None:
     # Arrange
     from google.api_core.exceptions import ServiceUnavailable
 
-    from app.infrastructure.firestore import RetryStrategy
+    from app.infrastructure.firestore import RetryPolicy
     calls = 0
 
     async def sample_func() -> str:
@@ -353,7 +353,7 @@ async def test_retry_strategy_transient_failure_retries() -> None:
         return "success"
 
     # Act
-    res = await RetryStrategy.execute(sample_func, min_seconds=0.01, max_seconds=0.05)
+    res = await RetryPolicy.execute(sample_func, min_seconds=0.01, max_seconds=0.05)
 
     # Assert
     assert res == "success"

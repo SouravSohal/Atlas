@@ -14,7 +14,7 @@ from tenacity import (
 
 logger = structlog.get_logger()
 
-class RetryStrategy:
+class RetryPolicy:
     """Manages automatic retry logic with exponential backoff for transient Firestore operations."""
 
     @staticmethod
@@ -40,7 +40,7 @@ class RetryStrategy:
         max_seconds: float = 10.0,
     ) -> R:
         """Executes an async callable with automatic retry logic."""
-        decorator = RetryStrategy.get_retry_decorator(
+        decorator = RetryPolicy.get_retry_decorator(
             max_attempts=max_attempts,
             min_seconds=min_seconds,
             max_seconds=max_seconds,

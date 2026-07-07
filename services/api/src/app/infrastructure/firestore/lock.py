@@ -3,7 +3,7 @@ from typing import Any
 from app.infrastructure.firestore.exceptions import ConcurrencyException
 
 
-class OptimisticLock:
+class OptimisticLockManager:
     """Manages optimistic locking attributes and validations for Firestore documents."""
 
     @staticmethod
