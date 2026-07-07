@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -195,6 +195,12 @@ async def test_firebase_health_check() -> None:
     client.app = None
     assert await check.check_health() is False
 
+    # Exception path
+    mock_failing_client = MagicMock()
+    type(mock_failing_client).app = PropertyMock(side_effect=RuntimeError("Firebase app error"))
+    check_fail = FirebaseHealthCheck(mock_failing_client)
+    assert await check_fail.check_health() is False
+
 
 # 5. Firestore tests
 def test_firestore_client_factory() -> None:
@@ -270,6 +276,13 @@ async def test_vertex_ai_health_check() -> None:
     mock_client.client = None
     assert await check.check_health() is False
 
+    # Exception path
+    mock_failing_client = MagicMock()
+    type(mock_failing_client).client = PropertyMock(side_effect=RuntimeError("AI client error"))
+    check_fail = VertexAiHealthCheck(mock_failing_client)
+    assert await check_fail.check_health() is False
+    assert await check.check_health() is False
+
 
 # 7. Maps tests
 def test_maps_client_and_factory() -> None:
@@ -330,6 +343,12 @@ async def test_storage_health_check() -> None:
 
     mock_client.client = None
     assert await check.check_health() is False
+
+    # Exception path
+    mock_failing_client = MagicMock()
+    type(mock_failing_client).client = PropertyMock(side_effect=RuntimeError("Storage client error"))
+    check_fail = StorageHealthCheck(mock_failing_client)
+    assert await check_fail.check_health() is False
 
 
 # 9. Common infrastructure tests
