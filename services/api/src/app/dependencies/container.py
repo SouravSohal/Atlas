@@ -9,6 +9,7 @@ from app.application.incidents import (
     UpdateIncidentUseCase,
 )
 from app.application.operational_state import OperationalStateService
+from app.application.recommendations import RecommendationAgent
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
 from app.infrastructure.firestore import FirestoreClient, FirestoreUnitOfWork, TransactionManager
@@ -94,6 +95,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
         gateway=model_gateway,
         registry=prompt_registry,
         context_retriever=context_retriever,
+    )
+    recommendation_agent = providers.Singleton(
+        RecommendationAgent,
+        orchestrator=ai_orchestrator,
     )
 
     # Future Infrastructure/Service Providers (Placeholders for future milestones)
