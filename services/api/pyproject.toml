@@ -70,6 +70,8 @@ module = [
     "firebase_admin.*",
     "google",
     "google.genai",
-    "google.genai.*"
+    "google.genai.*",
+    "google.cloud",
+    "google.cloud.*"
 ]
 ignore_missing_imports = true
