@@ -844,7 +844,7 @@ function MissionControlPage() {
                 <input
                   type="range"
                   min="0"
-                  max="4"
+                  max={(SCENARIO_STEPS[playbackScenario || ""]?.length || 5) - 1}
                   value={playbackStep}
                   onChange={(e) => {
                     setPlaybackStep(parseInt(e.target.value));
@@ -852,7 +852,9 @@ function MissionControlPage() {
                   }}
                   className="w-24 accent-primary cursor-pointer"
                 />
-                <span className="text-[11px] font-bold text-foreground font-mono">{playbackStep + 1}/5</span>
+                <span className="text-[11px] font-bold text-foreground font-mono">
+                  {playbackStep + 1}/{SCENARIO_STEPS[playbackScenario || ""]?.length || 5}
+                </span>
               </div>
 
               {/* Playback speed selector */}
