@@ -31,6 +31,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
             "app.presentation.routers.health",
             "app.presentation.routers.version",
             "app.presentation.routers.incidents",
+            "app.presentation.routers.dashboard",
             "app.dependencies.auth",
             "app.main",
         ]
