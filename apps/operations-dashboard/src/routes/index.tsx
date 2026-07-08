@@ -566,7 +566,7 @@ function OperationsCommandCenter() {
 
               <div className="grid grid-cols-2 gap-2.5">
                 <button
-                  onClick={() => triggerScenario("crowd", "high", "High congestion alert at Gate 1 Ingress turnstiles.")}
+                  onClick={() => triggerScenario("crowd_control", "high", "High congestion alert at Gate 1 Ingress turnstiles.")}
                   className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
                 >
                   Gate Congestion
@@ -578,7 +578,7 @@ function OperationsCommandCenter() {
                   Medical Emergency
                 </button>
                 <button
-                  onClick={() => triggerScenario("infrastructure", "critical", "Local power failure reported in central food sector.")}
+                  onClick={() => triggerScenario("facility", "critical", "Local power failure reported in central food sector.")}
                   className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
                 >
                   Power Failure

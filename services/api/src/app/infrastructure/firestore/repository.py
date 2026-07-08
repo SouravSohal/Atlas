@@ -4,6 +4,7 @@ from uuid import UUID
 
 import structlog
 from atlas_core.domain.entities.base import BaseEntity
+from google.cloud import firestore
 from google.cloud.firestore import AsyncCollectionReference, AsyncTransaction
 
 from app.infrastructure.firestore.client import FirestoreClient
@@ -65,15 +66,14 @@ class BaseRepository[T: BaseEntity]:
         """Saves or updates a domain entity in Firestore with optimistic locking."""
         doc_ref = self.collection_ref.document(str(entity.id))
 
-        async def _save() -> None:
-            if transaction is not None:
-                await self._save_with_lock(doc_ref, entity, transaction)
-            else:
-                tx = self.client.client.transaction()
-                async with tx as transactional_tx:
-                    await self._save_with_lock(doc_ref, entity, transactional_tx)
-
-        await RetryPolicy.execute(_save)
+        if transaction is not None:
+            await self._save_with_lock(doc_ref, entity, transaction)
+        else:
+            tx = self.client.client.transaction()
+            @firestore.async_transactional
+            async def _run_transaction(transactional_tx: AsyncTransaction) -> None:
+                await self._save_with_lock(doc_ref, entity, transactional_tx)
+            await _run_transaction(tx)
 
     async def _save_with_lock(self, doc_ref: Any, entity: T, transaction: AsyncTransaction) -> None:
         snapshot = await doc_ref.get(transaction=transaction)
