@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
+import dagre from "dagre";
 import {
   ReactFlow,
   Background,
@@ -51,7 +52,7 @@ type TwinNodeData = {
 
 type TwinNode = Node<TwinNodeData, "digitalTwinNode">;
 
-// Custom high-fidelity Node component for stadium facilities
+// Custom high-fidelity Node component for stadium facilities (optimized for compact density)
 const DigitalTwinNodeComponent = ({ data }: NodeProps<TwinNode>) => {
   const statusBorderColors = {
     stable: "border-emerald-500/40 shadow-emerald-500/5",
@@ -72,44 +73,44 @@ const DigitalTwinNodeComponent = ({ data }: NodeProps<TwinNode>) => {
   };
 
   const typeIcons = {
-    Gates: <Maximize2 className="h-4 w-4" />,
-    Security: <Shield className="h-4 w-4" />,
-    Medical: <HeartPulse className="h-4 w-4" />,
-    Parking: <Car className="h-4 w-4" />,
-    "Food Courts": <Utensils className="h-4 w-4" />,
-    Restrooms: <Zap className="h-4 w-4" />,
-    Transportation: <Bus className="h-4 w-4" />,
-    "Volunteer Stations": <UserCheck className="h-4 w-4" />,
+    Gates: <Maximize2 className="h-3.5 w-3.5" />,
+    Security: <Shield className="h-3.5 w-3.5" />,
+    Medical: <HeartPulse className="h-3.5 w-3.5" />,
+    Parking: <Car className="h-3.5 w-3.5" />,
+    "Food Courts": <Utensils className="h-3.5 w-3.5" />,
+    Restrooms: <Zap className="h-3.5 w-3.5" />,
+    Transportation: <Bus className="h-3.5 w-3.5" />,
+    "Volunteer Stations": <UserCheck className="h-3.5 w-3.5" />,
   };
 
   return (
-    <div className={`rounded-2xl border bg-card/90 backdrop-blur-md p-4 text-left w-52 shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-primary/5 ${statusBorderColors[data.status]} ${statusBgColors[data.status]}`}>
-      <Handle type="target" position={Position.Left} className="w-2.5 h-2.5 bg-border rounded-full border-2 border-card" />
+    <div className={`rounded-xl border bg-card/90 backdrop-blur-md p-2.5 text-left w-44 shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-primary/5 ${statusBorderColors[data.status]} ${statusBgColors[data.status]}`}>
+      <Handle type="target" position={Position.Left} className="w-2 h-2 bg-border rounded-full border-2 border-card" />
       
       {/* Header */}
-      <div className="flex justify-between items-start mb-2.5">
-        <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg border bg-muted/40 ${statusTextColors[data.status]}`}>
-            {typeIcons[data.type] || <Activity className="h-4 w-4" />}
+      <div className="flex justify-between items-start mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className={`p-1 rounded-lg border bg-muted/40 ${statusTextColors[data.status]}`}>
+            {typeIcons[data.type] || <Activity className="h-3.5 w-3.5" />}
           </div>
           <div>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">{data.type}</span>
-            <span className="text-xs font-black text-foreground block truncate max-w-[110px]">{data.label}</span>
+            <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider block leading-none">{data.type}</span>
+            <span className="text-[10px] font-black text-foreground block truncate max-w-[90px] mt-0.5 leading-tight">{data.label}</span>
           </div>
         </div>
-        <span className={`text-[10px] font-bold uppercase tracking-wider ${statusTextColors[data.status]}`}>
+        <span className={`text-[8px] font-bold uppercase tracking-wider ${statusTextColors[data.status]}`}>
           {data.status}
         </span>
       </div>
 
       {/* Health & Density Gauges */}
-      <div className="space-y-2 text-xs">
+      <div className="space-y-1.5 text-[10px]">
         <div>
-          <div className="flex justify-between text-[10px] font-bold text-muted-foreground mb-0.5">
+          <div className="flex justify-between text-[8px] font-bold text-muted-foreground mb-0.5">
             <span>HEALTH INDEX</span>
             <span className="text-foreground">{data.health}%</span>
           </div>
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+          <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 data.health > 80 ? "bg-emerald-500" : data.health > 50 ? "bg-amber-500" : "bg-destructive"
@@ -120,11 +121,11 @@ const DigitalTwinNodeComponent = ({ data }: NodeProps<TwinNode>) => {
         </div>
 
         <div>
-          <div className="flex justify-between text-[10px] font-bold text-muted-foreground mb-0.5">
+          <div className="flex justify-between text-[8px] font-bold text-muted-foreground mb-0.5">
             <span>CROWD DENSITY</span>
             <span className="text-foreground">{Math.round(data.density * 100)}%</span>
           </div>
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+          <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full bg-primary transition-all duration-500`}
               style={{ width: `${Math.round(data.density * 100)}%` }}
@@ -132,9 +133,9 @@ const DigitalTwinNodeComponent = ({ data }: NodeProps<TwinNode>) => {
           </div>
         </div>
 
-        <div className="flex justify-between items-center text-[10px] font-bold pt-1 border-t border-border/40">
-          <span className="text-muted-foreground flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+        <div className="flex justify-between items-center text-[8px] font-bold pt-1 border-t border-border/40">
+          <span className="text-muted-foreground flex items-center gap-0.5">
+            <Clock className="h-2.5 w-2.5" />
             Wait Time
           </span>
           <span className="text-foreground">{data.queueLength}m</span>
@@ -142,22 +143,22 @@ const DigitalTwinNodeComponent = ({ data }: NodeProps<TwinNode>) => {
       </div>
 
       {/* Badges indicators (Alerts & Recommendations) */}
-      <div className="mt-3 flex gap-2">
+      <div className="mt-1.5 flex gap-1.5">
         {data.alertsCount > 0 && (
-          <span className="flex items-center gap-1 rounded bg-destructive/10 border border-destructive/20 px-1.5 py-0.5 text-[9px] font-black text-destructive animate-pulse">
-            <AlertTriangle className="h-2.5 w-2.5" />
-            {data.alertsCount} Alerts
+          <span className="flex items-center gap-0.5 rounded bg-destructive/10 border border-destructive/20 px-1 py-0.5 text-[8px] font-black text-destructive animate-pulse">
+            <AlertTriangle className="h-2 w-2" />
+            {data.alertsCount}
           </span>
         )}
         {data.recsCount > 0 && (
-          <span className="flex items-center gap-1 rounded bg-primary/10 border border-primary/20 px-1.5 py-0.5 text-[9px] font-black text-primary">
-            <Activity className="h-2.5 w-2.5" />
-            {data.recsCount} Recs
+          <span className="flex items-center gap-0.5 rounded bg-primary/10 border border-primary/20 px-1 py-0.5 text-[8px] font-black text-primary">
+            <Activity className="h-2 w-2" />
+            {data.recsCount}
           </span>
         )}
       </div>
 
-      <Handle type="source" position={Position.Right} className="w-2.5 h-2.5 bg-border rounded-full border-2 border-card" />
+      <Handle type="source" position={Position.Right} className="w-2 h-2 bg-border rounded-full border-2 border-card" />
     </div>
   );
 };
@@ -209,20 +210,6 @@ function OperationalStateDashboardPage() {
     };
   }, [subscribe, unsubscribe]);
 
-  if (stateQuery.isLoading || incidentsQuery.isLoading || recommendationsQuery.isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (stateQuery.isError) {
-    return (
-      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-card border border-border rounded-2xl max-w-sm mx-auto mt-10">
-        <AlertTriangle className="h-10 w-10 text-destructive mb-3 animate-bounce" />
-        <h3 className="text-sm font-bold">API Offline</h3>
-        <p className="text-xs text-muted-foreground mt-1">Unable to load stadium state coordinates from backend.</p>
-      </div>
-    );
-  }
-
   const zones = stateQuery.data || [];
   const rawIncidents = incidentsQuery.data?.items || [];
   const rawRecs = recommendationsQuery.data?.items || [];
@@ -238,60 +225,107 @@ function OperationalStateDashboardPage() {
     return { ...rec, zoneId: zones[index]?.zone_id || "" };
   });
 
-  // Map zone records dynamically to React Flow nodes using metadata templates
-  const flowNodes = zones.map((zone, index) => {
-    const template = ZONE_METADATA_TEMPLATES[index] || {
-      label: `Sector Zone ${zone.zone_id.slice(0, 4)}`,
-      type: "Gates" as const,
-      x: 100 + (index * 160) % 700,
-      y: 100 + (index * 110) % 400,
-    };
+  // Compute auto-layouted elements using Dagre
+  const { flowNodes, flowEdges } = useMemo(() => {
+    // 1. Map raw node definitions
+    const rawNodes = zones.map((zone, index) => {
+      const template = ZONE_METADATA_TEMPLATES[index] || {
+        label: `Sector Zone ${zone.zone_id.slice(0, 4)}`,
+        type: "Gates" as const,
+        x: 100,
+        y: 100,
+      };
 
-    // Calculate matching alerts and recommendations
-    const zoneIncidents = incidents.filter((inc) => inc.zoneId === zone.zone_id && !inc.resolved);
-    const zoneRecs = recs.filter((rec) => rec.zoneId === zone.zone_id);
+      const zoneIncidents = incidents.filter((inc) => inc.zoneId === zone.zone_id && !inc.resolved);
+      const zoneRecs = recs.filter((rec) => rec.zoneId === zone.zone_id);
 
-    // Calculate health score based on density and incidents
-    const healthScore = Math.max(
-      0,
-      Math.round(100 - zoneIncidents.length * 25 - (zone.density > 0.8 ? 20 : 0))
-    );
+      const healthScore = Math.max(
+        0,
+        Math.round(100 - zoneIncidents.length * 25 - (zone.density > 0.8 ? 20 : 0))
+      );
 
-    let status: "stable" | "warning" | "critical" = "stable";
-    if (zone.density > 0.8 || zoneIncidents.length > 0) status = "critical";
-    else if (zone.density > 0.4) status = "warning";
+      let status: "stable" | "warning" | "critical" = "stable";
+      if (zone.density > 0.8 || zoneIncidents.length > 0) status = "critical";
+      else if (zone.density > 0.4) status = "warning";
 
-    return {
-      id: zone.zone_id,
-      type: "digitalTwinNode",
-      position: { x: template.x, y: template.y },
-      data: {
-        label: template.label,
-        type: template.type,
-        density: zone.density,
-        health: healthScore,
-        queueLength: zone.queue_waiting_minutes,
-        alertsCount: zoneIncidents.length,
-        recsCount: zoneRecs.length,
-        status,
-        zoneId: zone.zone_id,
-      },
-    } as TwinNode;
-  });
+      return {
+        id: zone.zone_id,
+        type: "digitalTwinNode",
+        position: { x: template.x, y: template.y },
+        data: {
+          label: template.label,
+          type: template.type,
+          density: zone.density,
+          health: healthScore,
+          queueLength: zone.queue_waiting_minutes,
+          alertsCount: zoneIncidents.length,
+          recsCount: zoneRecs.length,
+          status,
+          zoneId: zone.zone_id,
+        },
+      } as TwinNode;
+    });
 
-  // Flow connections showing circulation movement between gates, arenas, and hubs
-  const flowEdges = [
-    { id: "e1", source: flowNodes[0]?.id || "", target: flowNodes[1]?.id || "", animated: true, style: { stroke: "#3b82f6" } },
-    { id: "e2", source: flowNodes[0]?.id || "", target: flowNodes[2]?.id || "", animated: true, style: { stroke: "#10b981" } },
-    { id: "e3", source: flowNodes[1]?.id || "", target: flowNodes[5]?.id || "", animated: true, style: { stroke: "#f59e0b" } },
-    { id: "e4", source: flowNodes[2]?.id || "", target: flowNodes[3]?.id || "", animated: true, style: { stroke: "#6366f1" } },
-    { id: "e5", source: flowNodes[3]?.id || "", target: flowNodes[4]?.id || "", animated: true, style: { stroke: "#ec4899" } },
-    { id: "e6", source: flowNodes[5]?.id || "", target: flowNodes[7]?.id || "", animated: true, style: { stroke: "#a855f7" } },
-    { id: "e7", source: flowNodes[6]?.id || "", target: flowNodes[0]?.id || "", animated: true, style: { stroke: "#14b8a6" } },
-  ].filter((e) => e.source && e.target) as Edge[];
+    // 2. Define edge connections
+    const rawEdges = [
+      { id: "e1", source: rawNodes[0]?.id || "", target: rawNodes[1]?.id || "", animated: true, style: { stroke: "#3b82f6", strokeWidth: 2 } },
+      { id: "e2", source: rawNodes[0]?.id || "", target: rawNodes[2]?.id || "", animated: true, style: { stroke: "#10b981", strokeWidth: 2 } },
+      { id: "e3", source: rawNodes[1]?.id || "", target: rawNodes[5]?.id || "", animated: true, style: { stroke: "#f59e0b", strokeWidth: 2 } },
+      { id: "e4", source: rawNodes[2]?.id || "", target: rawNodes[3]?.id || "", animated: true, style: { stroke: "#6366f1", strokeWidth: 2 } },
+      { id: "e5", source: rawNodes[3]?.id || "", target: rawNodes[4]?.id || "", animated: true, style: { stroke: "#ec4899", strokeWidth: 2 } },
+      { id: "e6", source: rawNodes[5]?.id || "", target: rawNodes[7]?.id || "", animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } },
+      { id: "e7", source: rawNodes[6]?.id || "", target: rawNodes[0]?.id || "", animated: true, style: { stroke: "#14b8a6", strokeWidth: 2 } },
+    ].filter((e) => e.source && e.target) as Edge[];
+
+    if (rawNodes.length === 0) {
+      return { flowNodes: [], flowEdges: [] };
+    }
+
+    // 3. Initialize Dagre graph solver
+    const g = new dagre.graphlib.Graph();
+    g.setDefaultEdgeLabel(() => ({}));
+    g.setGraph({ rankdir: "LR", nodesep: 55, ranksep: 100 });
+
+    rawNodes.forEach((node) => {
+      g.setNode(node.id, { width: 176, height: 85 });
+    });
+
+    rawEdges.forEach((edge) => {
+      g.setEdge(edge.source, edge.target);
+    });
+
+    dagre.layout(g);
+
+    // 4. Align layout according to physical stadium zones to ensure natural mapping
+    const layoutedNodes = rawNodes.map((node) => {
+      const pos = g.node(node.id);
+      let x = pos.x;
+      let y = pos.y;
+
+      const type = node.data.type;
+      if (type === "Parking" || type === "Transportation") {
+        x = 50; // Outer ingress rings
+      } else if (type === "Gates") {
+        x = 240; // Entry points
+      } else if (type === "Security" || type === "Medical") {
+        x = 430; // Midfield operations center
+      } else if (type === "Food Courts" || type === "Volunteer Stations") {
+        x = 620; // Concourse amenities
+      } else if (type === "Restrooms") {
+        x = 810; // Outer east vomitories
+      }
+
+      return {
+        ...node,
+        position: { x, y },
+      };
+    });
+
+    return { flowNodes: layoutedNodes as any, flowEdges: rawEdges as any };
+  }, [zones, incidents, recs]);
 
   // Find currently selected node details
-  const selectedNode = flowNodes.find((n) => n.id === selectedNodeId);
+  const selectedNode = flowNodes.find((n: any) => n.id === selectedNodeId);
   const selectedNodeIncidents = selectedNode
     ? incidents.filter((inc) => inc.zoneId === selectedNode.id && !inc.resolved)
     : [];
@@ -299,6 +333,20 @@ function OperationalStateDashboardPage() {
   const actualNodeTypes = {
     digitalTwinNode: DigitalTwinNodeComponent,
   };
+
+  if (stateQuery.isLoading || incidentsQuery.isLoading || recommendationsQuery.isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (stateQuery.isError) {
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-card border border-border rounded-2xl max-w-sm mx-auto mt-10">
+        <AlertTriangle className="h-10 w-10 text-destructive mb-3 animate-bounce" />
+        <h3 className="text-sm font-bold">API Offline</h3>
+        <p className="text-xs text-muted-foreground mt-1">Unable to load stadium state coordinates from backend.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 text-left h-full">

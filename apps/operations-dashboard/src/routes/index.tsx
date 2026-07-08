@@ -80,7 +80,7 @@ const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
     <motion.div
       animate={data.isFocused ? { scale: [1, 1.03, 1], y: [0, -2, 0] } : {}}
       transition={{ repeat: Infinity, duration: 2 }}
-      className={`rounded-xl border ${borderColors[data.status]} ${bgColors[data.status]} p-3 text-left w-52 backdrop-blur-md shadow-lg relative text-foreground`}
+      className={`rounded-xl border ${borderColors[data.status]} ${bgColors[data.status]} p-2.5 text-left w-44 backdrop-blur-md shadow-lg relative text-foreground`}
     >
       {data.isFocused && (
         <span className="absolute -top-2.5 -right-2 bg-amber-500 text-black text-[7px] font-black px-1.5 py-0.5 rounded border border-black shadow uppercase animate-pulse">
@@ -93,7 +93,7 @@ const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
       <div className="flex items-center justify-between gap-1.5 border-b border-border/40 pb-1.5">
         <div className="flex items-center gap-1.5">
           <span className={`h-1.5 w-1.5 rounded-full ${indicatorColors[data.status]}`} />
-          <span className="text-[9px] font-black tracking-wide uppercase truncate w-32">{data.label}</span>
+          <span className="text-[9px] font-black tracking-wide uppercase tracking-wider block truncate w-24">{data.label}</span>
         </div>
         <span className="text-[7px] font-mono text-muted-foreground uppercase">{data.type}</span>
       </div>
@@ -752,16 +752,16 @@ function MissionControlPage() {
       "Operations Center"
     ];
     const positions = [
-      { x: 40, y: 150 },
-      { x: 640, y: 150 },
-      { x: 340, y: 30 },
-      { x: 190, y: 270 },
-      { x: 490, y: 270 },
-      { x: 40, y: 30 },
-      { x: 190, y: 150 },
-      { x: 640, y: 30 },
-      { x: 490, y: 30 },
-      { x: 340, y: 150 }
+      { x: 40, y: 150 },   // node-0: Gate 1 Ingress
+      { x: 920, y: 150 },  // node-1: Gate 2 Exit
+      { x: 480, y: 30 },   // node-2: Security Command
+      { x: 260, y: 270 },  // node-3: Medical Post Alpha
+      { x: 700, y: 270 },  // node-4: Central Food Plaza
+      { x: 40, y: 30 },    // node-5: Main Parking Area
+      { x: 260, y: 150 },  // node-6: Volunteer Base Alpha
+      { x: 920, y: 30 },   // node-7: Metro Shuttle Plaza
+      { x: 700, y: 30 },   // node-8: Eastern Restrooms
+      { x: 480, y: 150 }   // node-9: Operations Center Hub
     ];
 
     return labels.map((label, index) => {
