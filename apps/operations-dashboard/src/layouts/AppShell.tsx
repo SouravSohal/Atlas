@@ -22,8 +22,11 @@ import {
   ShieldCheck,
   HelpCircle,
   LogOut,
+  Terminal,
+  CornerDownLeft,
 } from "lucide-react";
 import { useTheme } from "../providers/ThemeProvider";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -35,6 +38,89 @@ export function AppShell({ children }: AppShellProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { theme, setTheme } = useTheme();
+
+  // Command Palette State variables
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionResult, setExecutionResult] = useState<string | null>(null);
+
+  const suggestedCommands = [
+    "Summarize stadium status",
+    "Open Gate C",
+    "Show medical incidents",
+    "Predict congestion after match",
+    "Translate announcement to Spanish",
+    "Assign nearest volunteers",
+  ];
+
+  // Shortcut listener (Ctrl+K / Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+        setQuery("");
+        setExecutionResult(null);
+        setIsExecuting(false);
+        setActiveIndex(0);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const totalItems = suggestedCommands.length;
+
+  const handleCommandSelect = (cmd: string) => {
+    setQuery(cmd);
+    setIsExecuting(true);
+    setExecutionResult(null);
+
+    // Track historical queries
+    setCommandHistory((prev) => [cmd, ...prev.filter((h) => h !== cmd)].slice(0, 5));
+
+    // Simulate AI orchestrator response time
+    setTimeout(() => {
+      let resultText = "";
+      if (cmd.includes("Summarize")) {
+        resultText = "AI Executive Summary compiled: Stadium health is at **98%**, all main gates are ingress-active, and crowd bottlenecks remain resolved under default routing configurations.";
+      } else if (cmd.includes("Open")) {
+        resultText = "Command executed: **Gate C turnstiles unlocked**. Volunteer dispatched to verify status. Operations notified.";
+      } else if (cmd.includes("medical")) {
+        resultText = "Database query completed: Displaying active medical logs. Found **0 active critical logs**, **1 minor warning** (Post Alpha heat distress).";
+      } else if (cmd.includes("congestion")) {
+        resultText = "Congestion prediction model compiled: Outflow bottleneck probability at Gate A is **12.4%** at match exit. Recommend default exit channels.";
+      } else if (cmd.includes("Translate")) {
+        resultText = "Translation complete: 'Atención espectadores: por favor usen las salidas señalizadas.' Broadcast sent to LED display boards.";
+      } else if (cmd.includes("Assign")) {
+        resultText = "Deployment success: **4 nearest volunteers** assigned to Gate 1 turnstile channels. Task logs updated.";
+      } else {
+        resultText = `Command executed successfully: processed query '${cmd}' under default operations loops.`;
+      }
+      setExecutionResult(resultText);
+      setIsExecuting(false);
+    }, 1500);
+  };
+
+  const handlePaletteKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev + 1) % totalItems);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev - 1 + totalItems) % totalItems);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const cmd = suggestedCommands[activeIndex];
+      handleCommandSelect(cmd);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setPaletteOpen(false);
+    }
+  };
 
   // Listen to network status
   useEffect(() => {
@@ -339,6 +425,106 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
       </div>
+
+      {/* ATLAS Command Palette Modal overlay */}
+      <AnimatePresence>
+        {paletteOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-[15vh]"
+            onClick={() => setPaletteOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              transition={{ duration: 0.15 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg rounded-2xl border border-border bg-card/95 backdrop-blur-md shadow-2xl p-4 flex flex-col gap-4 text-left"
+              onKeyDown={handlePaletteKeyDown}
+            >
+              {/* Search input header */}
+              <div className="flex items-center gap-2 border-b border-border pb-3">
+                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Type an operational command..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="flex-1 bg-transparent text-sm text-foreground outline-none border-none placeholder-muted-foreground"
+                  autoFocus
+                />
+                <span className="text-[10px] font-bold text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded uppercase font-mono">
+                  ESC
+                </span>
+              </div>
+
+              {/* Execution status displaying stream */}
+              {isExecuting && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 flex items-center gap-2 text-xs">
+                  <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent animate-spin rounded-full shrink-0" />
+                  <span className="font-bold text-primary animate-pulse">Executing operational instruction...</span>
+                </div>
+              )}
+
+              {executionResult && (
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 flex flex-col gap-1.5 text-xs text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-400 flex items-center gap-1">
+                      <Terminal className="h-3.5 w-3.5" />
+                      Command Result
+                    </span>
+                    <span className="text-[9px] font-mono text-muted-foreground uppercase">
+                      98% Confidence &bull; Gemini 2.5
+                    </span>
+                  </div>
+                  <p className="text-foreground leading-relaxed font-mono">{executionResult}</p>
+                </div>
+              )}
+
+              {/* Suggested Commands List */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block px-1">
+                  Suggested Commands
+                </span>
+                <div className="space-y-1 max-h-56 overflow-y-auto">
+                  {suggestedCommands.map((cmd, idx) => (
+                    <button
+                      key={cmd}
+                      onClick={() => handleCommandSelect(cmd)}
+                      className={`w-full text-left rounded-xl px-3 py-2.5 text-xs flex items-center justify-between transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary ${
+                        activeIndex === idx ? "bg-primary text-primary-foreground font-bold" : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <span className="truncate">{cmd}</span>
+                      <CornerDownLeft className={`h-3.5 w-3.5 shrink-0 ${activeIndex === idx ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Command History */}
+              {commandHistory.length > 0 && (
+                <div className="border-t border-border/60 pt-3 space-y-1.5">
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block px-1">
+                    Recent Command History
+                  </span>
+                  <div className="space-y-1">
+                    {commandHistory.map((cmd) => (
+                      <div
+                        key={cmd}
+                        className="flex items-center justify-between text-[11px] text-muted-foreground px-3 py-1.5 border border-border/40 rounded-lg bg-muted/10 font-mono"
+                      >
+                        <span className="truncate">{cmd}</span>
+                        <span className="text-[8px] uppercase font-bold text-muted-foreground/60">executed</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
