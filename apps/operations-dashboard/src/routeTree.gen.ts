@@ -9,12 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VolunteersRouteImport } from './routes/volunteers'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as OperationalStateRouteImport } from './routes/operational-state'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as NavigationRouteImport } from './routes/navigation'
 import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as IncidentsRouteImport } from './routes/incidents'
+import { Route as CrowdIntelligenceRouteImport } from './routes/crowd-intelligence'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VolunteersRoute = VolunteersRouteImport.update({
+  id: '/volunteers',
+  path: '/volunteers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RecommendationsRoute = RecommendationsRouteImport.update({
   id: '/recommendations',
   path: '/recommendations',
@@ -23,6 +39,16 @@ const RecommendationsRoute = RecommendationsRouteImport.update({
 const OperationalStateRoute = OperationalStateRouteImport.update({
   id: '/operational-state',
   path: '/operational-state',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NavigationRoute = NavigationRouteImport.update({
+  id: '/navigation',
+  path: '/navigation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MetricsRoute = MetricsRouteImport.update({
@@ -35,6 +61,16 @@ const IncidentsRoute = IncidentsRouteImport.update({
   path: '/incidents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CrowdIntelligenceRoute = CrowdIntelligenceRouteImport.update({
+  id: '/crowd-intelligence',
+  path: '/crowd-intelligence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,52 +79,116 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
+  '/navigation': typeof NavigationRoute
+  '/notifications': typeof NotificationsRoute
   '/operational-state': typeof OperationalStateRoute
   '/recommendations': typeof RecommendationsRoute
+  '/settings': typeof SettingsRoute
+  '/volunteers': typeof VolunteersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
+  '/navigation': typeof NavigationRoute
+  '/notifications': typeof NotificationsRoute
   '/operational-state': typeof OperationalStateRoute
   '/recommendations': typeof RecommendationsRoute
+  '/settings': typeof SettingsRoute
+  '/volunteers': typeof VolunteersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
+  '/navigation': typeof NavigationRoute
+  '/notifications': typeof NotificationsRoute
   '/operational-state': typeof OperationalStateRoute
   '/recommendations': typeof RecommendationsRoute
+  '/settings': typeof SettingsRoute
+  '/volunteers': typeof VolunteersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/incidents' | '/metrics' | '/operational-state' | '/recommendations'
+    | '/'
+    | '/analytics'
+    | '/crowd-intelligence'
+    | '/incidents'
+    | '/metrics'
+    | '/navigation'
+    | '/notifications'
+    | '/operational-state'
+    | '/recommendations'
+    | '/settings'
+    | '/volunteers'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/incidents' | '/metrics' | '/operational-state' | '/recommendations'
+    | '/'
+    | '/analytics'
+    | '/crowd-intelligence'
+    | '/incidents'
+    | '/metrics'
+    | '/navigation'
+    | '/notifications'
+    | '/operational-state'
+    | '/recommendations'
+    | '/settings'
+    | '/volunteers'
   id:
     | '__root__'
     | '/'
+    | '/analytics'
+    | '/crowd-intelligence'
     | '/incidents'
     | '/metrics'
+    | '/navigation'
+    | '/notifications'
     | '/operational-state'
     | '/recommendations'
+    | '/settings'
+    | '/volunteers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
+  CrowdIntelligenceRoute: typeof CrowdIntelligenceRoute
   IncidentsRoute: typeof IncidentsRoute
   MetricsRoute: typeof MetricsRoute
+  NavigationRoute: typeof NavigationRoute
+  NotificationsRoute: typeof NotificationsRoute
   OperationalStateRoute: typeof OperationalStateRoute
   RecommendationsRoute: typeof RecommendationsRoute
+  SettingsRoute: typeof SettingsRoute
+  VolunteersRoute: typeof VolunteersRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/volunteers': {
+      id: '/volunteers'
+      path: '/volunteers'
+      fullPath: '/volunteers'
+      preLoaderRoute: typeof VolunteersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/recommendations': {
       id: '/recommendations'
       path: '/recommendations'
@@ -101,6 +201,20 @@ declare module '@tanstack/react-router' {
       path: '/operational-state'
       fullPath: '/operational-state'
       preLoaderRoute: typeof OperationalStateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/navigation': {
+      id: '/navigation'
+      path: '/navigation'
+      fullPath: '/navigation'
+      preLoaderRoute: typeof NavigationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/metrics': {
@@ -117,6 +231,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/crowd-intelligence': {
+      id: '/crowd-intelligence'
+      path: '/crowd-intelligence'
+      fullPath: '/crowd-intelligence'
+      preLoaderRoute: typeof CrowdIntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -129,10 +257,16 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
+  CrowdIntelligenceRoute: CrowdIntelligenceRoute,
   IncidentsRoute: IncidentsRoute,
   MetricsRoute: MetricsRoute,
+  NavigationRoute: NavigationRoute,
+  NotificationsRoute: NotificationsRoute,
   OperationalStateRoute: OperationalStateRoute,
   RecommendationsRoute: RecommendationsRoute,
+  SettingsRoute: SettingsRoute,
+  VolunteersRoute: VolunteersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
