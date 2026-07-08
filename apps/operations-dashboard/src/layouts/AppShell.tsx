@@ -136,6 +136,7 @@ export function AppShell({ children }: AppShellProps) {
 
   const navigation = [
     { name: "Overview", to: "/", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { name: "Executive Room", to: "/executive-situation-room", icon: <ShieldCheck className="h-5 w-5 text-amber-500 animate-pulse" /> },
     { name: "ATLAS Copilot", to: "/copilot", icon: <Brain className="h-5 w-5 animate-pulse text-primary" /> },
     { name: "Incidents", to: "/incidents", icon: <AlertTriangle className="h-5 w-5" /> },
     { name: "Operational State", to: "/operational-state", icon: <Activity className="h-5 w-5" /> },

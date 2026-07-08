@@ -17,6 +17,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NavigationRouteImport } from './routes/navigation'
 import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as IncidentsRouteImport } from './routes/incidents'
+import { Route as ExecutiveSituationRoomRouteImport } from './routes/executive-situation-room'
 import { Route as CrowdIntelligenceRouteImport } from './routes/crowd-intelligence'
 import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
@@ -62,6 +63,11 @@ const IncidentsRoute = IncidentsRouteImport.update({
   path: '/incidents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExecutiveSituationRoomRoute = ExecutiveSituationRoomRouteImport.update({
+  id: '/executive-situation-room',
+  path: '/executive-situation-room',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CrowdIntelligenceRoute = CrowdIntelligenceRouteImport.update({
   id: '/crowd-intelligence',
   path: '/crowd-intelligence',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
+  '/executive-situation-room': typeof ExecutiveSituationRoomRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
+  '/executive-situation-room': typeof ExecutiveSituationRoomRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
+  '/executive-situation-room': typeof ExecutiveSituationRoomRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/copilot'
     | '/crowd-intelligence'
+    | '/executive-situation-room'
     | '/incidents'
     | '/metrics'
     | '/navigation'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/copilot'
     | '/crowd-intelligence'
+    | '/executive-situation-room'
     | '/incidents'
     | '/metrics'
     | '/navigation'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/copilot'
     | '/crowd-intelligence'
+    | '/executive-situation-room'
     | '/incidents'
     | '/metrics'
     | '/navigation'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   CopilotRoute: typeof CopilotRoute
   CrowdIntelligenceRoute: typeof CrowdIntelligenceRoute
+  ExecutiveSituationRoomRoute: typeof ExecutiveSituationRoomRoute
   IncidentsRoute: typeof IncidentsRoute
   MetricsRoute: typeof MetricsRoute
   NavigationRoute: typeof NavigationRoute
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/executive-situation-room': {
+      id: '/executive-situation-room'
+      path: '/executive-situation-room'
+      fullPath: '/executive-situation-room'
+      preLoaderRoute: typeof ExecutiveSituationRoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/crowd-intelligence': {
       id: '/crowd-intelligence'
       path: '/crowd-intelligence'
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   CopilotRoute: CopilotRoute,
   CrowdIntelligenceRoute: CrowdIntelligenceRoute,
+  ExecutiveSituationRoomRoute: ExecutiveSituationRoomRoute,
   IncidentsRoute: IncidentsRoute,
   MetricsRoute: MetricsRoute,
   NavigationRoute: NavigationRoute,
