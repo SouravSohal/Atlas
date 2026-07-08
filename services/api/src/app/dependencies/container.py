@@ -8,8 +8,9 @@ from app.application.incidents import (
     ListIncidentsUseCase,
     UpdateIncidentUseCase,
 )
-from app.application.operational_state import OperationalStateService, SituationSummaryAgent
+from app.application.operational_state import OperationalStateService, SituationSummaryAgent, OperationalStateManager
 from app.application.recommendations import RecommendationAgent
+from app.application.copilot.service import CopilotService
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
 from app.infrastructure.firestore import FirestoreClient, FirestoreUnitOfWork, TransactionManager
@@ -32,6 +33,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
             "app.presentation.routers.version",
             "app.presentation.routers.incidents",
             "app.presentation.routers.dashboard",
+            "app.presentation.routers.copilot",
             "app.dependencies.auth",
             "app.main",
         ]
@@ -104,6 +106,19 @@ class ApplicationContainer(containers.DeclarativeContainer):
     situation_summary_agent = providers.Singleton(
         SituationSummaryAgent,
         orchestrator=ai_orchestrator,
+    )
+    operational_state_manager = providers.Singleton(
+        OperationalStateManager,
+        state_repo=operational_state_repository,
+        incident_repo=incident_repository,
+        task_repo=task_repository,
+        recommendation_repo=recommendation_repository,
+        event_publisher=event_publisher,
+    )
+    copilot_service = providers.Singleton(
+        CopilotService,
+        orchestrator=ai_orchestrator,
+        state_manager=operational_state_manager,
     )
 
     # Future Infrastructure/Service Providers (Placeholders for future milestones)
