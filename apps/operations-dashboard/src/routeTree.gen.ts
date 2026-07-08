@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VolunteersRouteImport } from './routes/volunteers'
+import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as OperationalStateRouteImport } from './routes/operational-state'
@@ -26,6 +27,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const VolunteersRoute = VolunteersRouteImport.update({
   id: '/volunteers',
   path: '/volunteers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TimelineRoute = TimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/operational-state': typeof OperationalStateRoute
   '/recommendations': typeof RecommendationsRoute
   '/settings': typeof SettingsRoute
+  '/timeline': typeof TimelineRoute
   '/volunteers': typeof VolunteersRoute
 }
 export interface FileRoutesByTo {
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/operational-state': typeof OperationalStateRoute
   '/recommendations': typeof RecommendationsRoute
   '/settings': typeof SettingsRoute
+  '/timeline': typeof TimelineRoute
   '/volunteers': typeof VolunteersRoute
 }
 export interface FileRoutesById {
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/operational-state': typeof OperationalStateRoute
   '/recommendations': typeof RecommendationsRoute
   '/settings': typeof SettingsRoute
+  '/timeline': typeof TimelineRoute
   '/volunteers': typeof VolunteersRoute
 }
 export interface FileRouteTypes {
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/operational-state'
     | '/recommendations'
     | '/settings'
+    | '/timeline'
     | '/volunteers'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/operational-state'
     | '/recommendations'
     | '/settings'
+    | '/timeline'
     | '/volunteers'
   id:
     | '__root__'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/operational-state'
     | '/recommendations'
     | '/settings'
+    | '/timeline'
     | '/volunteers'
   fileRoutesById: FileRoutesById
 }
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   OperationalStateRoute: typeof OperationalStateRoute
   RecommendationsRoute: typeof RecommendationsRoute
   SettingsRoute: typeof SettingsRoute
+  TimelineRoute: typeof TimelineRoute
   VolunteersRoute: typeof VolunteersRoute
 }
 
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/volunteers'
       fullPath: '/volunteers'
       preLoaderRoute: typeof VolunteersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/timeline': {
+      id: '/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof TimelineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -308,6 +328,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperationalStateRoute: OperationalStateRoute,
   RecommendationsRoute: RecommendationsRoute,
   SettingsRoute: SettingsRoute,
+  TimelineRoute: TimelineRoute,
   VolunteersRoute: VolunteersRoute,
 }
 export const routeTree = rootRouteImport
