@@ -79,8 +79,15 @@ export async function fetchDashboardOverview(): Promise<DashboardOverview> {
   return data.data;
 }
 
-export async function fetchDashboardIncidents(page = 1, limit = 10): Promise<IncidentsResponse> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/incidents?page=${page}&limit=${limit}`);
+export async function fetchDashboardIncidents(
+  page = 1,
+  limit = 10,
+  sortBy = "created_at",
+  order = "desc"
+): Promise<IncidentsResponse> {
+  const res = await fetch(
+    `${API_BASE_URL}/dashboard/incidents?page=${page}&limit=${limit}&sort_by=${sortBy}&order=${order}`
+  );
   if (!res.ok) throw new Error("Failed to fetch incidents");
   const data: ApiResponse<IncidentsResponse> = await res.json();
   return data.data;
@@ -104,5 +111,23 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
   const res = await fetch(`${API_BASE_URL}/dashboard/metrics`);
   if (!res.ok) throw new Error("Failed to fetch dashboard metrics");
   const data: ApiResponse<DashboardMetrics> = await res.json();
+  return data.data;
+}
+
+export async function updateIncident(
+  id: string,
+  resolved: boolean,
+  severity?: string,
+  description?: string
+): Promise<IncidentItem> {
+  const res = await fetch(`${API_BASE_URL}/incidents/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ resolved, severity, description }),
+  });
+  if (!res.ok) throw new Error("Failed to update incident");
+  const data: ApiResponse<IncidentItem> = await res.json();
   return data.data;
 }
