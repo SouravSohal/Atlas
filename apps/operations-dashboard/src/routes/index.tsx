@@ -710,13 +710,20 @@ function MissionControlPage() {
   }, [playbackActive, playbackData, stateQuery.data, focusedNodeIndex]);
 
   const flowEdges = useMemo(() => {
-    if (flowNodes.length < 2) return [];
-    return [
-      { id: "e1-2", source: flowNodes[0].id, target: flowNodes[2].id, animated: true, style: { stroke: "#3b82f6" } },
-      { id: "e1-3", source: flowNodes[0].id, target: flowNodes[3].id, animated: true, style: { stroke: "#10b981" } },
-      { id: "e2-4", source: flowNodes[2].id, target: flowNodes[1].id, animated: true, style: { stroke: "#f59e0b" } },
-      { id: "e3-5", source: flowNodes[3].id, target: flowNodes[5].id, animated: true, style: { stroke: "#ec4899" } },
-    ].filter((e) => e.source && e.target) as Edge[];
+    const edges: Edge[] = [];
+    if (flowNodes[0] && flowNodes[2]) {
+      edges.push({ id: "e1-2", source: flowNodes[0].id, target: flowNodes[2].id, animated: true, style: { stroke: "#3b82f6" } } as Edge);
+    }
+    if (flowNodes[0] && flowNodes[3]) {
+      edges.push({ id: "e1-3", source: flowNodes[0].id, target: flowNodes[3].id, animated: true, style: { stroke: "#10b981" } } as Edge);
+    }
+    if (flowNodes[2] && flowNodes[1]) {
+      edges.push({ id: "e2-4", source: flowNodes[2].id, target: flowNodes[1].id, animated: true, style: { stroke: "#f59e0b" } } as Edge);
+    }
+    if (flowNodes[3] && flowNodes[5]) {
+      edges.push({ id: "e3-5", source: flowNodes[3].id, target: flowNodes[5].id, animated: true, style: { stroke: "#ec4899" } } as Edge);
+    }
+    return edges;
   }, [flowNodes]);
 
   // Copilot submit message
