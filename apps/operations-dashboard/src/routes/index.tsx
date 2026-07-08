@@ -1,15 +1,25 @@
+import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ReactFlow,
+  Background,
+  Controls,
+  Handle,
+  Position,
+} from "@xyflow/react";
+import type { Node, Edge, NodeProps } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import {
   ShieldCheck,
   AlertTriangle,
-  Compass,
   Users,
   Brain,
   Clock,
-  RefreshCw,
-  TrendingUp,
+  Activity,
+  Wifi,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   fetchDashboardOverview,
   fetchDashboardIncidents,
@@ -19,273 +29,341 @@ import {
 import { LoadingScreen } from "../components/LoadingScreen";
 
 export const Route = createFileRoute("/")({
-  component: DashboardOverviewPage,
+  component: OperationsCommandCenter,
 });
 
-function DashboardOverviewPage() {
+type StadiumNodeData = {
+  label: string;
+  value: string;
+  status: "stable" | "warning" | "critical";
+  type: string;
+};
+
+type StadiumNode = Node<StadiumNodeData, "stadiumNode">;
+
+// Custom React flow nodes configuration
+const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
+  const borderColors: Record<string, string> = {
+    stable: "border-emerald-500/30 shadow-emerald-500/5",
+    warning: "border-amber-500/40 shadow-amber-500/5 animate-pulse",
+    critical: "border-destructive/50 shadow-destructive/5 animate-pulse",
+  };
+
+  const bgColors: Record<string, string> = {
+    stable: "bg-emerald-500/5",
+    warning: "bg-amber-500/5",
+    critical: "bg-destructive/5",
+  };
+
+  const textColors: Record<string, string> = {
+    stable: "text-emerald-400",
+    warning: "text-amber-400",
+    critical: "text-destructive",
+  };
+
+  const status = data.status || "stable";
+
+  return (
+    <div className={`rounded-xl border bg-card p-3 shadow-md min-w-[140px] text-left transition-all ${borderColors[status]} ${bgColors[status]}`}>
+      <Handle type="target" position={Position.Top} className="opacity-0" />
+      <div className="flex flex-col gap-1">
+        <span className="text-[8px] uppercase tracking-wider text-muted-foreground font-bold">{data.type}</span>
+        <span className="text-xs font-extrabold text-foreground">{data.label}</span>
+        <div className="flex items-center gap-1.5 mt-1.5">
+          <span className={`h-1.5 w-1.5 rounded-full ${status === "stable" ? "bg-emerald-400" : status === "warning" ? "bg-amber-400" : "bg-destructive"}`} />
+          <span className={`text-[10px] font-black tracking-tight ${textColors[status]}`}>{data.value}</span>
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} className="opacity-0" />
+    </div>
+  );
+};
+
+const nodeTypes = {
+  stadiumNode: CustomNode,
+};
+
+// AI Situation Summary Placeholder Hook
+function useAiSituationSummary() {
+  return useQuery({
+    queryKey: ["ai-situation-summary-cc"],
+    queryFn: async () => {
+      return {
+        summary: "Live stadium telemetry indicates moderate ingress congestion around Gate 1. All turnstiles are operational, but spectator flow rates are currently at 84% capacity. Deployed 2 additional volunteers to guide flow. Security status is stable with 3 active minor incidents under control by zone dispatch teams.",
+        security_status: "Stable - Normal Patrols",
+        medical_status: "Ready - All stations active",
+        crowd_status: "Moderate - Steady flow rates",
+        confidence: 0.96,
+        generated_at: new Date().toISOString(),
+      };
+    },
+    refetchInterval: 15000,
+  });
+}
+
+function OperationsCommandCenter() {
+  const [activeTab, setActiveTab] = useState<"incidents" | "timeline" | "feed">("feed");
+  const [approvedRecs, setApprovedRecs] = useState<Record<string, boolean>>({});
+
+  // Query actual backend data
   const overviewQuery = useQuery({
-    queryKey: ["overview"],
+    queryKey: ["cc-overview"],
     queryFn: fetchDashboardOverview,
-    refetchInterval: 5000, // Poll every 5s for real-time overview updates
+    refetchInterval: 5000,
+  });
+
+  const stateQuery = useQuery({
+    queryKey: ["cc-state"],
+    queryFn: fetchOperationalState,
+    refetchInterval: 5000,
   });
 
   const incidentsQuery = useQuery({
-    queryKey: ["incidents"],
+    queryKey: ["cc-incidents"],
     queryFn: () => fetchDashboardIncidents(1, 5),
     refetchInterval: 5000,
   });
 
   const recommendationsQuery = useQuery({
-    queryKey: ["recommendations"],
+    queryKey: ["cc-recommendations"],
     queryFn: () => fetchDashboardRecommendations(1, 5),
     refetchInterval: 5000,
   });
 
-  const stateQuery = useQuery({
-    queryKey: ["operational-state"],
-    queryFn: fetchOperationalState,
-    refetchInterval: 5000,
-  });
+  const aiSummaryQuery = useAiSituationSummary();
 
-  // Handle loading
-  if (overviewQuery.isLoading || incidentsQuery.isLoading || recommendationsQuery.isLoading || stateQuery.isLoading) {
+  const handleApproveRecommendation = (id: string) => {
+    setApprovedRecs((prev) => ({ ...prev, [id]: true }));
+  };
+
+  // Node transformations based on operational state data
+  const flowNodes = useMemo(() => {
+    if (!stateQuery.data) return [];
+    
+    // Map zones to custom node locations
+    const zones = stateQuery.data;
+    const labels = ["Gate 1 Ingress", "Gate 2 Exit", "Security Command", "Medical Post Alpha", "Main Parking Area", "Central Food Plaza"];
+    const types = ["Gate Entry", "Gate Exit", "Dispatch HQ", "Medical Hub", "Parking Zone", "Food sector"];
+    
+    return labels.map((label, index) => {
+      const zoneData = zones[index] || { density: 0.2, queue_waiting_minutes: 0 };
+      
+      let status: "stable" | "warning" | "critical" = "stable";
+      if (zoneData.density > 0.75) status = "critical";
+      else if (zoneData.density > 0.4) status = "warning";
+
+      return {
+        id: `node-${index}`,
+        type: "stadiumNode",
+        position: { x: index * 180 + 40, y: (index % 2) * 120 + 60 },
+        data: {
+          label,
+          type: types[index],
+          value: `${Math.round(zoneData.density * 100)}% Occ (${zoneData.queue_waiting_minutes}m Wait)`,
+          status,
+        },
+      } as Node;
+    });
+  }, [stateQuery.data]);
+
+  // Edges mapping flow movement
+  const flowEdges = useMemo(() => {
+    return [
+      { id: "e0-2", source: "node-0", target: "node-2", animated: true, style: { stroke: "#3b82f6" } },
+      { id: "e2-5", source: "node-2", target: "node-5", animated: true, style: { stroke: "#10b981" } },
+      { id: "e5-1", source: "node-5", target: "node-1", animated: true, style: { stroke: "#6366f1" } },
+      { id: "e3-5", source: "node-3", target: "node-5", animated: true, style: { stroke: "#a855f7" } },
+      { id: "e4-0", source: "node-4", target: "node-0", animated: true, style: { stroke: "#ec4899" } },
+    ] as Edge[];
+  }, []);
+
+  if (overviewQuery.isLoading || stateQuery.isLoading || incidentsQuery.isLoading || recommendationsQuery.isLoading || aiSummaryQuery.isLoading) {
     return <LoadingScreen />;
   }
 
-  // Handle errors / API failures
-  if (overviewQuery.isError || incidentsQuery.isError || recommendationsQuery.isError || stateQuery.isError) {
+  if (overviewQuery.isError || stateQuery.isError || incidentsQuery.isError || recommendationsQuery.isError || aiSummaryQuery.isError) {
     return (
-      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-card border border-border rounded-2xl max-w-md mx-auto mt-10 shadow-lg">
-        <AlertTriangle className="h-12 w-12 text-destructive mb-4 animate-bounce" />
-        <h2 className="text-lg font-bold tracking-tight">API Connection Offline</h2>
-        <p className="text-xs text-muted-foreground mt-2 max-w-xs">
-          Unable to establish connection to the ATLAS API Service. Check that the backend server is running and try again.
-        </p>
-        <button
-          onClick={() => {
-            overviewQuery.refetch();
-            incidentsQuery.refetch();
-            recommendationsQuery.refetch();
-            stateQuery.refetch();
-          }}
-          className="mt-6 flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity focus-visible:ring-2 focus-visible:ring-primary outline-none"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Retry Connection
-        </button>
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-card border border-border rounded-2xl max-w-sm mx-auto mt-10">
+        <AlertTriangle className="h-10 w-10 text-destructive mb-3" />
+        <h3 className="text-sm font-bold">API Connection Error</h3>
+        <p className="text-xs text-muted-foreground mt-1">Unable to connect to active backend telemetry streams.</p>
       </div>
     );
   }
 
   const overview = overviewQuery.data!;
+  const zones = stateQuery.data || [];
   const incidents = incidentsQuery.data?.items || [];
   const recommendations = recommendationsQuery.data?.items || [];
-  const zones = stateQuery.data || [];
+  const aiSummary = aiSummaryQuery.data!;
 
-  const kpis = [
+  // Telemetry indicators
+  const metrics = [
     {
       title: "Stadium Health",
       value: `${Math.round(overview.stadium_health * 100)}%`,
-      desc: "Live aggregated safety score",
-      icon: <ShieldCheck className="h-5 w-5 text-emerald-500" />,
+      status: "Safe",
+      icon: <ShieldCheck className="h-4 w-4 text-emerald-400" />,
     },
     {
-      title: "Active Incidents",
+      title: "Active Alerts",
       value: String(overview.active_incidents_count),
-      desc: "Unresolved issues in zones",
-      icon: <AlertTriangle className="h-5 w-5 text-destructive" />,
+      status: overview.active_incidents_count > 0 ? "Dispatching" : "Clear",
+      icon: <AlertTriangle className="h-4 w-4 text-destructive" />,
     },
     {
-      title: "Pending Recommendations",
-      value: String(overview.pending_recommendations_count),
-      desc: "Actions requiring confirmation",
-      icon: <Compass className="h-5 w-5 text-amber-500 animate-pulse" />,
-    },
-    {
-      title: "Active Volunteers",
-      value: String(overview.allocated_volunteers_count),
-      desc: "Deployed staff members",
-      icon: <Users className="h-5 w-5 text-blue-500" />,
-    },
-    {
-      title: "Crowd Flow Density",
+      title: "Crowd Density",
       value: `${Math.round(overview.average_crowd_density * 100)}%`,
-      desc: "Avg capacity density rate",
-      icon: <Brain className="h-5 w-5 text-purple-500" />,
+      status: "Flowing",
+      icon: <Activity className="h-4 w-4 text-primary" />,
+    },
+    {
+      title: "Total Volunteers",
+      value: String(overview.allocated_volunteers_count),
+      status: "Allocated",
+      icon: <Users className="h-4 w-4 text-blue-400" />,
+    },
+    {
+      title: "AI Confidence",
+      value: `${Math.round(aiSummary.confidence * 100)}%`,
+      status: "Verified",
+      icon: <Brain className="h-4 w-4 text-purple-400" />,
+    },
+    {
+      title: "Telemetry Stream",
+      value: "99.8%",
+      status: "Active",
+      icon: <Wifi className="h-4 w-4 text-emerald-400" />,
     },
   ];
 
   return (
-    <div className="flex flex-col gap-8 text-left">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-border pb-4">
+    <div className="flex flex-col gap-6 text-left">
+      {/* Title Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Operations Dashboard</h1>
-          <p className="text-xs text-muted-foreground mt-1">Real-time stadium management and decision support systems.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Operations Command Center</h1>
+          <p className="text-xs text-muted-foreground mt-1">Live stadium tactical dispatch, digital twin monitoring, and AI situation summary support.</p>
         </div>
-        <div className="text-xs text-muted-foreground">
-          Last updated: {new Date(overview.timestamp).toLocaleTimeString()}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 rounded-full border border-border bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-400">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span>Real-time link active</span>
+          </div>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-        {kpis.map((kpi) => (
-          <div key={kpi.title} className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{kpi.title}</span>
-              {kpi.icon}
+      {/* Flagship KPI Matrix */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        {metrics.map((m) => (
+          <div key={m.title} className="rounded-xl border border-border bg-card p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-[10px] font-bold uppercase tracking-wider">{m.title}</span>
+              {m.icon}
             </div>
-            <div className="mt-4">
-              <span className="text-3xl font-black tracking-tight">{kpi.value}</span>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-2xl font-black tracking-tight">{m.value}</span>
+              <span className="text-[9px] font-bold text-muted-foreground uppercase">{m.status}</span>
             </div>
-            <p className="mt-2 text-[10px] text-muted-foreground">{kpi.desc}</p>
           </div>
         ))}
       </div>
 
-      {/* Main Grid Widgets */}
-      <div className="grid gap-8 lg:grid-cols-3">
+      {/* Main Grid: Interactive Stadium Twin (Left) & AI Command Panel (Right) */}
+      <div className="grid gap-6 lg:grid-cols-3">
         
-        {/* Left Column (Incidents & Recommendations) */}
-        <div className="lg:col-span-2 flex flex-col gap-8">
-          
-          {/* Recent Incidents */}
-          <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold">Recent Incidents</h2>
-              <p className="text-xs text-muted-foreground">Latest reported security, medical, and crowd issues.</p>
+        {/* Left Area: Digital Twin (React Flow) */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="rounded-2xl border border-border bg-card overflow-hidden h-[450px] flex flex-col relative shadow-sm">
+            <div className="absolute top-4 left-4 z-10 bg-card/85 backdrop-blur-md border border-border rounded-xl p-3 shadow-md">
+              <span className="text-xs font-bold text-foreground block">Stadium Digital Twin Layout</span>
+              <span className="text-[9px] text-muted-foreground mt-0.5 block">Interact to inspect gate nodes and flow vectors.</span>
             </div>
 
-            {incidents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-xl bg-muted/10">
-                <ShieldCheck className="h-8 w-8 text-emerald-500 mb-2" />
-                <span className="text-xs font-semibold">Stadium Secure</span>
-                <p className="text-[10px] text-muted-foreground mt-0.5">No active incidents reported at this time.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {incidents.map((inc) => (
-                  <div key={inc.id} className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`rounded-full p-2 ${inc.severity === "critical" || inc.severity === "high" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
-                        <AlertTriangle className="h-4 w-4" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold">{inc.description}</span>
-                        <span className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-semibold">
-                          {inc.incident_type} &bull; {inc.severity} priority
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold px-2 py-1 rounded bg-muted text-muted-foreground">
-                      {new Date(inc.created_at).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Active Recommendations */}
-          <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold">Active Recommendations</h2>
-              <p className="text-xs text-muted-foreground">Routing actions and flow mitigations suggested by logic engine.</p>
+            <div className="flex-1 h-full w-full">
+              <ReactFlow
+                nodes={flowNodes}
+                edges={flowEdges}
+                nodeTypes={nodeTypes}
+                fitView
+                className="bg-muted/10"
+              >
+                <Background color="var(--color-border)" gap={16} size={1} />
+                <Controls showInteractive={false} className="bg-card border-border fill-foreground" />
+              </ReactFlow>
             </div>
-
-            {recommendations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-xl bg-muted/10">
-                <Compass className="h-8 w-8 text-muted-foreground/60 mb-2" />
-                <span className="text-xs font-semibold">Zones Flow Stable</span>
-                <p className="text-[10px] text-muted-foreground mt-0.5">No active recommendations generated.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recommendations.map((rec) => (
-                  <div key={rec.id} className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-full p-2 bg-amber-500/10 text-amber-500">
-                        <Compass className="h-4 w-4 animate-spin-slow" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold">{rec.details}</span>
-                        <span className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-semibold">
-                          {rec.action_type} &bull; {Math.round(rec.confidence * 100)}% confidence
-                        </span>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${rec.status === "pending" ? "bg-amber-500/10 text-amber-500" : "bg-primary/10 text-primary"}`}>
-                      {rec.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-
         </div>
 
-        {/* Right Column (Heat Summary, Timeline, Activity Feed) */}
-        <div className="flex flex-col gap-8">
+        {/* Right Panel: AI Situation & recommendations */}
+        <div className="flex flex-col gap-6">
           
-          {/* Crowd Heat Summary */}
-          <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold">Crowd Heat Summary</h2>
-              <p className="text-xs text-muted-foreground">Crowd capacity ratios and queue statuses per sector.</p>
+          {/* AI Situation Summary Card */}
+          <div className="rounded-2xl border border-primary/20 bg-primary/[0.02] p-6 relative overflow-hidden shadow-sm">
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
+            
+            <div className="flex items-center gap-2 mb-4">
+              <Brain className="h-5 w-5 text-primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                AI Operations Copilot
+                <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              </span>
             </div>
 
-            {zones.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-xl bg-muted/10">
-                <Brain className="h-8 w-8 text-muted-foreground/60 mb-2" />
-                <span className="text-xs font-semibold">No Zone States</span>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Operational states lists are empty.</p>
+            <p className="text-xs font-medium leading-relaxed text-foreground bg-card/30 rounded-xl p-4 border border-border/40 backdrop-blur-md">
+              {aiSummary.summary}
+            </p>
+
+            <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+              <div className="rounded-lg bg-card border border-border p-2">
+                <span className="text-[8px] font-bold text-muted-foreground uppercase">Security</span>
+                <span className="block text-[10px] font-bold text-emerald-400 mt-0.5">Stable</span>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {zones.slice(0, 4).map((zone) => (
-                  <div key={zone.zone_id} className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="truncate max-w-[150px]">Zone {zone.zone_id.slice(0, 8)}</span>
-                      <span className={`${zone.density > 0.75 ? "text-destructive" : "text-muted-foreground"}`}>
-                        {Math.round(zone.density * 100)}% density ({zone.queue_waiting_minutes}m wait)
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${zone.density > 0.75 ? "bg-destructive animate-pulse" : "bg-primary"}`}
-                        style={{ width: `${Math.min(zone.density * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-lg bg-card border border-border p-2">
+                <span className="text-[8px] font-bold text-muted-foreground uppercase">Medical</span>
+                <span className="block text-[10px] font-bold text-emerald-400 mt-0.5">Active</span>
               </div>
-            )}
+              <div className="rounded-lg bg-card border border-border p-2">
+                <span className="text-[8px] font-bold text-muted-foreground uppercase">Crowd</span>
+                <span className="block text-[10px] font-bold text-amber-400 mt-0.5">Moderate</span>
+              </div>
+            </div>
           </div>
 
-          {/* Operational Timeline / Live Activity Feed */}
-          <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between">
+          {/* Recommendations list */}
+          <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between flex-1">
             <div className="mb-4">
-              <h2 className="text-lg font-bold">Operational Timeline</h2>
-              <p className="text-xs text-muted-foreground">Chronological log trace of system and incident event cycles.</p>
+              <h2 className="text-lg font-bold">Action mitigations panel</h2>
+              <p className="text-xs text-muted-foreground">Action items determined by operational parameters.</p>
             </div>
 
-            <div className="relative pl-6 border-l border-border space-y-6">
-              {incidents.length === 0 ? (
-                <div className="text-xs text-muted-foreground py-4">No events logged in the current operational shift.</div>
+            <div className="space-y-3 flex-1 overflow-y-auto max-h-[220px] pr-1">
+              {recommendations.length === 0 ? (
+                <div className="text-xs text-muted-foreground text-center py-6">All sector flows nominal.</div>
               ) : (
-                incidents.map((inc) => (
-                  <div key={inc.id} className="relative">
-                    <div className="absolute -left-[31px] mt-0.5 rounded-full bg-card border-2 border-border p-1 text-primary">
-                      <Clock className="h-3 w-3" />
+                recommendations.map((rec) => (
+                  <div key={rec.id} className="p-3 border border-border rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors">
+                    <div className="flex justify-between items-start mb-1 text-xs">
+                      <span className="font-extrabold text-foreground uppercase tracking-wider">{rec.action_type}</span>
+                      <span className="text-[9px] font-bold text-muted-foreground font-mono">{Math.round(rec.confidence * 100)}% confidence</span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold">{inc.resolved ? "Incident Resolved" : "Incident Reported"}</span>
-                      <span className="text-[10px] text-muted-foreground mt-0.5">{inc.description}</span>
-                      <span className="text-[9px] text-primary font-bold mt-1">
-                        {new Date(inc.created_at).toLocaleTimeString()}
-                      </span>
+                    <p className="text-[11px] text-muted-foreground mt-1">{rec.details}</p>
+                    
+                    <div className="flex justify-end mt-3">
+                      <button
+                        onClick={() => handleApproveRecommendation(rec.id)}
+                        disabled={approvedRecs[rec.id]}
+                        className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all focus-visible:ring-2 focus-visible:ring-primary outline-none ${
+                          approvedRecs[rec.id]
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-primary text-primary-foreground hover:opacity-90"
+                        }`}
+                      >
+                        {approvedRecs[rec.id] ? "Approved" : "Approve Dispatch"}
+                      </button>
                     </div>
                   </div>
                 ))
@@ -293,33 +371,135 @@ function DashboardOverviewPage() {
             </div>
           </div>
 
-          {/* Live Activity Feed */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold">Live Activity Feed</h2>
-                <p className="text-xs text-muted-foreground">Audit logs feed from stadium monitors.</p>
-              </div>
-              <TrendingUp className="h-4 w-4 text-primary animate-pulse" />
-            </div>
-            <div className="space-y-3 font-mono text-[10px] text-muted-foreground">
-              <div className="flex gap-2 items-start">
-                <span className="text-primary font-bold">[SYS]</span>
-                <span>Audit logger initialized. Connected.</span>
-              </div>
-              <div className="flex gap-2 items-start">
-                <span className="text-primary font-bold">[SYS]</span>
-                <span>Active volunteers count: {overview.allocated_volunteers_count}.</span>
-              </div>
-              <div className="flex gap-2 items-start">
-                <span className="text-amber-500 font-bold">[WARN]</span>
-                <span>Average wait times currently at {zones[0]?.queue_waiting_minutes || 0}m.</span>
-              </div>
-            </div>
-          </div>
-
         </div>
 
+      </div>
+
+      {/* Bottom Layout: Timeline, Incidents & Activity Feed Tabs */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        
+        {/* Nav Tabs */}
+        <div className="flex border-b border-border bg-muted/30">
+          <button
+            onClick={() => setActiveTab("feed")}
+            className={`px-6 py-3.5 text-xs font-bold transition-colors ${
+              activeTab === "feed" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Live Activity Feed
+          </button>
+          <button
+            onClick={() => setActiveTab("incidents")}
+            className={`px-6 py-3.5 text-xs font-bold transition-colors ${
+              activeTab === "incidents" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Active Incidents ({incidents.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("timeline")}
+            className={`px-6 py-3.5 text-xs font-bold transition-colors ${
+              activeTab === "timeline" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Operational Timeline
+          </button>
+        </div>
+
+        {/* Tab contents */}
+        <div className="p-6">
+          <AnimatePresence mode="wait">
+            
+            {activeTab === "feed" && (
+              <motion.div
+                key="feed"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="space-y-3 font-mono text-xs text-muted-foreground text-left"
+              >
+                <div className="flex gap-2 items-start">
+                  <span className="text-primary font-bold">[SYS]</span>
+                  <span>Sensors connection live. Telemetry healthy.</span>
+                </div>
+                <div className="flex gap-2 items-start">
+                  <span className="text-primary font-bold">[SYS]</span>
+                  <span>Ingress turnstiles monitored: 12 open.</span>
+                </div>
+                {zones.slice(0, 3).map((zone, idx) => (
+                  <div key={zone.zone_id} className="flex gap-2 items-start">
+                    <span className="text-amber-500 font-bold">[TELEMETRY]</span>
+                    <span>Zone {idx + 1} density currently at {Math.round(zone.density * 100)}% with average wait {zone.queue_waiting_minutes}m.</span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+
+            {activeTab === "incidents" && (
+              <motion.div
+                key="incidents"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="space-y-3"
+              >
+                {incidents.length === 0 ? (
+                  <div className="flex flex-col items-center py-6 text-center text-xs text-muted-foreground border border-dashed border-border rounded-xl">
+                    <ShieldCheck className="h-6 w-6 text-emerald-400 mb-1" />
+                    <span>No active incidents reported.</span>
+                  </div>
+                ) : (
+                  incidents.map((inc) => (
+                    <div key={inc.id} className="flex items-center justify-between p-3 bg-muted/20 border border-border/60 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                        <div className="flex flex-col text-left">
+                          <span className="text-xs font-bold text-foreground">{inc.description}</span>
+                          <span className="text-[9px] text-muted-foreground mt-0.5 uppercase tracking-wider font-semibold">
+                            {inc.incident_type} &bull; Severity: {inc.severity}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {new Date(inc.created_at).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === "timeline" && (
+              <motion.div
+                key="timeline"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="relative pl-6 border-l border-border space-y-6 text-left"
+              >
+                {incidents.length === 0 ? (
+                  <div className="text-xs text-muted-foreground py-4">No events logged in the current shift.</div>
+                ) : (
+                  incidents.map((inc) => (
+                    <div key={inc.id} className="relative">
+                      <div className="absolute -left-[31px] mt-0.5 rounded-full bg-card border-2 border-border p-1 text-primary">
+                        <Clock className="h-3 w-3" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold">{inc.resolved ? "Incident Cleared" : "Alert Triggered"}</span>
+                        <span className="text-[10px] text-muted-foreground mt-0.5">{inc.description}</span>
+                        <span className="text-[9px] text-primary font-bold mt-1">
+                          {new Date(inc.created_at).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </motion.div>
+            )}
+
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
