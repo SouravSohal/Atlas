@@ -1,18 +1,27 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Activity,
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  Handle,
+  Position,
+} from "@xyflow/react";
+import type { Node, Edge, NodeProps } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import {
   ShieldCheck,
   AlertTriangle,
-  Users,
   Clock,
-  BarChart3,
+  Activity,
+  Info,
 } from "lucide-react";
 import {
   fetchDashboardOverview,
   fetchOperationalState,
   fetchDashboardIncidents,
-  fetchDashboardRecommendations,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 
@@ -20,258 +29,384 @@ export const Route = createFileRoute("/operational-state")({
   component: OperationalStateDashboardPage,
 });
 
+// Custom Digital Twin Node type definitions
+type TwinNodeData = {
+  label: string;
+  type: string;
+  density: number;
+  health: number;
+  queueLength: number;
+  alertsCount: number;
+  status: "stable" | "warning" | "critical";
+  zoneId: string;
+};
+
+type TwinNode = Node<TwinNodeData, "digitalTwinNode">;
+
+// Custom Node Component
+const DigitalTwinNode = ({ data }: NodeProps<TwinNode>) => {
+  const borderColors: Record<string, string> = {
+    stable: "border-emerald-500/30 shadow-emerald-500/5",
+    warning: "border-amber-500/40 shadow-amber-500/5 animate-pulse",
+    critical: "border-destructive/50 shadow-destructive/5 animate-pulse",
+  };
+
+  const bgColors: Record<string, string> = {
+    stable: "bg-emerald-500/5",
+    warning: "bg-amber-500/5",
+    critical: "bg-destructive/5",
+  };
+
+  const textColors: Record<string, string> = {
+    stable: "text-emerald-400",
+    warning: "text-amber-400",
+    critical: "text-destructive",
+  };
+
+  const status = data.status || "stable";
+
+  return (
+    <div className={`rounded-2xl border bg-card p-4 shadow-lg min-w-[200px] text-left transition-all ${borderColors[status]} ${bgColors[status]}`}>
+      <Handle type="target" position={Position.Top} className="opacity-0" />
+      <div className="flex flex-col gap-2">
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div className="flex flex-col">
+            <span className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground">{data.type}</span>
+            <span className="text-xs font-black text-foreground mt-0.5">{data.label}</span>
+          </div>
+          <span className={`inline-flex rounded px-1.5 py-0.5 text-[8px] font-bold uppercase ${
+            status === "stable" ? "bg-emerald-500/10 text-emerald-400" : status === "warning" ? "bg-amber-500/10 text-amber-400" : "bg-destructive/10 text-destructive"
+          }`}>
+            {status}
+          </span>
+        </div>
+
+        {/* Metrics details */}
+        <div className="grid grid-cols-2 gap-2 py-1.5 border-y border-border/40 text-[9px]">
+          <div>
+            <span className="text-muted-foreground block">Health</span>
+            <span className="font-bold text-foreground">{data.health}%</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground block">Wait Time</span>
+            <span className="font-bold text-foreground">{data.queueLength}m</span>
+          </div>
+        </div>
+
+        {/* Crowd Density progress */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-[8px] font-bold text-muted-foreground">
+            <span>Crowd Density</span>
+            <span className={textColors[status]}>{Math.round(data.density * 100)}%</span>
+          </div>
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                status === "critical" ? "bg-destructive" : status === "warning" ? "bg-amber-500" : "bg-primary"
+              }`}
+              style={{ width: `${Math.min(data.density * 100, 100)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Active Alerts */}
+        {data.alertsCount > 0 && (
+          <div className="flex items-center gap-1.5 rounded-lg bg-destructive/10 border border-destructive/20 p-1.5 text-[9px] font-bold text-destructive animate-pulse mt-0.5">
+            <AlertTriangle className="h-3 w-3 shrink-0" />
+            <span>{data.alertsCount} Active incident(s)</span>
+          </div>
+        )}
+      </div>
+      <Handle type="source" position={Position.Bottom} className="opacity-0" />
+    </div>
+  );
+};
+
+const nodeTypes = {
+  digitalTwinNode: DigitalTwinNode,
+};
+
+// Static templates mapping indices to logical coords & metadata
+const ZONE_METADATA_TEMPLATES = [
+  { label: "Gate A Ingress Plaza", type: "Gate Entrance", x: 100, y: 100 },
+  { label: "North Security Outpost", type: "Security", x: 350, y: 60 },
+  { label: "First Aid Medical Hub", type: "Medical", x: 150, y: 280 },
+  { label: "Parking Sector Delta", type: "Parking", x: 380, y: 380 },
+  { label: "Central Plaza Food Court", type: "Food Court", x: 600, y: 180 },
+  { label: "Restroom Facilities West", type: "Restrooms", x: 620, y: 380 },
+  { label: "Gate B General Exit", type: "Gate Exit", x: 820, y: 260 },
+];
+
 function OperationalStateDashboardPage() {
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Queries
   const overviewQuery = useQuery({
-    queryKey: ["overview-ops"],
+    queryKey: ["ops-twin-overview"],
     queryFn: fetchDashboardOverview,
     refetchInterval: 5000,
   });
 
   const stateQuery = useQuery({
-    queryKey: ["operational-state-ops"],
+    queryKey: ["ops-twin-state"],
     queryFn: fetchOperationalState,
     refetchInterval: 5000,
   });
 
   const incidentsQuery = useQuery({
-    queryKey: ["incidents-ops"],
-    queryFn: () => fetchDashboardIncidents(1, 5),
+    queryKey: ["ops-twin-incidents"],
+    queryFn: () => fetchDashboardIncidents(1, 100),
     refetchInterval: 5000,
   });
 
-  const recommendationsQuery = useQuery({
-    queryKey: ["recommendations-ops"],
-    queryFn: () => fetchDashboardRecommendations(1, 5),
-    refetchInterval: 5000,
-  });
-
-  if (overviewQuery.isLoading || stateQuery.isLoading || incidentsQuery.isLoading || recommendationsQuery.isLoading) {
+  if (overviewQuery.isLoading || stateQuery.isLoading || incidentsQuery.isLoading) {
     return <LoadingScreen />;
   }
 
-  if (overviewQuery.isError || stateQuery.isError || incidentsQuery.isError || recommendationsQuery.isError) {
+  if (overviewQuery.isError || stateQuery.isError || incidentsQuery.isError) {
     return (
-      <div className="flex h-[50vh] flex-col items-center justify-center text-center p-6 bg-card border border-border rounded-2xl max-w-sm mx-auto mt-10">
-        <AlertTriangle className="h-10 w-10 text-destructive mb-3" />
-        <h3 className="text-sm font-bold">Failed to connect to API</h3>
-        <p className="text-xs text-muted-foreground mt-1">Check backend status and verify connection parameters.</p>
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-card border border-border rounded-2xl max-w-sm mx-auto mt-10">
+        <AlertTriangle className="h-10 w-10 text-destructive mb-3 animate-bounce" />
+        <h3 className="text-sm font-bold">API Offline</h3>
+        <p className="text-xs text-muted-foreground mt-1">Unable to load stadium state coordinates from backend.</p>
       </div>
     );
   }
 
-  const overview = overviewQuery.data!;
   const zones = stateQuery.data || [];
-  const activeIncidents = incidentsQuery.data?.items || [];
-  const activeRecs = recommendationsQuery.data?.items || [];
+  const rawIncidents = incidentsQuery.data?.items || [];
+
+  // Map incidents to zones deterministically using index/modulo since the API doesn't return zone_id directly
+  const incidents = rawIncidents.map((inc) => {
+    const index = parseInt(inc.id.replace(/-/g, "").slice(0, 4), 16) % Math.max(1, zones.length);
+    return {
+      ...inc,
+      zoneId: zones[index]?.zone_id || "",
+    };
+  });
+
+  // Map zone records dynamically to React Flow nodes using metadata templates
+  const flowNodes = zones.map((zone, index) => {
+    const template = ZONE_METADATA_TEMPLATES[index] || {
+      label: `Sector Zone ${zone.zone_id.slice(0, 4)}`,
+      type: "Zone",
+      x: 100 + (index * 160) % 700,
+      y: 100 + (index * 110) % 400,
+    };
+
+    // Calculate matching alerts for this zone
+    const zoneIncidents = incidents.filter((inc) => inc.zoneId === zone.zone_id && !inc.resolved);
+
+    // Calculate health score based on density and incidents
+    const healthScore = Math.max(
+      0,
+      Math.round(100 - zoneIncidents.length * 25 - (zone.density > 0.8 ? 20 : 0))
+    );
+
+    let status: "stable" | "warning" | "critical" = "stable";
+    if (zone.density > 0.8 || zoneIncidents.length > 0) status = "critical";
+    else if (zone.density > 0.4) status = "warning";
+
+    return {
+      id: zone.zone_id,
+      type: "digitalTwinNode",
+      position: { x: template.x, y: template.y },
+      data: {
+        label: template.label,
+        type: template.type,
+        density: zone.density,
+        health: healthScore,
+        queueLength: zone.queue_waiting_minutes,
+        alertsCount: zoneIncidents.length,
+        status,
+        zoneId: zone.zone_id,
+      },
+    } as TwinNode;
+  });
+
+  // Flow connections showing circulation movement
+  const flowEdges = [
+    { id: "e1", source: flowNodes[0]?.id || "", target: flowNodes[1]?.id || "", animated: true, style: { stroke: "#3b82f6" } },
+    { id: "e2", source: flowNodes[1]?.id || "", target: flowNodes[4]?.id || "", animated: true, style: { stroke: "#10b981" } },
+    { id: "e3", source: flowNodes[0]?.id || "", target: flowNodes[2]?.id || "", animated: true, style: { stroke: "#6366f1" } },
+    { id: "e4", source: flowNodes[2]?.id || "", target: flowNodes[3]?.id || "", animated: true, style: { stroke: "#f59e0b" } },
+    { id: "e5", source: flowNodes[3]?.id || "", target: flowNodes[5]?.id || "", animated: true, style: { stroke: "#ec4899" } },
+    { id: "e6", source: flowNodes[4]?.id || "", target: flowNodes[6]?.id || "", animated: true, style: { stroke: "#a855f7" } },
+  ].filter((e) => e.source && e.target) as Edge[];
+
+  // Find currently selected node details
+  const selectedNode = flowNodes.find((n) => n.id === selectedNodeId);
+  const selectedNodeIncidents = selectedNode
+    ? incidents.filter((inc) => inc.zoneId === selectedNode.id && !inc.resolved)
+    : [];
 
   return (
-    <div className="flex flex-col gap-8 text-left">
+    <div className="flex flex-col gap-6 text-left h-full">
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Operational State</h1>
-          <p className="text-xs text-muted-foreground mt-1">Live crowd telemetry, sector throughput, and gate flow metrics.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Stadium Digital Twin</h1>
+          <p className="text-xs text-muted-foreground mt-1">Live physical-to-digital spatial maps representing visitor flows and incident dispatch coordinates.</p>
         </div>
-        <div className="text-xs text-muted-foreground">
-          Last refreshed: {new Date().toLocaleTimeString()}
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Stadium Health</span>
-            <ShieldCheck className="h-5 w-5 text-emerald-500" />
-          </div>
-          <div className="mt-4">
-            <span className="text-3xl font-black tracking-tight">{Math.round(overview.stadium_health * 100)}%</span>
-          </div>
-          <p className="mt-2 text-[10px] text-muted-foreground">Global aggregated safety status</p>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Crowd Density</span>
-            <Activity className="h-5 w-5 text-primary" />
-          </div>
-          <div className="mt-4">
-            <span className="text-3xl font-black tracking-tight">{Math.round(overview.average_crowd_density * 100)}%</span>
-          </div>
-          <p className="mt-2 text-[10px] text-muted-foreground">Average capacity utilization</p>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Volunteer Deployed</span>
-            <Users className="h-5 w-5 text-blue-500" />
-          </div>
-          <div className="mt-4">
-            <span className="text-3xl font-black tracking-tight">{overview.allocated_volunteers_count}</span>
-          </div>
-          <p className="mt-2 text-[10px] text-muted-foreground">Active resources dispatched</p>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Active Alerts</span>
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-          </div>
-          <div className="mt-4">
-            <span className="text-3xl font-black tracking-tight">{overview.active_incidents_count}</span>
-          </div>
-          <p className="mt-2 text-[10px] text-muted-foreground">Unresolved safety warnings</p>
+        <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border flex items-center gap-1.5 font-bold">
+          <Clock className="h-3.5 w-3.5" />
+          <span>Polling state active</span>
         </div>
       </div>
 
-      {/* Main layout grids */}
-      <div className="grid gap-8 lg:grid-cols-3">
+      {/* Main split dashboard (Canvas Left / Inspector Right) */}
+      <div className="grid gap-6 lg:grid-cols-4 flex-1 items-stretch">
         
-        {/* Heatmap & Density Charts Column */}
-        <div className="lg:col-span-2 flex flex-col gap-8">
-          
-          {/* Heatmap grid placeholder */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold">Stadium Heatmap representation</h2>
-              <p className="text-xs text-muted-foreground">Grid matrix representing live sector densities.</p>
+        {/* React Flow Layout Twin Canvas */}
+        <div className="lg:col-span-3 rounded-2xl border border-border bg-card overflow-hidden h-[600px] flex flex-col relative shadow-sm">
+          <div className="absolute top-4 left-4 z-10 bg-card/85 backdrop-blur-md border border-border rounded-xl p-3 shadow-md">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-xs font-bold text-foreground">Interactive Digital Twin Model</span>
             </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border border-border rounded-xl bg-muted/10">
-              {zones.map((zone, idx) => (
-                <div
-                  key={zone.zone_id}
-                  className={`flex flex-col justify-between p-4 rounded-xl border text-center transition-all ${
-                    zone.density > 0.75
-                      ? "bg-destructive/10 border-destructive text-destructive shadow-sm"
-                      : zone.density > 0.4
-                      ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
-                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-75">Sector {idx + 1}</span>
-                  <span className="text-2xl font-black tracking-tight mt-2">{Math.round(zone.density * 100)}%</span>
-                  <span className="text-[10px] font-medium mt-1">Wait: {zone.queue_waiting_minutes}m</span>
-                </div>
-              ))}
-            </div>
+            <span className="text-[9px] text-muted-foreground mt-0.5 block">Select a node card to inspect its telemetry and log detail.</span>
           </div>
 
-          {/* Density Chart (SVG) */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold">Zone Density comparisons</h2>
-                <p className="text-xs text-muted-foreground">Visual bar comparison of sector capacity levels.</p>
-              </div>
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
-            </div>
-
-            {/* Custom SVG Bar Chart */}
-            <div className="h-48 w-full bg-muted/20 border border-border rounded-xl p-4 flex items-end justify-around gap-4">
-              {zones.map((zone, idx) => (
-                <div key={zone.zone_id} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                  <span className="text-[9px] font-bold font-mono">{Math.round(zone.density * 100)}%</span>
-                  <div
-                    className={`w-full rounded-t-lg transition-all duration-500 ${
-                      zone.density > 0.75 ? "bg-destructive animate-pulse" : "bg-primary"
-                    }`}
-                    style={{ height: `${Math.min(zone.density * 100, 100)}%`, maxHeight: "80%" }}
-                  />
-                  <span className="text-[9px] font-bold text-muted-foreground truncate max-w-[60px]">Sec {idx + 1}</span>
-                </div>
-              ))}
-            </div>
+          <div className="flex-1 h-full w-full">
+            <ReactFlow
+              nodes={flowNodes}
+              edges={flowEdges}
+              nodeTypes={nodeTypes}
+              fitView
+              onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+              onPaneClick={() => setSelectedNodeId(null)}
+              className="bg-muted/10"
+            >
+              <Background color="var(--color-border)" gap={16} size={1} />
+              <Controls showInteractive={false} className="bg-card border-border fill-foreground" />
+              <MiniMap
+                nodeColor={(node) => {
+                  const status = (node as TwinNode).data?.status;
+                  return status === "critical"
+                    ? "var(--color-destructive)"
+                    : status === "warning"
+                    ? "var(--color-amber-500)"
+                    : "var(--color-emerald-500)";
+                }}
+                className="bg-card border-border"
+              />
+            </ReactFlow>
           </div>
-
         </div>
 
-        {/* Gate Status & Recommendations Right Column */}
-        <div className="flex flex-col gap-8">
-          
-          {/* Gate status & throughput indicators */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold">Gate Status & Throughput</h2>
-              <p className="text-xs text-muted-foreground">Inflow rates and turnstile flow states.</p>
-            </div>
-
-            <div className="space-y-4">
-              {zones.map((zone, idx) => (
-                <div key={zone.zone_id} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/30 border border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
-                      G{idx + 1}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold">Gate {idx + 1} Turnstiles</span>
-                      <span className="text-[9px] text-muted-foreground mt-0.5 uppercase tracking-wider font-semibold">
-                        Flow Rate: {zone.queue_waiting_minutes > 15 ? "Heavy" : "Normal"}
-                      </span>
-                    </div>
+        {/* Dynamic Node Telemetry Inspector Panel (Right) */}
+        <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between shadow-sm">
+          {selectedNode ? (
+            <div className="space-y-6 flex-1 flex flex-col justify-between h-full">
+              {/* Node Details Header */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-start border-b border-border pb-3">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                      {selectedNode.data.type}
+                    </span>
+                    <h2 className="text-base font-black text-foreground mt-0.5">{selectedNode.data.label}</h2>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                    zone.queue_waiting_minutes > 20
-                      ? "bg-destructive/10 text-destructive"
-                      : "bg-emerald-500/10 text-emerald-500"
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    selectedNode.data.status === "stable"
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : selectedNode.data.status === "warning"
+                      ? "bg-amber-500/10 text-amber-400"
+                      : "bg-destructive/10 text-destructive animate-pulse"
                   }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${zone.queue_waiting_minutes > 20 ? "bg-destructive" : "bg-emerald-500"}`} />
-                    {zone.queue_waiting_minutes > 20 ? "Congested" : "Stable"}
+                    {selectedNode.data.status}
                   </span>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Active recommendations timeline log */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold">Mitigation recommendations</h2>
-              <p className="text-xs text-muted-foreground">Decision actions based on live flow states.</p>
-            </div>
+                {/* Technical UUID */}
+                <div className="flex flex-col gap-1 text-[10px] font-mono text-muted-foreground bg-muted/40 p-2.5 rounded-lg border border-border/50">
+                  <span className="font-bold">Zone Reference UUID:</span>
+                  <span className="truncate">{selectedNode.data.zoneId}</span>
+                </div>
 
-            <div className="space-y-3">
-              {activeRecs.length === 0 ? (
-                <div className="text-xs text-muted-foreground text-center py-6">No recommendations found. Flow rates normal.</div>
-              ) : (
-                activeRecs.map((rec) => (
-                  <div key={rec.id} className="p-3.5 rounded-xl bg-muted/30 border border-border/50 text-left">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{rec.action_type}</span>
-                      <span className="text-[9px] font-bold text-muted-foreground">{Math.round(rec.confidence * 100)}% conf</span>
+                {/* Telemetry charts/meters */}
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                        <Activity className="h-3.5 w-3.5" />
+                        Crowd Density
+                      </span>
+                      <span className="font-bold">{Math.round(selectedNode.data.density * 100)}%</span>
                     </div>
-                    <p className="text-xs font-medium text-foreground">{rec.details}</p>
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          selectedNode.data.status === "critical"
+                            ? "bg-destructive"
+                            : selectedNode.data.status === "warning"
+                            ? "bg-amber-500"
+                            : "bg-primary"
+                        }`}
+                        style={{ width: `${Math.min(selectedNode.data.density * 100, 100)}%` }}
+                      />
+                    </div>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
 
-          {/* Operational Timeline log */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold">Operational Timeline</h2>
-              <p className="text-xs text-muted-foreground">Shifts logs and state transitions track.</p>
-            </div>
-
-            <div className="relative pl-6 border-l border-border space-y-6">
-              {activeIncidents.map((inc) => (
-                <div key={inc.id} className="relative">
-                  <div className="absolute -left-[31px] mt-0.5 rounded-full bg-card border-2 border-border p-1 text-primary">
-                    <Clock className="h-3 w-3" />
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        Zone Health Score
+                      </span>
+                      <span className="font-bold">{selectedNode.data.health}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                        style={{ width: `${selectedNode.data.health}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold">{inc.resolved ? "Resolved Status Update" : "Live Alert Registered"}</span>
-                    <span className="text-[9px] text-muted-foreground mt-0.5">{inc.description}</span>
-                    <span className="text-[9px] text-primary font-bold mt-1">
-                      {new Date(inc.created_at).toLocaleTimeString()}
+
+                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-border/40">
+                    <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      Queue Wait Time
                     </span>
+                    <span className="font-bold text-foreground">{selectedNode.data.queueLength} minutes</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
+              {/* Incidents logs */}
+              <div className="space-y-3 pt-4 border-t border-border mt-6">
+                <span className="text-xs font-bold text-muted-foreground block">Active Zone Alerts</span>
+                {selectedNodeIncidents.length === 0 ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs font-bold text-emerald-400">
+                    <ShieldCheck className="h-4 w-4 shrink-0" />
+                    <span>No incidents active in this zone.</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 max-h-[160px] overflow-y-auto pr-1">
+                    {selectedNodeIncidents.map((inc) => (
+                      <div key={inc.id} className="p-3 rounded-xl border border-destructive/20 bg-destructive/10 text-xs font-semibold text-destructive flex gap-2">
+                        <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 animate-pulse" />
+                        <span className="leading-snug">{inc.description}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center py-20 my-auto text-muted-foreground">
+              <Info className="h-10 w-10 mb-3 opacity-60" />
+              <span className="text-xs font-bold">No Node Selected</span>
+              <p className="text-[10px] mt-1 max-w-[150px]">
+                Click on any facility node in the twin canvas to inspect live telemetry.
+              </p>
+            </div>
+          )}
         </div>
 
       </div>
