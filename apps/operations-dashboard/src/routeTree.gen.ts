@@ -18,6 +18,7 @@ import { Route as NavigationRouteImport } from './routes/navigation'
 import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as CrowdIntelligenceRouteImport } from './routes/crowd-intelligence'
+import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -66,6 +67,11 @@ const CrowdIntelligenceRoute = CrowdIntelligenceRouteImport.update({
   path: '/crowd-intelligence',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CopilotRoute = CopilotRouteImport.update({
+  id: '/copilot',
+  path: '/copilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -80,6 +86,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/analytics'
+    | '/copilot'
     | '/crowd-intelligence'
     | '/incidents'
     | '/metrics'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/analytics'
+    | '/copilot'
     | '/crowd-intelligence'
     | '/incidents'
     | '/metrics'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/analytics'
+    | '/copilot'
     | '/crowd-intelligence'
     | '/incidents'
     | '/metrics'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  CopilotRoute: typeof CopilotRoute
   CrowdIntelligenceRoute: typeof CrowdIntelligenceRoute
   IncidentsRoute: typeof IncidentsRoute
   MetricsRoute: typeof MetricsRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrowdIntelligenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/copilot': {
+      id: '/copilot'
+      path: '/copilot'
+      fullPath: '/copilot'
+      preLoaderRoute: typeof CopilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
@@ -258,6 +278,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
+  CopilotRoute: CopilotRoute,
   CrowdIntelligenceRoute: CrowdIntelligenceRoute,
   IncidentsRoute: IncidentsRoute,
   MetricsRoute: MetricsRoute,
