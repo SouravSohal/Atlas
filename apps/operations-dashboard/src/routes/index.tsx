@@ -7,6 +7,7 @@ import {
   Controls,
   Handle,
   Position,
+  MiniMap,
 } from "@xyflow/react";
 import type { Node, Edge, NodeProps } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -43,6 +44,13 @@ type StadiumNodeData = {
   status: "stable" | "warning" | "critical";
   type: string;
   isFocused?: boolean;
+  health: number;
+  density: number;
+  queue: number;
+  capacity: number;
+  alerts: number;
+  recs: number;
+  resources: string;
 };
 
 type StadiumNode = Node<StadiumNodeData, "stadiumNode">;
@@ -69,24 +77,53 @@ const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
 
   return (
     <motion.div
-      animate={data.isFocused ? { scale: [1, 1.05, 1], y: [0, -3, 0] } : {}}
-      transition={{ repeat: Infinity, duration: 1.5 }}
-      className={`rounded-xl border ${borderColors[data.status]} ${bgColors[data.status]} p-3 text-left w-40 backdrop-blur-md shadow-lg relative`}
+      animate={data.isFocused ? { scale: [1, 1.03, 1], y: [0, -2, 0] } : {}}
+      transition={{ repeat: Infinity, duration: 2 }}
+      className={`rounded-xl border ${borderColors[data.status]} ${bgColors[data.status]} p-3 text-left w-52 backdrop-blur-md shadow-lg relative text-foreground`}
     >
       {data.isFocused && (
-        <span className="absolute -top-2.5 -right-2 bg-amber-500 text-black text-[7px] font-black px-1 py-0.5 rounded border border-black shadow uppercase animate-pulse">
+        <span className="absolute -top-2.5 -right-2 bg-amber-500 text-black text-[7px] font-black px-1.5 py-0.5 rounded border border-black shadow uppercase animate-pulse">
           🎯 focus
         </span>
       )}
       <Handle type="target" position={Position.Left} className="w-1.5 h-1.5 bg-border" />
-      <div className="flex items-center gap-1.5">
-        <span className={`h-1.5 w-1.5 rounded-full ${indicatorColors[data.status]}`} />
-        <span className="text-[10px] font-black tracking-wide text-foreground uppercase">{data.label}</span>
+      
+      {/* Node Title */}
+      <div className="flex items-center justify-between gap-1.5 border-b border-border/40 pb-1.5">
+        <div className="flex items-center gap-1.5">
+          <span className={`h-1.5 w-1.5 rounded-full ${indicatorColors[data.status]}`} />
+          <span className="text-[9px] font-black tracking-wide uppercase truncate w-32">{data.label}</span>
+        </div>
+        <span className="text-[7px] font-mono text-muted-foreground uppercase">{data.type}</span>
       </div>
-      <div className="mt-1">
-        <span className="text-xs font-bold text-muted-foreground block">{data.type}</span>
-        <span className="text-xs font-black text-foreground mt-0.5 block">{data.value}</span>
+
+      {/* Grid details */}
+      <div className="grid grid-cols-2 gap-1.5 mt-2 text-[8px] font-mono text-muted-foreground">
+        <div>
+          <span>HEALTH</span>
+          <span className="font-bold text-foreground block">{data.health}%</span>
+        </div>
+        <div>
+          <span>DENSITY</span>
+          <span className="font-bold text-foreground block">{data.density}%</span>
+        </div>
+        <div>
+          <span>QUEUE</span>
+          <span className="font-bold text-foreground block">{data.queue}m</span>
+        </div>
+        <div>
+          <span>ALERTS</span>
+          <span className={`font-bold block ${data.alerts > 0 ? "text-destructive" : "text-foreground"}`}>
+            {data.alerts}
+          </span>
+        </div>
       </div>
+
+      <div className="mt-2 border-t border-border/40 pt-1.5 flex items-center justify-between text-[7px] font-mono text-muted-foreground">
+        <span>STAFF: {data.resources}</span>
+        {data.recs > 0 && <span className="text-amber-400 font-bold">RECS: {data.recs}</span>}
+      </div>
+
       <Handle type="source" position={Position.Right} className="w-1.5 h-1.5 bg-border" />
     </motion.div>
   );
@@ -676,34 +713,75 @@ function MissionControlPage() {
     const activeZones = playbackActive && playbackData ? playbackData.zones : (stateQuery.data || []);
     if (activeZones.length === 0) return [];
     
-    const labels = ["Gate 1 Ingress", "Gate 2 Exit", "Security Command", "Medical Post Alpha", "Main Parking Area", "Central Food Plaza"];
-    const types = ["Gate Entry", "Gate Exit", "Dispatch HQ", "Medical Hub", "Parking Zone", "Food sector"];
+    const labels = [
+      "Gate 1 Ingress",
+      "Gate 2 Exit",
+      "Security Command",
+      "Medical Post Alpha",
+      "Central Food Plaza",
+      "Main Parking Area",
+      "Volunteer Base Alpha",
+      "Metro Shuttle Plaza",
+      "Eastern Restrooms",
+      "Operations Center Hub"
+    ];
+    const types = [
+      "Entrance Gate",
+      "Exit Gate",
+      "Security",
+      "Medical",
+      "Food Court",
+      "Parking",
+      "Volunteer Station",
+      "Transit",
+      "Restrooms",
+      "Operations Center"
+    ];
     const positions = [
-      { x: 50, y: 150 },
-      { x: 550, y: 150 },
-      { x: 300, y: 40 },
-      { x: 300, y: 260 },
-      { x: 50, y: 40 },
-      { x: 550, y: 260 },
+      { x: 40, y: 150 },
+      { x: 640, y: 150 },
+      { x: 340, y: 30 },
+      { x: 190, y: 270 },
+      { x: 490, y: 270 },
+      { x: 40, y: 30 },
+      { x: 190, y: 150 },
+      { x: 640, y: 30 },
+      { x: 490, y: 30 },
+      { x: 340, y: 150 }
     ];
 
-    return activeZones.slice(0, 6).map((zone: any, index: number) => {
+    return labels.map((label, index) => {
+      const zone = activeZones[index % activeZones.length] || { density: 0.15, queue_waiting_minutes: 0, zone_id: `zone-${index}` };
+      
       let status: "stable" | "warning" | "critical" = "stable";
       if (zone.density > 0.8) status = "critical";
       else if (zone.density > 0.4) status = "warning";
 
       const isFocused = focusedNodeIndex === index;
 
+      const health = Math.round(100 - (zone.density * 30));
+      const capacity = index === 5 ? 4500 : 15000;
+      const alerts = status === "critical" ? 2 : status === "warning" ? 1 : 0;
+      const recs = status === "critical" ? 3 : status === "warning" ? 1 : 0;
+      const resources = index === 6 ? "12 Deployed" : index === 3 ? "2 EMTs" : "Standard";
+
       return {
-        id: zone.zone_id,
+        id: `node-${index}`,
         type: "stadiumNode",
-        position: positions[index] || { x: 100 + index * 100, y: 100 },
+        position: positions[index] || { x: 100 + index * 80, y: 100 },
         data: {
-          label: labels[index] || `Zone ${zone.zone_id.slice(0, 4)}`,
-          type: types[index] || "Sector",
+          label,
+          type: types[index],
           value: `Density: ${Math.round(zone.density * 100)}%`,
           status,
           isFocused,
+          health,
+          density: Math.round(zone.density * 100),
+          queue: zone.queue_waiting_minutes || 0,
+          capacity,
+          alerts,
+          recs,
+          resources
         },
       } as StadiumNode;
     });
@@ -711,18 +789,26 @@ function MissionControlPage() {
 
   const flowEdges = useMemo(() => {
     const edges: Edge[] = [];
-    if (flowNodes[0] && flowNodes[2]) {
-      edges.push({ id: "e1-2", source: flowNodes[0].id, target: flowNodes[2].id, animated: true, style: { stroke: "#3b82f6" } } as Edge);
-    }
-    if (flowNodes[0] && flowNodes[3]) {
-      edges.push({ id: "e1-3", source: flowNodes[0].id, target: flowNodes[3].id, animated: true, style: { stroke: "#10b981" } } as Edge);
-    }
-    if (flowNodes[2] && flowNodes[1]) {
-      edges.push({ id: "e2-4", source: flowNodes[2].id, target: flowNodes[1].id, animated: true, style: { stroke: "#f59e0b" } } as Edge);
-    }
-    if (flowNodes[3] && flowNodes[5]) {
-      edges.push({ id: "e3-5", source: flowNodes[3].id, target: flowNodes[5].id, animated: true, style: { stroke: "#ec4899" } } as Edge);
-    }
+    if (flowNodes.length < 10) return [];
+    
+    // Connect Ingress/Parking to central nodes
+    edges.push({ id: "e-g1-vol", source: "node-0", target: "node-6", animated: true, style: { stroke: "#10b981" } } as Edge);
+    edges.push({ id: "e-prk-sec", source: "node-5", target: "node-2", animated: true, style: { stroke: "#3b82f6" } } as Edge);
+    
+    // Connect central nodes to ops center
+    edges.push({ id: "e-vol-ops", source: "node-6", target: "node-9", animated: true, style: { stroke: "#10b981" } } as Edge);
+    edges.push({ id: "e-sec-ops", source: "node-2", target: "node-9", animated: true, style: { stroke: "#ef4444" } } as Edge);
+    edges.push({ id: "e-med-ops", source: "node-3", target: "node-9", animated: true, style: { stroke: "#ef4444" } } as Edge);
+
+    // Connect ops center to food plaza / restrooms
+    edges.push({ id: "e-ops-fod", source: "node-9", target: "node-4", animated: true, style: { stroke: "#f59e0b" } } as Edge);
+    edges.push({ id: "e-ops-rst", source: "node-8", target: "node-9", animated: true, style: { stroke: "#3b82f6" } } as Edge);
+
+    // Connect food plaza / restrooms to Exit/Transit
+    edges.push({ id: "e-fod-g2", source: "node-4", target: "node-1", animated: true, style: { stroke: "#ec4899" } } as Edge);
+    edges.push({ id: "e-rst-trn", source: "node-8", target: "node-7", animated: true, style: { stroke: "#3b82f6" } } as Edge);
+    edges.push({ id: "e-g2-trn", source: "node-1", target: "node-7", animated: true, style: { stroke: "#f59e0b" } } as Edge);
+
     return edges;
   }, [flowNodes]);
 
@@ -922,22 +1008,170 @@ function MissionControlPage() {
       {/* Main Grid: Row 1: Digital Twin & AI Copilot */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Digital Twin Widget */}
-        <div className="lg:col-span-2 rounded-2xl border border-border bg-card/45 backdrop-blur-md overflow-hidden h-[400px] flex flex-col relative shadow-sm">
-          <div className="absolute top-4 left-4 z-10 bg-card/85 backdrop-blur-md border border-border rounded-xl p-3 shadow-md text-left">
-            <span className="text-xs font-bold text-foreground block">Stadium Digital Twin</span>
-            <span className="text-[9px] text-muted-foreground mt-0.5 block">Interact to inspect flow vectors.</span>
+        <div className="lg:col-span-2 rounded-2xl border border-border bg-card/45 backdrop-blur-md overflow-hidden h-[540px] flex flex-col relative shadow-sm">
+          {/* Header Controls */}
+          <div className="p-4 border-b border-border bg-muted/20 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-left">
+              <span className="text-xs font-bold text-foreground block">Stadium Digital Twin</span>
+              <span className="text-[9px] text-muted-foreground mt-0.5 block">Interact to inspect flow vectors.</span>
+            </div>
+
+            {/* Quick Node Search Select */}
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-black text-muted-foreground uppercase font-mono">Go to:</span>
+              <select
+                value={focusedNodeIndex !== null ? `node-${focusedNodeIndex}` : ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) {
+                    setFocusedNodeIndex(null);
+                  } else {
+                    const idx = parseInt(val.split("-")[1]);
+                    setFocusedNodeIndex(idx);
+                  }
+                }}
+                className="rounded-lg border border-border bg-card px-2 py-1 text-[10px] font-bold outline-none cursor-pointer text-foreground"
+              >
+                <option value="">Select Sector...</option>
+                {flowNodes.map((n, idx) => (
+                  <option key={n.id} value={`node-${idx}`}>{n.data.label}</option>
+                ))}
+              </select>
+              {focusedNodeIndex !== null && (
+                <button
+                  onClick={() => setFocusedNodeIndex(null)}
+                  className="p-1 rounded bg-muted hover:bg-muted/40 text-[9px] font-black uppercase text-muted-foreground"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex-1 h-full w-full">
-            <ReactFlow
-              nodes={flowNodes}
-              edges={flowEdges}
-              nodeTypes={nodeTypes}
-              fitView
-              className="bg-muted/10"
-            >
-              <Background color="var(--color-border)" gap={16} size={1} />
-              <Controls showInteractive={false} className="bg-card border-border fill-foreground" />
-            </ReactFlow>
+
+          <div className="flex-1 flex flex-col md:flex-row h-full w-full overflow-hidden">
+            {/* Map Canvas */}
+            <div className="flex-1 h-full relative border-r border-border/40">
+              <ReactFlow
+                nodes={flowNodes}
+                edges={flowEdges}
+                nodeTypes={nodeTypes}
+                fitView
+                onNodeClick={(_, node) => {
+                  const idx = flowNodes.findIndex((n) => n.id === node.id);
+                  if (idx !== -1) setFocusedNodeIndex(idx);
+                }}
+                className="bg-muted/10 h-full w-full"
+              >
+                <Background color="var(--color-border)" gap={16} size={1} />
+                <Controls showInteractive={false} className="bg-card border-border fill-foreground" />
+                <MiniMap
+                  className="bg-card border-border border rounded-xl"
+                  nodeColor={(node) => {
+                    if (node.data?.status === "critical") return "#ef4444";
+                    if (node.data?.status === "warning") return "#f59e0b";
+                    return "#10b981";
+                  }}
+                  maskColor="rgba(0, 0, 0, 0.4)"
+                />
+              </ReactFlow>
+            </div>
+
+            {/* Inspector Panel */}
+            <div className="w-full md:w-64 h-full bg-card/25 backdrop-blur-md p-4 flex flex-col justify-between overflow-y-auto border-t md:border-t-0 md:border-l border-border/40 text-left">
+              {focusedNodeIndex !== null && flowNodes[focusedNodeIndex] ? (
+                (() => {
+                  const node = flowNodes[focusedNodeIndex];
+                  const statusColors = {
+                    stable: "text-emerald-400",
+                    warning: "text-amber-500",
+                    critical: "text-destructive",
+                  };
+
+                  return (
+                    <div className="flex flex-col gap-4 h-full justify-between">
+                      <div className="flex flex-col gap-3.5">
+                        <div className="border-b border-border/40 pb-2">
+                          <span className={`text-[8px] font-black uppercase font-mono ${statusColors[node.data.status]}`}>
+                            {node.data.type} status: {node.data.status}
+                          </span>
+                          <h4 className="text-xs font-black uppercase text-foreground mt-0.5">
+                            {node.data.label}
+                          </h4>
+                        </div>
+
+                        {/* Telemetry specs */}
+                        <div className="grid grid-cols-2 gap-2 text-[9px] font-mono text-muted-foreground bg-muted/20 p-2.5 rounded-lg border border-border/40">
+                          <div>
+                            <span>HEALTH</span>
+                            <span className="font-bold text-foreground block">{node.data.health}%</span>
+                          </div>
+                          <div>
+                            <span>DENSITY</span>
+                            <span className="font-bold text-foreground block">{node.data.density}%</span>
+                          </div>
+                          <div>
+                            <span>WAIT TIME</span>
+                            <span className="font-bold text-foreground block">{node.data.queue} min</span>
+                          </div>
+                          <div>
+                            <span>LIMIT</span>
+                            <span className="font-bold text-foreground block">{node.data.capacity} pax</span>
+                          </div>
+                        </div>
+
+                        {/* Staff / Alerts */}
+                        <div className="flex flex-col gap-1 text-[9px] font-mono">
+                          <span className="text-muted-foreground uppercase">ASSIGNED STAFF:</span>
+                          <span className="font-bold text-foreground uppercase">{node.data.resources}</span>
+                        </div>
+
+                        {node.data.recs > 0 && (
+                          <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-500 leading-relaxed font-semibold">
+                            ⚠️ AI Recommendations active: Reallocate volunteer squad to clear local bottlenecks.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action */}
+                      <button
+                        onClick={() => {
+                          setToastMessage(`Command dispatched: Staff rerouted to ${node.data.label}.`);
+                          setTimeout(() => setToastMessage(null), 3000);
+                        }}
+                        className="w-full rounded-lg bg-primary py-2 text-[10px] font-black uppercase text-primary-foreground tracking-wider hover:opacity-90 transition-opacity"
+                      >
+                        Optimize Sector
+                      </button>
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="flex flex-col justify-between h-full">
+                  <div className="flex flex-col gap-4">
+                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest border-b border-border/40 pb-2">
+                      Sector Inspector
+                    </span>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Click any node on the stadium map to inspect real-time flow telemetry, pending recommendations, incident history, and workforce assignments.
+                    </p>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex flex-col gap-1.5 border-t border-border/40 pt-4 text-[8px] font-black uppercase text-muted-foreground tracking-wider">
+                    <span className="mb-1 block text-[7px] text-muted-foreground">Status Legend</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" /> Nominal state
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" /> Warning limits
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" /> Critical bottleneck
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
