@@ -25,6 +25,7 @@ import {
   Terminal,
   CornerDownLeft,
   Clock,
+  Sparkles,
 } from "lucide-react";
 import { useTheme } from "../providers/ThemeProvider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -137,6 +138,7 @@ export function AppShell({ children }: AppShellProps) {
 
   const navigation = [
     { name: "Overview", to: "/", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { name: "Final Demo", to: "/final-demo", icon: <Sparkles className="h-5 w-5 text-amber-400 animate-bounce" /> },
     { name: "Executive Room", to: "/executive-situation-room", icon: <ShieldCheck className="h-5 w-5 text-amber-500 animate-pulse" /> },
     { name: "Match Timeline", to: "/timeline", icon: <Clock className="h-5 w-5 text-emerald-400" /> },
     { name: "ATLAS Copilot", to: "/copilot", icon: <Brain className="h-5 w-5 animate-pulse text-primary" /> },

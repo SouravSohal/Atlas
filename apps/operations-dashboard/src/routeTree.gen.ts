@@ -18,6 +18,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NavigationRouteImport } from './routes/navigation'
 import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as IncidentsRouteImport } from './routes/incidents'
+import { Route as FinalDemoRouteImport } from './routes/final-demo'
 import { Route as ExecutiveSituationRoomRouteImport } from './routes/executive-situation-room'
 import { Route as CrowdIntelligenceRouteImport } from './routes/crowd-intelligence'
 import { Route as CopilotRouteImport } from './routes/copilot'
@@ -69,6 +70,11 @@ const IncidentsRoute = IncidentsRouteImport.update({
   path: '/incidents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinalDemoRoute = FinalDemoRouteImport.update({
+  id: '/final-demo',
+  path: '/final-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExecutiveSituationRoomRoute = ExecutiveSituationRoomRouteImport.update({
   id: '/executive-situation-room',
   path: '/executive-situation-room',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/executive-situation-room': typeof ExecutiveSituationRoomRoute
+  '/final-demo': typeof FinalDemoRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/executive-situation-room': typeof ExecutiveSituationRoomRoute
+  '/final-demo': typeof FinalDemoRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/executive-situation-room': typeof ExecutiveSituationRoomRoute
+  '/final-demo': typeof FinalDemoRoute
   '/incidents': typeof IncidentsRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/copilot'
     | '/crowd-intelligence'
     | '/executive-situation-room'
+    | '/final-demo'
     | '/incidents'
     | '/metrics'
     | '/navigation'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/copilot'
     | '/crowd-intelligence'
     | '/executive-situation-room'
+    | '/final-demo'
     | '/incidents'
     | '/metrics'
     | '/navigation'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/copilot'
     | '/crowd-intelligence'
     | '/executive-situation-room'
+    | '/final-demo'
     | '/incidents'
     | '/metrics'
     | '/navigation'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   CopilotRoute: typeof CopilotRoute
   CrowdIntelligenceRoute: typeof CrowdIntelligenceRoute
   ExecutiveSituationRoomRoute: typeof ExecutiveSituationRoomRoute
+  FinalDemoRoute: typeof FinalDemoRoute
   IncidentsRoute: typeof IncidentsRoute
   MetricsRoute: typeof MetricsRoute
   NavigationRoute: typeof NavigationRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/final-demo': {
+      id: '/final-demo'
+      path: '/final-demo'
+      fullPath: '/final-demo'
+      preLoaderRoute: typeof FinalDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/executive-situation-room': {
       id: '/executive-situation-room'
       path: '/executive-situation-room'
@@ -321,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   CopilotRoute: CopilotRoute,
   CrowdIntelligenceRoute: CrowdIntelligenceRoute,
   ExecutiveSituationRoomRoute: ExecutiveSituationRoomRoute,
+  FinalDemoRoute: FinalDemoRoute,
   IncidentsRoute: IncidentsRoute,
   MetricsRoute: MetricsRoute,
   NavigationRoute: NavigationRoute,
