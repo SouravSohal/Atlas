@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { routeTree } from "./routeTree.gen";
 import { NotFoundPage } from "./routes/-404";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { WebSocketProvider } from "./providers/WebSocketProvider";
 import "./styles/global.css";
 
 // Initialize TanStack Query Client
@@ -36,7 +37,9 @@ declare module "@tanstack/react-router" {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <WebSocketProvider>
+        <RouterProvider router={router} />
+      </WebSocketProvider>
     </QueryClientProvider>
   </StrictMode>
 );

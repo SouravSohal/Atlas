@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useWebSocket } from "../providers/WebSocketProvider";
 import {
   TrendingUp,
   Download,
@@ -20,10 +21,16 @@ export const Route = createFileRoute("/analytics")({
 });
 
 function AnalyticsPage() {
+  const { subscribe, unsubscribe } = useWebSocket();
   const [timeRange, setTimeRange] = useState("match");
   const [filterZone, setFilterZone] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    subscribe("telemetry");
+    return () => unsubscribe("telemetry");
+  }, [subscribe, unsubscribe]);
 
   const overviewQuery = useQuery({
     queryKey: ["cc-overview"],

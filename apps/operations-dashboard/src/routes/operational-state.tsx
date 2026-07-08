@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useWebSocket } from "../providers/WebSocketProvider";
 import {
   ReactFlow,
   Background,
@@ -176,7 +177,7 @@ const ZONE_METADATA_TEMPLATES = [
 ];
 
 function OperationalStateDashboardPage() {
-  const queryClient = useQueryClient();
+  const { subscribe, unsubscribe } = useWebSocket();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   // TanStack Query
@@ -198,34 +199,15 @@ function OperationalStateDashboardPage() {
     refetchInterval: 5000,
   });
 
-  // Future-ready WebSockets Connection
+  // Real-time WebSocket connection to subscribe to topic updates
   useEffect(() => {
-    const wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    // Replaces client dev port (5173) with backend api port (8000)
-    const wsHost = window.location.host.replace("5173", "8000");
-    const socket = new WebSocket(`${wsProto}//${wsHost}/api/v1/operational-state/ws`);
-
-    socket.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload.type === "state_update") {
-          // Dynamically mutate query cache value
-          queryClient.setQueryData(["twin-state"], (prev: any) => {
-            if (!prev) return prev;
-            return prev.map((zone: any) =>
-              zone.zone_id === payload.zone_id ? { ...zone, ...payload.metrics } : zone
-            );
-          });
-        }
-      } catch (err) {
-        console.error("WebSocket message parsing failed:", err);
-      }
-    };
-
+    subscribe("operational_state");
+    subscribe("telemetry");
     return () => {
-      socket.close();
+      unsubscribe("operational_state");
+      unsubscribe("telemetry");
     };
-  }, [queryClient]);
+  }, [subscribe, unsubscribe]);
 
   if (stateQuery.isLoading || incidentsQuery.isLoading || recommendationsQuery.isLoading) {
     return <LoadingScreen />;

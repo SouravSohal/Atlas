@@ -22,6 +22,7 @@ from app.infrastructure.repositories import (
     FirestoreTaskRepository,
 )
 from app.intelligence import AIOrchestrator, ContextRetriever, ModelGateway, PromptRegistry
+from app.infrastructure.streaming import WebSocketManager, BroadcastService
 
 
 class ApplicationContainer(containers.DeclarativeContainer):
@@ -34,6 +35,8 @@ class ApplicationContainer(containers.DeclarativeContainer):
             "app.presentation.routers.incidents",
             "app.presentation.routers.dashboard",
             "app.presentation.routers.copilot",
+            "app.presentation.routers.streaming",
+            "app.presentation.routers.demo_engine",
             "app.dependencies.auth",
             "app.main",
         ]
@@ -125,3 +128,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     gemini_client = providers.Singleton(lambda: None)
     firebase_app = providers.Singleton(lambda: None)
     maps_client = providers.Singleton(lambda: None)
+
+    # Streaming Infrastructure
+    websocket_manager = providers.Singleton(WebSocketManager)
+    broadcast_service = providers.Singleton(BroadcastService, websocket_manager=websocket_manager)

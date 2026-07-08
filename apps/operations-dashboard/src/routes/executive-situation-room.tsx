@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useWebSocket } from "../providers/WebSocketProvider";
 import {
   ShieldCheck,
   AlertTriangle,
@@ -24,7 +25,17 @@ export const Route = createFileRoute("/executive-situation-room")({
 });
 
 function ExecutiveSituationRoomPage() {
+  const { subscribe, unsubscribe } = useWebSocket();
   const [approvedDecisions, setApprovedDecisions] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    subscribe("telemetry");
+    subscribe("incidents");
+    return () => {
+      unsubscribe("telemetry");
+      unsubscribe("incidents");
+    };
+  }, [subscribe, unsubscribe]);
 
   const overviewQuery = useQuery({
     queryKey: ["cc-overview"],

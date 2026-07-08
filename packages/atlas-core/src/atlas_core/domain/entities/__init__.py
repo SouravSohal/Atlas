@@ -7,6 +7,8 @@ from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.recommendation import Recommendation
 from atlas_core.domain.entities.task import Task
 from atlas_core.domain.entities.user import User
+from atlas_core.domain.entities.stadium_node import StadiumNode
+from atlas_core.domain.entities.stadium import Stadium
 
 __all__ = [
     "BaseEntity",
@@ -16,4 +18,6 @@ __all__ = [
     "Recommendation",
     "Task",
     "User",
+    "StadiumNode",
+    "Stadium",
 ]

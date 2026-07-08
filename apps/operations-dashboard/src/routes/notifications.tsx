@@ -1,18 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useWebSocket } from "../providers/WebSocketProvider";
 import {
   Bell,
+  Filter,
+  Trash2,
   Shield,
   HeartPulse,
-  Activity,
   Brain,
   CloudRain,
   Bus,
   CheckCircle,
   Clock,
-  Filter,
-  Trash2,
+  Activity,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -43,6 +44,17 @@ interface NotificationItem {
 
 function NotificationCenterPage() {
   const queryClient = useQueryClient();
+  const { subscribe, unsubscribe } = useWebSocket();
+
+  useEffect(() => {
+    subscribe("incidents");
+    subscribe("recommendations");
+    return () => {
+      unsubscribe("incidents");
+      unsubscribe("recommendations");
+    };
+  }, [subscribe, unsubscribe]);
+
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [groupBySeverity, setGroupBySeverity] = useState(false);

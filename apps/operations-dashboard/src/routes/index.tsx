@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useWebSocket } from "../providers/WebSocketProvider";
 import {
   ReactFlow,
   Background,
@@ -459,6 +460,7 @@ const SCENARIO_STEPS: Record<string, any[]> = {
 
 function MissionControlPage() {
   const queryClient = useQueryClient();
+  const { subscribe, unsubscribe } = useWebSocket();
   const [approvedRecs, setApprovedRecs] = useState<Record<string, boolean>>({});
   const [demoOpen, setDemoOpen] = useState(false);
   const [demoMessage, setDemoMessage] = useState<string | null>(null);
@@ -468,6 +470,18 @@ function MissionControlPage() {
   const [demoStatusMilestone, setDemoStatusMilestone] = useState<string>("");
   const [focusedNodeIndex, setFocusedNodeIndex] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Real-time WebSocket connection to subscribe to updates
+  useEffect(() => {
+    subscribe("telemetry");
+    subscribe("incidents");
+    subscribe("recommendations");
+    return () => {
+      unsubscribe("telemetry");
+      unsubscribe("incidents");
+      unsubscribe("recommendations");
+    };
+  }, [subscribe, unsubscribe]);
 
 
 

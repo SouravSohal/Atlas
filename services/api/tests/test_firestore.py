@@ -117,6 +117,9 @@ async def test_base_repository_save_and_delete(firestore_client: FirestoreClient
     mock_doc.get = AsyncMock(return_value=mock_snapshot)
 
     mock_tx = MagicMock(spec=AsyncTransaction)
+    mock_tx._read_only = False
+    mock_tx._max_attempts = 5
+    mock_tx._id = b"test_id"
     mock_tx.__aenter__ = AsyncMock(return_value=mock_tx)
     mock_tx.__aexit__ = AsyncMock(return_value=False)
 
@@ -143,6 +146,9 @@ async def test_base_repository_save_and_delete_with_transaction(firestore_client
 
     mock_doc = MagicMock()
     mock_tx = MagicMock(spec=AsyncTransaction)
+    mock_tx._read_only = False
+    mock_tx._max_attempts = 5
+    mock_tx._id = b"test_id"
 
     mock_snapshot = MagicMock()
     mock_snapshot.exists = False

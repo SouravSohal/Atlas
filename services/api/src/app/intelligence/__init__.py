@@ -11,6 +11,7 @@ from app.intelligence.prompt_builder import PromptBuilder
 from app.intelligence.prompt_registry import PromptRegistry
 from app.intelligence.prompt_version import PromptVersion
 from app.intelligence.response_validator import ResponseValidator
+from app.intelligence.stadium_orchestrator import StadiumAIResponse, StadiumAIOrchestrator
 from app.intelligence.structured_output import (
     AIExplanation,
     AIPrediction,
@@ -38,4 +39,6 @@ __all__ = [
     "ResponseEnvelope",
     "ResponseValidator",
     "ValidationException",
+    "StadiumAIResponse",
+    "StadiumAIOrchestrator",
 ]

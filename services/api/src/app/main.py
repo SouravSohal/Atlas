@@ -15,6 +15,8 @@ from app.presentation.routers.health import router as health_router
 from app.presentation.routers.incidents import router as incidents_router
 from app.presentation.routers.version import router as version_router
 from app.presentation.routers.copilot import router as copilot_router
+from app.presentation.routers.streaming import router as streaming_router
+from app.presentation.routers.demo_engine import router as demo_router
 
 logger = structlog.get_logger()
 
@@ -85,6 +87,8 @@ def create_app() -> FastAPI:
     app.include_router(incidents_router)
     app.include_router(dashboard_router)
     app.include_router(copilot_router)
+    app.include_router(streaming_router)
+    app.include_router(demo_router)
 
     return app
 

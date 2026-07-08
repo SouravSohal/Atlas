@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Users,
   Search,
@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchDashboardOverview } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useWebSocket } from "../providers/WebSocketProvider";
 
 export const Route = createFileRoute("/volunteers")({
   component: VolunteersIntelligencePage,
@@ -105,7 +106,7 @@ const MOCK_VOLUNTEERS: Volunteer[] = [
 ];
 
 function VolunteersIntelligencePage() {
-  const queryClient = useQueryClient();
+  const { subscribe, unsubscribe } = useWebSocket();
   const [volunteers, setVolunteers] = useState<Volunteer[]>(MOCK_VOLUNTEERS);
   const [selectedVolId, setSelectedVolId] = useState<string>("vol-1");
   const [bulkSelected, setBulkSelected] = useState<Record<string, boolean>>({});
@@ -123,20 +124,11 @@ function VolunteersIntelligencePage() {
     refetchInterval: 5000,
   });
 
-  // Real-time WebSocket connection to mock/invalidate updates
+  // Real-time WebSocket connection to subscribe to updates
   useEffect(() => {
-    const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws";
-    const ws = new WebSocket(wsUrl);
-
-    ws.onmessage = () => {
-      // Refresh volunteer updates
-      queryClient.invalidateQueries({ queryKey: ["cc-overview"] });
-      setToastMessage("Volunteer center database synchronized.");
-      setTimeout(() => setToastMessage(null), 3000);
-    };
-
-    return () => ws.close();
-  }, [queryClient]);
+    subscribe("telemetry");
+    return () => unsubscribe("telemetry");
+  }, [subscribe, unsubscribe]);
 
   const selectedVolunteer = useMemo(() => {
     return volunteers.find((v) => v.id === selectedVolId) || volunteers[0];

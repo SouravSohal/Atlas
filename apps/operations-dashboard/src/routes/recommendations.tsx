@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Compass,
   CheckCircle,
@@ -17,13 +17,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { fetchDashboardRecommendations } from "../services/api";
 import type { RecommendationItem } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useWebSocket } from "../providers/WebSocketProvider";
 
 export const Route = createFileRoute("/recommendations")({
   component: RecommendationsPage,
 });
 
 function RecommendationsPage() {
-  const queryClient = useQueryClient();
+  const { subscribe, unsubscribe } = useWebSocket();
 
   // Selected cards for bulk actions
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
@@ -46,31 +47,16 @@ function RecommendationsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["cc-recommendations"],
     queryFn: () => fetchDashboardRecommendations(1, 40),
-    refetchInterval: 5000,
+    refetchInterval: 10000,
   });
 
   const rawItems = data?.items || [];
 
-  // Real-time WebSocket connection to invalidate query cash on update events
+  // Real-time WebSocket connection to subscribe to topic updates
   useEffect(() => {
-    const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws";
-    const ws = new WebSocket(wsUrl);
-
-    ws.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload.type === "update" || payload.event === "action_center_update") {
-          queryClient.invalidateQueries({ queryKey: ["cc-recommendations"] });
-          setToastMessage("WebSocket: Recs database synced in real time!");
-          setTimeout(() => setToastMessage(null), 3500);
-        }
-      } catch (err) {
-        console.log("WebSocket parse warning", err);
-      }
-    };
-
-    return () => ws.close();
-  }, [queryClient]);
+    subscribe("recommendations");
+    return () => unsubscribe("recommendations");
+  }, [subscribe, unsubscribe]);
 
   // Merge local status overrides (Approved/Rejected/Completed etc)
   const items = useMemo(() => {

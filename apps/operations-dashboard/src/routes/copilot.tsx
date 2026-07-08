@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useWebSocket } from "../providers/WebSocketProvider";
 import {
   Brain,
   Send,
@@ -28,6 +29,7 @@ interface ChatMessage {
 }
 
 function CopilotChatPage() {
+  const { subscribe, unsubscribe } = useWebSocket();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -35,6 +37,18 @@ function CopilotChatPage() {
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
+
+  useEffect(() => {
+    subscribe("telemetry");
+    subscribe("incidents");
+    subscribe("recommendations");
+    return () => {
+      unsubscribe("telemetry");
+      unsubscribe("incidents");
+      unsubscribe("recommendations");
+    };
+  }, [subscribe, unsubscribe]);
+
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [thinkingStage, setThinkingStage] = useState(0);

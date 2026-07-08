@@ -13,8 +13,8 @@ import {
   ChevronRight,
   ArrowUpDown,
 } from "lucide-react";
-import { fetchDashboardIncidents, updateIncident } from "../services/api";
-import type { IncidentItem } from "../services/api";
+import { fetchDashboardIncidents, updateIncident, type IncidentItem } from "../services/api";
+import { useWebSocket } from "../providers/WebSocketProvider";
 
 export const Route = createFileRoute("/incidents")({
   component: IncidentsPage,
@@ -22,6 +22,12 @@ export const Route = createFileRoute("/incidents")({
 
 function IncidentsPage() {
   const queryClient = useQueryClient();
+  const { subscribe, unsubscribe } = useWebSocket();
+
+  useEffect(() => {
+    subscribe("incidents");
+    return () => unsubscribe("incidents");
+  }, [subscribe, unsubscribe]);
   const [search, setSearch] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
