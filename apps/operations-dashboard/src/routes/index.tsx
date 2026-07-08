@@ -42,6 +42,7 @@ type StadiumNodeData = {
   value: string;
   status: "stable" | "warning" | "critical";
   type: string;
+  isFocused?: boolean;
 };
 
 type StadiumNode = Node<StadiumNodeData, "stadiumNode">;
@@ -49,9 +50,9 @@ type StadiumNode = Node<StadiumNodeData, "stadiumNode">;
 // Custom React flow nodes configuration
 const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
   const borderColors = {
-    stable: "border-emerald-500/50 shadow-emerald-500/5",
-    warning: "border-amber-500/50 shadow-amber-500/5",
-    critical: "border-destructive/60 shadow-destructive/5",
+    stable: data.isFocused ? "border-amber-400 ring-2 ring-amber-400/50" : "border-emerald-500/50 shadow-emerald-500/5",
+    warning: data.isFocused ? "border-amber-400 ring-2 ring-amber-400/50" : "border-amber-500/50 shadow-amber-500/5",
+    critical: data.isFocused ? "border-amber-400 ring-2 ring-amber-400/50" : "border-destructive/60 shadow-destructive/5",
   };
 
   const bgColors = {
@@ -67,7 +68,16 @@ const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
   };
 
   return (
-    <div className={`rounded-xl border ${borderColors[data.status]} ${bgColors[data.status]} p-3 text-left w-40 backdrop-blur-md shadow-lg`}>
+    <motion.div
+      animate={data.isFocused ? { scale: [1, 1.05, 1], y: [0, -3, 0] } : {}}
+      transition={{ repeat: Infinity, duration: 1.5 }}
+      className={`rounded-xl border ${borderColors[data.status]} ${bgColors[data.status]} p-3 text-left w-40 backdrop-blur-md shadow-lg relative`}
+    >
+      {data.isFocused && (
+        <span className="absolute -top-2.5 -right-2 bg-amber-500 text-black text-[7px] font-black px-1 py-0.5 rounded border border-black shadow uppercase animate-pulse">
+          🎯 focus
+        </span>
+      )}
       <Handle type="target" position={Position.Left} className="w-1.5 h-1.5 bg-border" />
       <div className="flex items-center gap-1.5">
         <span className={`h-1.5 w-1.5 rounded-full ${indicatorColors[data.status]}`} />
@@ -78,7 +88,7 @@ const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
         <span className="text-xs font-black text-foreground mt-0.5 block">{data.value}</span>
       </div>
       <Handle type="source" position={Position.Right} className="w-1.5 h-1.5 bg-border" />
-    </div>
+    </motion.div>
   );
 };
 
@@ -347,6 +357,66 @@ const SCENARIO_STEPS: Record<string, any[]> = {
       summary: "VIP transit completed. Operations returned to default.",
       notification: "System initialized. Normal."
     }
+  ],
+  "Lost Child": [
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Security patrols reporting all clear at Sections 200-220.",
+      notification: "System initialized. Security nominal."
+    },
+    {
+      overview: { stadium_health: 0.88, active_incidents_count: 1, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.50, queue_waiting_minutes: 6 }],
+      incidents: [{ id: "inc-5", incident_type: "security", severity: "medium", description: "7-year-old child separated from guardians near Section 208.", resolved: false, created_at: new Date().toISOString(), age: 60000 }],
+      recs: [{ id: "rec-13", action_type: "dispatch", priority: "high", details: "Deploy Gate 2 volunteers to support perimeter search.", age: 60000 }],
+      summary: "Lost child reported near Section 208. Dispatching nearest search volunteers.",
+      notification: "Warning: Lost child alert in Section 208."
+    },
+    {
+      overview: { stadium_health: 0.85, active_incidents_count: 1, average_crowd_density: 0.45, allocated_volunteers_count: 24 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.45, queue_waiting_minutes: 5 }],
+      incidents: [{ id: "inc-5", incident_type: "security", severity: "medium", description: "7-year-old child separated from guardians near Section 208.", resolved: false, created_at: new Date().toISOString(), age: 120000 }],
+      recs: [{ id: "rec-14", action_type: "dispatch", priority: "medium", details: "Broadcast alert description to exit gate turnstiles.", age: 60000 }],
+      summary: "Search in progress. Security checkpoints verified. Parent matched details.",
+      notification: "Update: Security perimeter sweep in progress."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 24 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Child reunited with guardians. Search stood down.",
+      notification: "Clear: Family reunited successfully."
+    }
+  ],
+  "Match End": [
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Match in final minutes. Gates preparation nominal.",
+      notification: "System initialized. Operations ready."
+    },
+    {
+      overview: { stadium_health: 0.85, active_incidents_count: 1, average_crowd_density: 0.75, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.85, queue_waiting_minutes: 18 }, { density: 0.70, queue_waiting_minutes: 15 }],
+      incidents: [{ id: "inc-6", incident_type: "crowd_control", severity: "medium", description: "Spectator surge at main exit gates.", resolved: false, created_at: new Date().toISOString(), age: 60000 }],
+      recs: [{ id: "rec-15", action_type: "reroute", priority: "high", details: "Open auxiliary egress corridor doors.", age: 60000 }],
+      summary: "Egress surge detected at main gates. Auxiliary corridors initiated.",
+      notification: "Warning: High egress density detected."
+    },
+    {
+      overview: { stadium_health: 0.95, active_incidents_count: 0, average_crowd_density: 0.30, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.30, queue_waiting_minutes: 4 }, { density: 0.25, queue_waiting_minutes: 3 }],
+      incidents: [],
+      recs: [],
+      summary: "Egress completed. Spectators cleared from plaza corridors.",
+      notification: "Clear: Stadium egress complete."
+    }
   ]
 };
 
@@ -355,6 +425,14 @@ function MissionControlPage() {
   const [approvedRecs, setApprovedRecs] = useState<Record<string, boolean>>({});
   const [demoOpen, setDemoOpen] = useState(false);
   const [demoMessage, setDemoMessage] = useState<string | null>(null);
+
+  // Judge Demo state variables
+  const [judgeDemoActive, setJudgeDemoActive] = useState(false);
+  const [demoStatusMilestone, setDemoStatusMilestone] = useState<string>("");
+  const [focusedNodeIndex, setFocusedNodeIndex] = useState<number | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+
 
   // Playback engine states
   const [playbackActive, setPlaybackActive] = useState(false);
@@ -418,6 +496,8 @@ function MissionControlPage() {
           setPlaybackActive(false);
           setPlaybackScenario(null);
           setPlaybackStep(0);
+          setFocusedNodeIndex(null);
+          setJudgeDemoActive(false);
           return 0;
         }
       });
@@ -474,6 +554,66 @@ function MissionControlPage() {
       setLocalNotifications((prev) => [newNotif, ...prev].slice(0, 8));
     }
   }, [playbackActive, playbackScenario, playbackStep, playbackData]);
+
+  // Trigger toast notification on step progression
+  useEffect(() => {
+    if (playbackActive && playbackData?.notification) {
+      setToastMessage(playbackData.notification);
+      const timer = setTimeout(() => setToastMessage(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [playbackActive, playbackStep, playbackData]);
+
+  const startJudgeDemo = (scenarioName: string) => {
+    setPlaybackActive(true);
+    setPlaybackScenario(scenarioName);
+    setPlaybackStep(0);
+    setPlaybackSpeed(1); // Standard 1x speed baseline
+    setPlaybackIsPaused(false);
+    setJudgeDemoActive(true);
+
+    let focusNodeIdx = 0;
+    if (scenarioName === "Crowd Surge") focusNodeIdx = 0;
+    if (scenarioName === "Medical Emergency") focusNodeIdx = 3;
+    if (scenarioName === "Heavy Rain") focusNodeIdx = 4;
+    if (scenarioName === "Lost Child") focusNodeIdx = 2;
+    if (scenarioName === "Match End") focusNodeIdx = 1;
+    setFocusedNodeIndex(focusNodeIdx);
+
+    // Call real backend mutation endpoints to demonstrate real-time data link
+    if (scenarioName === "Crowd Surge") {
+      triggerScenario("crowd_control", "high", "High congestion alert at Gate 1 turnstiles.");
+    } else if (scenarioName === "Medical Emergency") {
+      triggerScenario("medical", "critical", "Spectator collapse reported near Section 104.");
+    } else if (scenarioName === "Heavy Rain") {
+      triggerScenario("weather", "medium", "Sudden heavy rainfall starting. Diverting spectators.");
+    } else if (scenarioName === "Lost Child") {
+      triggerScenario("security", "medium", "7-year-old child reported separated from guardians near Section 208.");
+    } else if (scenarioName === "Match End") {
+      triggerScenario("crowd_control", "medium", "Match egress exit crowd surge bottleneck.");
+    }
+
+    const milestones = [
+      "🔄 Initializing Stadium Topology...",
+      "📡 Dispatching Backend Scenario Request...",
+      "🔬 Cloning state & applying simulator...",
+      "🤖 Triggering AI Orchestrator analysis...",
+      "✨ Replaying Digital Twin flow metrics...",
+      "✅ Demo complete: Operations stabilized!"
+    ];
+
+    let currentMilestone = 0;
+    setDemoStatusMilestone(milestones[0]);
+
+    const timer = setInterval(() => {
+      currentMilestone++;
+      if (currentMilestone < milestones.length) {
+        setDemoStatusMilestone(milestones[currentMilestone]);
+      } else {
+        clearInterval(timer);
+      }
+    }, 3500);
+  };
 
   // Resolve Incident mutation
   const resolveMutation = useMutation({
@@ -552,6 +692,8 @@ function MissionControlPage() {
       if (zone.density > 0.8) status = "critical";
       else if (zone.density > 0.4) status = "warning";
 
+      const isFocused = focusedNodeIndex === index;
+
       return {
         id: zone.zone_id,
         type: "stadiumNode",
@@ -561,10 +703,11 @@ function MissionControlPage() {
           type: types[index] || "Sector",
           value: `Density: ${Math.round(zone.density * 100)}%`,
           status,
+          isFocused,
         },
       } as StadiumNode;
     });
-  }, [playbackActive, playbackData, stateQuery.data]);
+  }, [playbackActive, playbackData, stateQuery.data, focusedNodeIndex]);
 
   const flowEdges = useMemo(() => {
     if (flowNodes.length < 2) return [];
@@ -681,6 +824,8 @@ function MissionControlPage() {
             <option value="Heavy Rain">Heavy Rain Simulation</option>
             <option value="Power Failure">Power Failure Simulation</option>
             <option value="VIP Arrival">VIP Arrival Simulation</option>
+            <option value="Lost Child">Lost Child Simulation</option>
+            <option value="Match End">Match End Simulation</option>
           </select>
 
           {playbackActive && (
@@ -731,6 +876,8 @@ function MissionControlPage() {
                   setPlaybackActive(false);
                   setPlaybackScenario(null);
                   setPlaybackStep(0);
+                  setFocusedNodeIndex(null);
+                  setJudgeDemoActive(false);
                 }}
                 className="rounded-xl bg-destructive px-3.5 py-2 text-xs font-bold text-destructive-foreground hover:opacity-90 transition-opacity"
               >
@@ -744,7 +891,13 @@ function MissionControlPage() {
       {/* Flagship KPI Matrix */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
         {metrics.map((m) => (
-          <div key={m.title} className="rounded-xl border border-border bg-card/45 backdrop-blur-md p-4 hover:shadow-md transition-shadow">
+          <motion.div
+            key={`${m.title}-${m.value}`}
+            initial={{ scale: 0.95, opacity: 0.8 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="rounded-xl border border-border bg-card/45 backdrop-blur-md p-4 hover:shadow-md transition-shadow"
+          >
             <div className="flex items-center justify-between text-muted-foreground">
               <span className="text-[10px] font-bold uppercase tracking-wider">{m.title}</span>
               {m.icon}
@@ -753,7 +906,7 @@ function MissionControlPage() {
               <span className="text-2xl font-black tracking-tight">{m.value}</span>
               <span className="text-[9px] font-bold text-muted-foreground uppercase">{m.status}</span>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
@@ -987,7 +1140,7 @@ function MissionControlPage() {
         </div>
       </div>
 
-      {/* Floating Demo Control Panel */}
+      {/* Floating Demo Control Panel (Judge Demo Mode Console) */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         <AnimatePresence>
           {demoOpen && (
@@ -995,12 +1148,14 @@ function MissionControlPage() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="mb-3 w-80 rounded-2xl border border-primary/30 bg-card/95 backdrop-blur-md shadow-2xl p-5"
+              className="mb-3 w-96 rounded-2xl border border-amber-500/30 bg-card/95 backdrop-blur-md shadow-2xl p-5 overflow-hidden text-left relative"
             >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+              
               <div className="flex items-center justify-between border-b border-border pb-2.5 mb-4">
-                <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                  Demo Control Console
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4" />
+                  🏆 ATLAS JUDGE DEMO MODE
                 </span>
                 <button
                   onClick={() => setDemoOpen(false)}
@@ -1010,44 +1165,49 @@ function MissionControlPage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5 text-left">
-                <button
-                  onClick={() => triggerScenario("crowd_control", "high", "High congestion alert at Gate 1 Ingress turnstiles.")}
-                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
-                >
-                  Gate Congestion
-                </button>
-                <button
-                  onClick={() => triggerScenario("medical", "critical", "Spectator collapse reported near Section 104.")}
-                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
-                >
-                  Medical Emergency
-                </button>
-                <button
-                  onClick={() => triggerScenario("facility", "critical", "Local power failure reported in central food sector.")}
-                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
-                >
-                  Power Failure
-                </button>
-                <button
-                  onClick={() => triggerScenario("weather", "medium", "Sudden heavy rainfall starting. Evacuating open parking lots.")}
-                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
-                >
-                  Heavy Rain
-                </button>
-                <button
-                  onClick={() => triggerScenario("security", "low", "VIP Motorcade approaching Gate 2 Ingress plaza.")}
-                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
-                >
-                  VIP Arrival
-                </button>
-                <button
-                  onClick={() => triggerScenario("security", "medium", "7-year-old child reported separated from guardians near Section 208.")}
-                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
-                >
-                  Lost Child
-                </button>
+              <p className="text-[10px] text-muted-foreground mb-4">
+                Select a playbook to run the automated demo. Focuses Digital Twin cameras, animates metrics, dispatches backend events, and reviews live AI briefs.
+              </p>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  { name: "Crowd Surge", desc: "Gate congestion surge egress" },
+                  { name: "Medical Emergency", desc: "Spectator health heat stroke" },
+                  { name: "Heavy Rain", desc: "Plaza shelter diversion" },
+                  { name: "Lost Child", desc: "Section 208 tracking search" },
+                  { name: "Match End", desc: "Outflow bottleneck clearance" }
+                ].map((scen) => (
+                  <button
+                    key={scen.name}
+                    onClick={() => startJudgeDemo(scen.name)}
+                    className={`rounded-xl border p-3 text-left transition-all flex flex-col justify-between h-20 ${
+                      playbackScenario === scen.name
+                        ? "bg-amber-500/10 border-amber-500 text-amber-400 font-bold"
+                        : "bg-muted/30 border-border hover:bg-amber-500/5 hover:border-amber-500/20 text-foreground"
+                    }`}
+                  >
+                    <span className="text-xs font-black leading-tight block">{scen.name}</span>
+                    <span className="text-[8px] text-muted-foreground leading-normal block">{scen.desc}</span>
+                  </button>
+                ))}
               </div>
+
+              {/* Milestones status indicator */}
+              {judgeDemoActive && (
+                <div className="mt-4 rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-[9px] font-mono text-amber-400">
+                    <span className="animate-pulse">{demoStatusMilestone}</span>
+                    <span>TICK PROGRESS</span>
+                  </div>
+                  <div className="w-full bg-amber-950/30 rounded-full h-1 overflow-hidden">
+                    <motion.div
+                      className="bg-amber-400 h-1"
+                      animate={{ width: `${((playbackStep + 1) / (SCENARIO_STEPS[playbackScenario || ""]?.length || 5)) * 100}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {demoMessage && (
                 <div className="mt-4 rounded-xl bg-primary/10 border border-primary/20 p-3 text-[10px] font-bold text-primary animate-pulse text-center">
@@ -1060,12 +1220,32 @@ function MissionControlPage() {
 
         <button
           onClick={() => setDemoOpen(!demoOpen)}
-          className="flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-xs font-bold text-primary-foreground shadow-2xl hover:opacity-90 transition-all border border-primary-foreground/10 focus-visible:ring-2 focus-visible:ring-primary outline-none"
+          className="flex items-center gap-2 rounded-full bg-amber-500 px-5 py-3 text-xs font-black text-black shadow-2xl hover:opacity-90 transition-all border border-amber-400/20 focus-visible:ring-2 focus-visible:ring-amber-500 outline-none uppercase tracking-wider"
         >
           <Sparkles className="h-4 w-4" />
-          Demo Mode Console
+          🏆 Judge Demo Mode
         </button>
       </div>
+
+      {/* Dynamic Toast Notifications */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-6 right-6 z-50 rounded-2xl border border-amber-500/30 bg-card/95 backdrop-blur-md p-4 shadow-2xl flex items-center gap-3 max-w-xs text-left"
+          >
+            <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
+              <Sparkles className="h-4 w-4 animate-pulse" />
+            </div>
+            <div>
+              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider block">Live Event Alert</span>
+              <p className="text-xs font-semibold text-foreground mt-0.5 leading-normal">{toastMessage}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
