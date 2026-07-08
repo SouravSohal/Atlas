@@ -86,11 +86,283 @@ const nodeTypes = {
   stadiumNode: CustomNode,
 };
 
+// Playback scenario database definitions
+const SCENARIO_STEPS: Record<string, any[]> = {
+  "Crowd Surge": [
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }, { density: 0.35, queue_waiting_minutes: 3 }],
+      incidents: [],
+      recs: [],
+      summary: "Stadium ingress gates reporting normal spectator arrivals. Staff deployed at check-points.",
+      notification: "System initialized. Operations nominal."
+    },
+    {
+      overview: { stadium_health: 0.92, active_incidents_count: 0, average_crowd_density: 0.65, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.75, queue_waiting_minutes: 12 }, { density: 0.50, queue_waiting_minutes: 6 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [{ id: "rec-1", action_type: "dispatch", priority: "medium", details: "Deploy 2 additional volunteers to Gate 1 check-points.", age: 60000 }],
+      summary: "Spectator density rising rapidly at Gate 1 turnstiles. Queue wait time now at 12 minutes.",
+      notification: "Warning: High crowd density detected at Gate 1 Sector."
+    },
+    {
+      overview: { stadium_health: 0.75, active_incidents_count: 1, average_crowd_density: 0.85, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.95, queue_waiting_minutes: 25 }, { density: 0.65, queue_waiting_minutes: 15 }, { density: 0.45, queue_waiting_minutes: 5 }],
+      incidents: [{ id: "inc-1", incident_type: "crowd_control", severity: "high", description: "Ingress bottleneck alert at Gate 1 check-points.", resolved: false, created_at: new Date().toISOString(), age: 120000 }],
+      recs: [
+        { id: "rec-1", action_type: "dispatch", priority: "medium", details: "Deploy 2 additional volunteers to Gate 1 check-points.", age: 120000 },
+        { id: "rec-2", action_type: "reroute", priority: "high", details: "Reroute incoming flows from Gate 1 to Gate 2.", age: 60000 }
+      ],
+      summary: "Ingress bottleneck alert at Gate 1 turnstiles. System recommends active flow rerouting.",
+      notification: "High Alert: Sector congestion bottleneck active."
+    },
+    {
+      overview: { stadium_health: 0.70, active_incidents_count: 1, average_crowd_density: 0.90, allocated_volunteers_count: 24 },
+      zones: [{ density: 0.98, queue_waiting_minutes: 32 }, { density: 0.70, queue_waiting_minutes: 18 }, { density: 0.50, queue_waiting_minutes: 6 }],
+      incidents: [{ id: "inc-1", incident_type: "crowd_control", severity: "high", description: "Ingress bottleneck alert at Gate 1 check-points.", resolved: false, created_at: new Date().toISOString(), age: 180000 }],
+      recs: [
+        { id: "rec-2", action_type: "reroute", priority: "high", details: "Reroute incoming flows from Gate 1 to Gate 2.", age: 120000 }
+      ],
+      summary: "Rerouting active. Volunteer teams are directing crowd flow to empty Gate 2 corridors.",
+      notification: "Rerouting protocol: Gate 2 backup ingress channels active."
+    },
+    {
+      overview: { stadium_health: 0.95, active_incidents_count: 0, average_crowd_density: 0.55, allocated_volunteers_count: 24 },
+      zones: [{ density: 0.50, queue_waiting_minutes: 6 }, { density: 0.55, queue_waiting_minutes: 8 }, { density: 0.45, queue_waiting_minutes: 5 }],
+      incidents: [],
+      recs: [],
+      summary: "Bottleneck dispersed successfully. Ingress flow stabilized under recommended routing.",
+      notification: "Clear: Gate 1 turnstiles returned to safe operational levels."
+    }
+  ],
+  "Medical Emergency": [
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Operations normal. Medical responder units placed on standby at Post Alpha.",
+      notification: "Medical status check complete. Ready."
+    },
+    {
+      overview: { stadium_health: 0.83, active_incidents_count: 1, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.55, queue_waiting_minutes: 8 }],
+      incidents: [{ id: "inc-2", incident_type: "medical", severity: "critical", description: "Spectator collapse reported in Section 104. Dispatching post units.", resolved: false, created_at: new Date().toISOString(), age: 60000 }],
+      recs: [{ id: "rec-3", action_type: "dispatch", priority: "high", details: "Dispatch First-Aid Team Alpha to Section 104.", age: 60000 }],
+      summary: "Spectator collapse reported in Section 104. First Aid responders dispatched.",
+      notification: "Emergency: Medical alert registered in Section 104."
+    },
+    {
+      overview: { stadium_health: 0.83, active_incidents_count: 1, average_crowd_density: 0.50, allocated_volunteers_count: 22 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.60, queue_waiting_minutes: 10 }],
+      incidents: [{ id: "inc-2", incident_type: "medical", severity: "critical", description: "Spectator collapse reported in Section 104. Dispatching post units.", resolved: false, created_at: new Date().toISOString(), age: 120000 }],
+      recs: [{ id: "rec-4", action_type: "reroute", priority: "medium", details: "Clear security corridor near Section 104 exit.", age: 60000 }],
+      summary: "Responders arrived on scene. Administering first aid. Corridor cleared for transit.",
+      notification: "Update: Responders arrived. Scene secured."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 22 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Patient evacuated and stable. Incident resolved. Corridor reopened.",
+      notification: "Resolve: Emergency cleared. Sector nominal."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Medical responders returned to standby. Ready.",
+      notification: "System initialized. Standby."
+    }
+  ],
+  "Gate Closure": [
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "All gates active and operating. Flow rate nominal.",
+      notification: "All check-points online."
+    },
+    {
+      overview: { stadium_health: 0.83, active_incidents_count: 1, average_crowd_density: 0.50, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.0, queue_waiting_minutes: 0 }, { density: 0.65, queue_waiting_minutes: 12 }],
+      incidents: [{ id: "inc-3", incident_type: "facility", severity: "high", description: "Gate 1 Turnstile malfunction. Structural block.", resolved: false, created_at: new Date().toISOString(), age: 60000 }],
+      recs: [{ id: "rec-5", action_type: "dispatch", priority: "medium", details: "Dispatch maintenance engineers to Gate 1.", age: 60000 }],
+      summary: "Turnstile malfunction at Gate 1. Ingress flow halted. Diverting spectators.",
+      notification: "Warning: Gate 1 turnstile malfunction."
+    },
+    {
+      overview: { stadium_health: 0.65, active_incidents_count: 1, average_crowd_density: 0.70, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.0, queue_waiting_minutes: 0 }, { density: 0.90, queue_waiting_minutes: 25 }],
+      incidents: [{ id: "inc-3", incident_type: "facility", severity: "high", description: "Gate 1 Turnstile malfunction. Structural block.", resolved: false, created_at: new Date().toISOString(), age: 120000 }],
+      recs: [
+        { id: "rec-5", action_type: "dispatch", priority: "medium", details: "Dispatch maintenance engineers to Gate 1.", age: 120000 },
+        { id: "rec-6", action_type: "reroute", priority: "high", details: "Divert crowd flow to Gate 2.", age: 60000 }
+      ],
+      summary: "Engineers on site. Spectators diverted. Gate 2 experiencing heavy load.",
+      notification: "Alert: Gate 2 queue times rising."
+    },
+    {
+      overview: { stadium_health: 0.95, active_incidents_count: 0, average_crowd_density: 0.55, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 6 }, { density: 0.55, queue_waiting_minutes: 8 }],
+      incidents: [],
+      recs: [],
+      summary: "Turnstile repaired. Gate 1 reopened. Flow rates normalized.",
+      notification: "Clear: Gate 1 turnstile repaired."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Gate operations returned to default presets.",
+      notification: "System initialized. Normal."
+    }
+  ],
+  "Heavy Rain": [
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Weather forecast: Clear sky operations.",
+      notification: "System initialized."
+    },
+    {
+      overview: { stadium_health: 0.93, active_incidents_count: 0, average_crowd_density: 0.55, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.55, queue_waiting_minutes: 10 }, { density: 0.50, queue_waiting_minutes: 8 }],
+      incidents: [],
+      recs: [{ id: "rec-7", action_type: "dispatch", priority: "medium", details: "Distribute rain covers and clear open plaza paths.", age: 60000 }],
+      summary: "Rain initiated. Open plaza areas cleared. Queue speeds slowing down.",
+      notification: "Warning: Rain shower starting."
+    },
+    {
+      overview: { stadium_health: 0.88, active_incidents_count: 0, average_crowd_density: 0.65, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.65, queue_waiting_minutes: 15 }, { density: 0.60, queue_waiting_minutes: 12 }],
+      incidents: [],
+      recs: [{ id: "rec-8", action_type: "reroute", priority: "high", details: "Evacuate open parking lots to covered corridors.", age: 60000 }],
+      summary: "Spectators moving to covered sectors. Plaza density rising.",
+      notification: "Alert: Spectators seeking cover."
+    },
+    {
+      overview: { stadium_health: 0.95, active_incidents_count: 0, average_crowd_density: 0.55, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 6 }, { density: 0.50, queue_waiting_minutes: 7 }],
+      incidents: [],
+      recs: [],
+      summary: "Rain cleared. Operations returning to default layout.",
+      notification: "Clear: Rain stopped."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Clear sky operations restored.",
+      notification: "System initialized. Normal."
+    }
+  ],
+  "Power Failure": [
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Power grid stable. All systems operating on main source.",
+      notification: "Power systems normal."
+    },
+    {
+      overview: { stadium_health: 0.68, active_incidents_count: 1, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 15 }, { density: 0.50, queue_waiting_minutes: 14 }],
+      incidents: [{ id: "inc-4", incident_type: "facility", severity: "critical", description: "Food Plaza sector power grid blackout.", resolved: false, created_at: new Date().toISOString(), age: 60000 }],
+      recs: [{ id: "rec-9", action_type: "dispatch", priority: "critical", details: "Dispatch emergency engineering crew and activate backup generator.", age: 60000 }],
+      summary: "Power outage in Food Plaza sector. Backup generators initiated.",
+      notification: "Critical: Food Plaza blackout reported."
+    },
+    {
+      overview: { stadium_health: 0.78, active_incidents_count: 1, average_crowd_density: 0.45, allocated_volunteers_count: 22 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 10 }, { density: 0.45, queue_waiting_minutes: 8 }],
+      incidents: [{ id: "inc-4", incident_type: "facility", severity: "critical", description: "Food Plaza sector power grid blackout.", resolved: false, created_at: new Date().toISOString(), age: 120000 }],
+      recs: [{ id: "rec-10", action_type: "dispatch", priority: "medium", details: "Verify main system security loops.", age: 60000 }],
+      summary: "Engineers working on restoration. Backup power keeping systems active.",
+      notification: "Update: Engineers on scene. Backup power active."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 22 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Main grid restored. Blackout cleared.",
+      notification: "Clear: Power restored to Food Plaza."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Operations returned to default grid source.",
+      notification: "System initialized. Grid normal."
+    }
+  ],
+  "VIP Arrival": [
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "Gate corridors operating on default ingress flow.",
+      notification: "System initialized."
+    },
+    {
+      overview: { stadium_health: 0.93, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 10 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [{ id: "rec-11", action_type: "dispatch", priority: "medium", details: "Secure Gate 2 arrival corridor.", age: 60000 }],
+      summary: "VIP motorcade approaching Gate 2. Corridor secure loops initiated.",
+      notification: "VIP Warning: Motorcade approaching."
+    },
+    {
+      overview: { stadium_health: 0.88, active_incidents_count: 0, average_crowd_density: 0.50, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 15 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [{ id: "rec-12", action_type: "reroute", priority: "high", details: "Divert public flow from Gate 2 to Gate 1.", age: 60000 }],
+      summary: "VIP arrival corridor secured. Public flow diverted to Gate 1.",
+      notification: "VIP Alert: Ingress diversion active."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "VIP transit complete. Gate 2 corridors returned to normal.",
+      notification: "Clear: VIP escort finished."
+    },
+    {
+      overview: { stadium_health: 0.98, active_incidents_count: 0, average_crowd_density: 0.45, allocated_volunteers_count: 20 },
+      zones: [{ density: 0.45, queue_waiting_minutes: 5 }, { density: 0.40, queue_waiting_minutes: 4 }],
+      incidents: [],
+      recs: [],
+      summary: "VIP transit completed. Operations returned to default.",
+      notification: "System initialized. Normal."
+    }
+  ]
+};
+
 function MissionControlPage() {
   const queryClient = useQueryClient();
   const [approvedRecs, setApprovedRecs] = useState<Record<string, boolean>>({});
   const [demoOpen, setDemoOpen] = useState(false);
   const [demoMessage, setDemoMessage] = useState<string | null>(null);
+
+  // Playback engine states
+  const [playbackActive, setPlaybackActive] = useState(false);
+  const [playbackScenario, setPlaybackScenario] = useState<string | null>(null);
+  const [playbackStep, setPlaybackStep] = useState(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [playbackIsPaused, setPlaybackIsPaused] = useState(false);
+  const [localNotifications, setLocalNotifications] = useState<any[]>([]);
 
   // Copilot Chat States
   const [chatMessages, setChatMessages] = useState<any[]>([
@@ -128,6 +400,80 @@ function MissionControlPage() {
     queryFn: () => fetchDashboardRecommendations(1, 10),
     refetchInterval: 5000,
   });
+
+  // Playback timer engine hook
+  useEffect(() => {
+    if (!playbackActive || playbackIsPaused || !playbackScenario) return;
+
+    const baseDelay = 4000; // 4 seconds per tick baseline
+    const delay = baseDelay / playbackSpeed;
+
+    const timer = setInterval(() => {
+      setPlaybackStep((prev) => {
+        const steps = SCENARIO_STEPS[playbackScenario] || [];
+        if (prev < steps.length - 1) {
+          return prev + 1;
+        } else {
+          // Playback finished, exit automatically
+          setPlaybackActive(false);
+          setPlaybackScenario(null);
+          setPlaybackStep(0);
+          return 0;
+        }
+      });
+    }, delay);
+
+    return () => clearInterval(timer);
+  }, [playbackActive, playbackIsPaused, playbackScenario, playbackSpeed]);
+
+  // Construct simulated playback dataset dynamically mapped to real coordinate containers
+  const playbackData = useMemo(() => {
+    if (!playbackActive || !playbackScenario) return null;
+    const stepData = SCENARIO_STEPS[playbackScenario]?.[playbackStep] || {};
+
+    const realZones = stateQuery.data || [];
+    const mappedZones = (stepData.zones || []).map((z: any, idx: number) => ({
+      zone_id: realZones[idx]?.zone_id || `z-${idx}`,
+      density: z.density,
+      queue_waiting_minutes: z.queue_waiting_minutes,
+      last_updated: new Date(),
+    }));
+
+    const mappedIncidents = (stepData.incidents || []).map((inc: any) => ({
+      ...inc,
+      id: inc.id,
+      zoneId: realZones[0]?.zone_id || "z-0",
+      created_at: new Date(Date.now() - inc.age).toISOString(),
+    }));
+
+    const mappedRecs = (stepData.recs || []).map((rec: any) => ({
+      ...rec,
+      id: rec.id,
+      zoneId: realZones[0]?.zone_id || "z-0",
+      created_at: new Date(Date.now() - rec.age).toISOString(),
+    }));
+
+    return {
+      overview: stepData.overview,
+      zones: mappedZones,
+      incidents: mappedIncidents,
+      recs: mappedRecs,
+      summary: stepData.summary,
+      notification: stepData.notification,
+    };
+  }, [playbackActive, playbackScenario, playbackStep, stateQuery.data]);
+
+  // Notification progression triggers
+  useEffect(() => {
+    if (playbackActive && playbackData?.notification) {
+      const newNotif = {
+        id: `${playbackScenario}-${playbackStep}-${Date.now()}`,
+        text: playbackData.notification,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setLocalNotifications((prev) => [newNotif, ...prev].slice(0, 8));
+    }
+  }, [playbackActive, playbackScenario, playbackStep, playbackData]);
 
   // Resolve Incident mutation
   const resolveMutation = useMutation({
@@ -187,9 +533,9 @@ function MissionControlPage() {
 
   // Digital Twin transforms
   const flowNodes = useMemo(() => {
-    if (!stateQuery.data) return [];
+    const activeZones = playbackActive && playbackData ? playbackData.zones : (stateQuery.data || []);
+    if (activeZones.length === 0) return [];
     
-    const zones = stateQuery.data;
     const labels = ["Gate 1 Ingress", "Gate 2 Exit", "Security Command", "Medical Post Alpha", "Main Parking Area", "Central Food Plaza"];
     const types = ["Gate Entry", "Gate Exit", "Dispatch HQ", "Medical Hub", "Parking Zone", "Food sector"];
     const positions = [
@@ -201,7 +547,7 @@ function MissionControlPage() {
       { x: 550, y: 260 },
     ];
 
-    return zones.slice(0, 6).map((zone, index) => {
+    return activeZones.slice(0, 6).map((zone: any, index: number) => {
       let status: "stable" | "warning" | "critical" = "stable";
       if (zone.density > 0.8) status = "critical";
       else if (zone.density > 0.4) status = "warning";
@@ -218,7 +564,7 @@ function MissionControlPage() {
         },
       } as StadiumNode;
     });
-  }, [stateQuery.data]);
+  }, [playbackActive, playbackData, stateQuery.data]);
 
   const flowEdges = useMemo(() => {
     if (flowNodes.length < 2) return [];
@@ -246,8 +592,9 @@ function MissionControlPage() {
 
     // Dynamic response based on current metrics
     setTimeout(() => {
-      const activeIncidents = incidentsQuery.data?.items.filter(i => !i.resolved) || [];
-      const summary = `System health rating is currently **${Math.round((overviewQuery.data?.stadium_health || 0.98)*100)}%**. We have **${activeIncidents.length} active incidents** registered. Recommended action priority is **High**.`;
+      const activeIncidents = playbackActive && playbackData ? playbackData.incidents : (incidentsQuery.data?.items.filter(i => !i.resolved) || []);
+      const rating = playbackActive && playbackData ? playbackData.overview.stadium_health : (overviewQuery.data?.stadium_health || 0.98);
+      const summary = `System health rating is currently **${Math.round(rating * 100)}%**. We have **${activeIncidents.length} active incidents** registered. Recommended action priority is **High**.`;
 
       const botMsg = {
         role: "assistant",
@@ -263,9 +610,10 @@ function MissionControlPage() {
     return <LoadingScreen />;
   }
 
-  const overview = overviewQuery.data;
-  const incidents = incidentsQuery.data?.items || [];
-  const recs = recommendationsQuery.data?.items || [];
+  // Intercept standard data if playback engine is active
+  const overview = playbackActive && playbackData ? playbackData.overview : overviewQuery.data;
+  const incidents = playbackActive && playbackData ? playbackData.incidents : (incidentsQuery.data?.items || []);
+  const recs = playbackActive && playbackData ? playbackData.recs : (recommendationsQuery.data?.items || []);
 
   const metrics = [
     { title: "Stadium Health", value: `${Math.round((overview?.stadium_health || 0.98) * 100)}%`, status: "Optimal", icon: <ShieldCheck className="h-4 w-4 text-emerald-400" /> },
@@ -292,6 +640,104 @@ function MissionControlPage() {
             </span>
             <span>Real-time link active</span>
           </div>
+        </div>
+      </div>
+
+      {/* Scenario Playback Controls Bar */}
+      <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-md p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary">
+            <Zap className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Scenario Playback Engine</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Replay hypothetical stadium incidents in real-time.</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Selector */}
+          <select
+            value={playbackScenario || ""}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val) {
+                setPlaybackScenario(val);
+                setPlaybackActive(true);
+                setPlaybackStep(0);
+                setPlaybackIsPaused(false);
+              } else {
+                setPlaybackActive(false);
+                setPlaybackScenario(null);
+                setPlaybackStep(0);
+              }
+            }}
+            className="rounded-xl border border-border bg-card px-3.5 py-2 text-xs font-bold text-foreground outline-none cursor-pointer"
+          >
+            <option value="">-- Select Scenario Playback --</option>
+            <option value="Crowd Surge">Crowd Surge Simulation</option>
+            <option value="Medical Emergency">Medical Emergency Simulation</option>
+            <option value="Gate Closure">Gate Closure Simulation</option>
+            <option value="Heavy Rain">Heavy Rain Simulation</option>
+            <option value="Power Failure">Power Failure Simulation</option>
+            <option value="VIP Arrival">VIP Arrival Simulation</option>
+          </select>
+
+          {playbackActive && (
+            <>
+              {/* Play Pause */}
+              <button
+                onClick={() => setPlaybackIsPaused(!playbackIsPaused)}
+                className="rounded-xl border border-border hover:bg-muted bg-card px-3 py-2 text-xs font-bold transition-colors"
+              >
+                {playbackIsPaused ? "Resume" : "Pause"}
+              </button>
+
+              {/* Scrubber slider */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">Step</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="4"
+                  value={playbackStep}
+                  onChange={(e) => {
+                    setPlaybackStep(parseInt(e.target.value));
+                    setPlaybackIsPaused(true);
+                  }}
+                  className="w-24 accent-primary cursor-pointer"
+                />
+                <span className="text-[11px] font-bold text-foreground font-mono">{playbackStep + 1}/5</span>
+              </div>
+
+              {/* Playback speed selector */}
+              <div className="flex items-center gap-1.5 border border-border rounded-xl bg-card p-1">
+                {[1, 2, 5].map((speed) => (
+                  <button
+                    key={speed}
+                    onClick={() => setPlaybackSpeed(speed)}
+                    className={`rounded-lg px-2.5 py-1 text-[10px] font-bold transition-colors ${
+                      playbackSpeed === speed ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {speed}x
+                  </button>
+                ))}
+              </div>
+
+              {/* Exit Playback */}
+              <button
+                onClick={() => {
+                  setPlaybackActive(false);
+                  setPlaybackScenario(null);
+                  setPlaybackStep(0);
+                }}
+                className="rounded-xl bg-destructive px-3.5 py-2 text-xs font-bold text-destructive-foreground hover:opacity-90 transition-opacity"
+              >
+                Exit
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -345,6 +791,16 @@ function MissionControlPage() {
 
           {/* Conversation history */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+            {playbackActive && (
+              <div className="p-3 rounded-xl border border-primary/30 bg-primary/5 flex items-start gap-2 text-left">
+                <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5 animate-pulse" />
+                <div>
+                  <span className="font-bold block text-primary text-[10px] uppercase">AI Situation Summary:</span>
+                  <p className="text-foreground mt-0.5">{playbackData?.summary}</p>
+                </div>
+              </div>
+            )}
+            
             {chatMessages.map((msg, idx) => (
               <div key={idx} className={`flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
                 <div className={`p-3 rounded-2xl border ${
@@ -394,8 +850,8 @@ function MissionControlPage() {
             {incidents.length === 0 ? (
               <div className="text-xs text-muted-foreground py-4">No events logged.</div>
             ) : (
-              incidents.slice(0, 5).map((inc) => (
-                <div key={inc.id} className="relative">
+              incidents.slice(0, 5).map((inc: any) => (
+                <div key={inc.id} className="relative text-left">
                   <div className="absolute -left-[31px] mt-0.5 rounded-full bg-card border-2 border-border p-1 text-primary">
                     <Clock className="h-3 w-3" />
                   </div>
@@ -422,7 +878,7 @@ function MissionControlPage() {
             {recs.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-10">All parameters stable. No recommendations.</div>
             ) : (
-              recs.slice(0, 4).map((rec) => (
+              recs.slice(0, 4).map((rec: any) => (
                 <div key={rec.id} className="p-3 border border-border rounded-xl bg-muted/20 flex items-center justify-between gap-3 text-left">
                   <div className="flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -463,10 +919,21 @@ function MissionControlPage() {
             <p className="text-xs text-muted-foreground">Real-time telemetry event streams and dispatcher updates.</p>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2.5 text-left">
-            {incidents.length === 0 ? (
+            {/* Show animated local notifications during playback */}
+            {playbackActive && localNotifications.map((notif) => (
+              <div key={notif.id} className="flex items-start gap-2.5 p-2 bg-primary/5 border border-primary/20 rounded-xl text-xs animate-pulse">
+                <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <span className="font-bold text-primary block truncate">{notif.text}</span>
+                  <span className="text-[9px] text-muted-foreground mt-0.5 block">{notif.timestamp}</span>
+                </div>
+              </div>
+            ))}
+            
+            {incidents.length === 0 && localNotifications.length === 0 ? (
               <div className="text-xs text-muted-foreground py-4">No activity events.</div>
             ) : (
-              incidents.map((inc) => (
+              incidents.map((inc: any) => (
                 <div key={inc.id} className="flex items-start gap-2.5 p-2 border-b border-border/40 text-xs">
                   <Activity className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
@@ -481,20 +948,20 @@ function MissionControlPage() {
           </div>
         </div>
 
-        {/* Active Incidents Widget */}
+        {/* Active Incidents Queue */}
         <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md p-6 flex flex-col h-[320px] shadow-sm">
           <div className="mb-4">
             <h2 className="text-base font-bold">Active Incidents Queue</h2>
             <p className="text-xs text-muted-foreground">Unresolved safety or medical logs under dispatch.</p>
           </div>
           <div className="flex-1 overflow-y-auto space-y-3">
-            {incidents.filter((i) => !i.resolved).length === 0 ? (
+            {incidents.filter((i: any) => !i.resolved).length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-10 flex flex-col items-center justify-center gap-2">
                 <CheckCircle className="h-8 w-8 text-emerald-500" />
                 <span>All incidents cleared.</span>
               </div>
             ) : (
-              incidents.filter((i) => !i.resolved).map((inc) => (
+              incidents.filter((i: any) => !i.resolved).map((inc: any) => (
                 <div key={inc.id} className="p-3 border border-border rounded-xl bg-muted/20 flex items-center justify-between gap-3 text-left">
                   <div className="flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -543,7 +1010,7 @@ function MissionControlPage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2.5 text-left">
                 <button
                   onClick={() => triggerScenario("crowd_control", "high", "High congestion alert at Gate 1 Ingress turnstiles.")}
                   className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
