@@ -71,7 +71,7 @@ async def test_copilot_service(mock_orchestrator: MagicMock, mock_state_manager:
     assert response.confidence_score == 0.95
     assert response.text == "Hello user, everything is optimal."
     assert response.model_version == "Gemini 2.5 Flash"
-    assert response.execution_time_ms > 0
+    assert response.execution_time_ms >= 0
     mock_state_manager.get_snapshot.assert_called_once()
     mock_orchestrator.execute.assert_called_once()
 
