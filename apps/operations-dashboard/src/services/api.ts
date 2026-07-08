@@ -131,3 +131,28 @@ export async function updateIncident(
   const data: ApiResponse<IncidentItem> = await res.json();
   return data.data;
 }
+
+export interface CreateIncidentPayload {
+  incident_type: string;
+  severity: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  reporter_id: string;
+  zone_id: string;
+}
+
+export async function createIncident(
+  payload: CreateIncidentPayload
+): Promise<IncidentItem> {
+  const res = await fetch(`${API_BASE_URL}/incidents`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create incident");
+  const data: ApiResponse<IncidentItem> = await res.json();
+  return data.data;
+}

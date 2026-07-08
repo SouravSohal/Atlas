@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ReactFlow,
   Background,
@@ -18,6 +18,7 @@ import {
   Clock,
   Activity,
   Wifi,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -25,6 +26,7 @@ import {
   fetchDashboardIncidents,
   fetchDashboardRecommendations,
   fetchOperationalState,
+  createIncident,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 
@@ -102,8 +104,11 @@ function useAiSituationSummary() {
 }
 
 function OperationsCommandCenter() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"incidents" | "timeline" | "feed">("feed");
   const [approvedRecs, setApprovedRecs] = useState<Record<string, boolean>>({});
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoMessage, setDemoMessage] = useState<string | null>(null);
 
   // Query actual backend data
   const overviewQuery = useQuery({
@@ -131,6 +136,40 @@ function OperationsCommandCenter() {
   });
 
   const aiSummaryQuery = useAiSituationSummary();
+
+  const demoMutation = useMutation({
+    mutationFn: createIncident,
+    onSuccess: (data) => {
+      // Invalidate queries immediately for visual feedback
+      queryClient.invalidateQueries({ queryKey: ["cc-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["cc-state"] });
+      queryClient.invalidateQueries({ queryKey: ["cc-incidents"] });
+      queryClient.invalidateQueries({ queryKey: ["cc-recommendations"] });
+      queryClient.invalidateQueries({ queryKey: ["ai-situation-summary-cc"] });
+
+      setDemoMessage(`Scenario triggered: ${data.incident_type.toUpperCase()} registered!`);
+      setTimeout(() => setDemoMessage(null), 5000);
+    },
+    onError: (err: any) => {
+      setDemoMessage(`Error: ${err.message || "Failed to trigger scenario"}`);
+      setTimeout(() => setDemoMessage(null), 5000);
+    },
+  });
+
+  const triggerScenario = (type: string, severity: string, description: string) => {
+    const zones = stateQuery.data || [];
+    const zoneId = zones[0]?.zone_id || "00000000-0000-0000-0000-000000000000";
+    
+    demoMutation.mutate({
+      incident_type: type,
+      severity,
+      description,
+      latitude: 37.7749,
+      longitude: -122.4194,
+      reporter_id: "00000000-0000-0000-0000-000000000000",
+      zone_id: zoneId,
+    });
+  };
 
   const handleApproveRecommendation = (id: string) => {
     setApprovedRecs((prev) => ({ ...prev, [id]: true }));
@@ -500,6 +539,86 @@ function OperationsCommandCenter() {
 
           </AnimatePresence>
         </div>
+      </div>
+
+      {/* Floating Demo Control Panel */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <AnimatePresence>
+          {demoOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="mb-3 w-80 rounded-2xl border border-primary/30 bg-card/95 backdrop-blur-md shadow-2xl p-5"
+            >
+              <div className="flex items-center justify-between border-b border-border pb-2.5 mb-4">
+                <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                  Demo Control Console
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                </span>
+                <button
+                  onClick={() => setDemoOpen(false)}
+                  className="text-muted-foreground hover:text-foreground text-xs"
+                >
+                  Hide
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  onClick={() => triggerScenario("crowd", "high", "High congestion alert at Gate 1 Ingress turnstiles.")}
+                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
+                >
+                  Gate Congestion
+                </button>
+                <button
+                  onClick={() => triggerScenario("medical", "critical", "Spectator collapse reported near Section 104.")}
+                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
+                >
+                  Medical Emergency
+                </button>
+                <button
+                  onClick={() => triggerScenario("infrastructure", "critical", "Local power failure reported in central food sector.")}
+                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
+                >
+                  Power Failure
+                </button>
+                <button
+                  onClick={() => triggerScenario("weather", "medium", "Sudden heavy rainfall starting. Evacuating open parking lots.")}
+                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
+                >
+                  Heavy Rain
+                </button>
+                <button
+                  onClick={() => triggerScenario("security", "low", "VIP Motorcade approaching Gate 2 Ingress plaza.")}
+                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
+                >
+                  VIP Arrival
+                </button>
+                <button
+                  onClick={() => triggerScenario("security", "medium", "7-year-old child reported separated from guardians near Section 208.")}
+                  className="rounded-xl border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all p-3 text-left text-[11px] font-bold"
+                >
+                  Lost Child
+                </button>
+              </div>
+
+              {demoMessage && (
+                <div className="mt-4 rounded-xl bg-primary/10 border border-primary/20 p-3 text-[10px] font-bold text-primary animate-pulse text-center">
+                  {demoMessage}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          onClick={() => setDemoOpen(!demoOpen)}
+          className="flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-xs font-bold text-primary-foreground shadow-2xl hover:opacity-90 transition-all border border-primary-foreground/10 focus-visible:ring-2 focus-visible:ring-primary outline-none"
+        >
+          <Sparkles className="h-4 w-4" />
+          Demo Mode Console
+        </button>
       </div>
     </div>
   );
