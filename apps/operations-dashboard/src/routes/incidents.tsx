@@ -48,6 +48,8 @@ function IncidentsPage() {
     setIncidentSortBy: setSortBy,
     incidentSortOrder: sortOrder,
     setIncidentSortOrder: setSortOrder,
+    playbackActive,
+    simulatedIncidents,
   } = useGlobalStore();
 
   // Query - refresh every 15 seconds
@@ -116,8 +118,8 @@ function IncidentsPage() {
     );
   }
 
-  const items = data?.items || [];
-  const totalCount = data?.total_count || 0;
+  const items = playbackActive && simulatedIncidents ? simulatedIncidents : (data?.items || []);
+  const totalCount = playbackActive && simulatedIncidents ? simulatedIncidents.length : (data?.total_count || 0);
   const totalPages = Math.ceil(totalCount / 10) || 1;
 
   // Client-side local filtering (search on description)

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { envConfig } from "../config/env";
+import { SCENARIO_STEPS } from "./scenarioSteps";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -45,12 +46,24 @@ interface GlobalState {
   setUserRole: (role: string) => void;
   setSessionExpiry: (expiry: string) => void;
 
-  // Active Simulation Controls
+  // Active Simulation Controls & State
   playbackActive: boolean;
   playbackScenario: string | null;
   playbackStep: number;
   playbackSpeed: number;
   playbackIsPaused: boolean;
+  simulationClock: string;
+  simulatedOverview: any | null;
+  simulatedZones: any[] | null;
+  simulatedIncidents: any[] | null;
+  simulatedRecommendations: any[] | null;
+
+  startSimulation: (scenario: string) => void;
+  pauseSimulation: () => void;
+  resumeSimulation: () => void;
+  resetSimulation: () => void;
+  stopSimulation: () => void;
+  updateSimulationStep: (scenario: string, step: number) => void;
   setPlaybackActive: (active: boolean) => void;
   setPlaybackScenario: (scenario: string | null) => void;
   setPlaybackStep: (step: number | ((prev: number) => number)) => void;
@@ -165,27 +178,287 @@ interface GlobalState {
   setFilterType: (type: string) => void;
 }
 
-export const useGlobalStore = create<GlobalState>((set) => ({
+let simInterval: any = null;
+
+const runSimulationTick = (get: any) => {
+  const state = get();
+  if (!state.playbackActive || state.playbackIsPaused || !state.playbackScenario) return;
+
+  const scenario = state.playbackScenario;
+  const currentStep = state.playbackStep;
+  const steps = SCENARIO_STEPS[scenario] || [];
+
+  if (currentStep < steps.length - 1) {
+    const nextStep = currentStep + 1;
+    state.updateSimulationStep(scenario, nextStep);
+  } else {
+    // Loop simulation
+    state.updateSimulationStep(scenario, 0);
+  }
+};
+
+const startTimer = (get: any) => {
+  if (simInterval) {
+    clearInterval(simInterval);
+  }
+  const state = get();
+  const delay = 4000 / state.playbackSpeed;
+  simInterval = setInterval(() => {
+    runSimulationTick(get);
+  }, delay);
+};
+
+const stopTimer = () => {
+  if (simInterval) {
+    clearInterval(simInterval);
+    simInterval = null;
+  }
+};
+
+export const useGlobalStore = create<GlobalState>((set, get) => ({
   // Authentication & Security Context
   userRole: "Administrator",
   sessionExpiry: "12 Hours",
   setUserRole: (role) => set({ userRole: role }),
   setSessionExpiry: (expiry) => set({ sessionExpiry: expiry }),
 
-  // Active Simulation Controls
+  // Active Simulation Controls & State
   playbackActive: false,
   playbackScenario: null,
   playbackStep: 0,
   playbackSpeed: 1,
   playbackIsPaused: false,
-  setPlaybackActive: (active) => set({ playbackActive: active }),
-  setPlaybackScenario: (scenario) => set({ playbackScenario: scenario, playbackStep: 0 }),
-  setPlaybackStep: (step) =>
-    set((state) => ({
-      playbackStep: typeof step === "function" ? step(state.playbackStep) : step,
-    })),
-  setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
-  setPlaybackIsPaused: (paused) => set({ playbackIsPaused: paused }),
+  simulationClock: "18:00",
+  simulatedOverview: null,
+  simulatedZones: null,
+  simulatedIncidents: null,
+  simulatedRecommendations: null,
+
+  startSimulation: (scenario) => {
+    set({
+      playbackActive: true,
+      playbackScenario: scenario,
+      playbackStep: 0,
+      playbackIsPaused: false,
+    });
+    get().updateSimulationStep(scenario, 0);
+    startTimer(get);
+  },
+  pauseSimulation: () => {
+    set({ playbackIsPaused: true });
+    stopTimer();
+  },
+  resumeSimulation: () => {
+    set({ playbackIsPaused: false });
+    startTimer(get);
+  },
+  resetSimulation: () => {
+    const scenario = get().playbackScenario || "Crowd Surge";
+    set({
+      playbackStep: 0,
+      playbackIsPaused: false,
+    });
+    get().updateSimulationStep(scenario, 0);
+    startTimer(get);
+  },
+  stopSimulation: () => {
+    set({
+      playbackActive: false,
+      playbackScenario: null,
+      playbackStep: 0,
+      playbackIsPaused: false,
+      simulatedOverview: null,
+      simulatedZones: null,
+      simulatedIncidents: null,
+      simulatedRecommendations: null,
+      simulationClock: "18:00",
+    });
+    stopTimer();
+  },
+  updateSimulationStep: (scenario, step) => {
+    const stepData = SCENARIO_STEPS[scenario]?.[step];
+    if (!stepData) return;
+
+    const getZoneId = (scen: string, idx: number): string => {
+      if (scen === "Crowd Surge") {
+        if (idx === 0) return "gate-1";
+        if (idx === 1) return "food-court";
+        if (idx === 2) return "restrooms";
+      }
+      if (scen === "Medical Emergency") {
+        if (idx === 0) return "med-post";
+        if (idx === 1) return "sec-cmd";
+      }
+      if (scen === "Gate Closure") {
+        if (idx === 0) return "gate-1";
+        if (idx === 1) return "transit-hub";
+      }
+      if (scen === "Heavy Rain") {
+        if (idx === 0) return "food-court";
+        if (idx === 1) return "restrooms";
+      }
+      if (scen === "Power Failure") {
+        if (idx === 0) return "food-court";
+        if (idx === 1) return "sec-cmd";
+      }
+      if (scen === "VIP Arrival") {
+        if (idx === 0) return "park-vip";
+        if (idx === 1) return "gate-1";
+      }
+      if (scen === "Lost Child") {
+        if (idx === 0) return "sec-cmd";
+        if (idx === 1) return "vol-depot";
+      }
+      if (scen === "Match End") {
+        if (idx === 0) return "gate-1";
+        if (idx === 1) return "transit-hub";
+      }
+      return `zone-${idx}`;
+    };
+
+    const zoneMetadata = [
+      { zone_id: "gate-1" },
+      { zone_id: "sec-cmd" },
+      { zone_id: "med-post" },
+      { zone_id: "park-vip" },
+      { zone_id: "food-court" },
+      { zone_id: "restrooms" },
+      { zone_id: "transit-hub" },
+      { zone_id: "vol-depot" },
+    ];
+
+    const simulatedZones = zoneMetadata.map((meta) => {
+      const stepZoneIndex = (stepData.zones || []).findIndex(
+        (_: any, idx: number) => getZoneId(scenario, idx) === meta.zone_id
+      );
+      if (stepZoneIndex !== -1) {
+        const sz = stepData.zones[stepZoneIndex];
+        return {
+          zone_id: meta.zone_id,
+          density: sz.density,
+          queue_waiting_minutes: sz.queue_waiting_minutes,
+          last_updated: new Date().toISOString(),
+        };
+      }
+      return {
+        zone_id: meta.zone_id,
+        density: 0.15,
+        queue_waiting_minutes: 2,
+        last_updated: new Date().toISOString(),
+      };
+    });
+
+    const simulatedOverview = {
+      stadium_health: stepData.overview.stadium_health,
+      active_incidents_count: stepData.overview.active_incidents_count,
+      average_crowd_density: stepData.overview.average_crowd_density,
+      allocated_volunteers_count: stepData.overview.allocated_volunteers_count,
+      last_updated: new Date().toISOString(),
+    };
+
+    const simulatedIncidents = (stepData.incidents || []).map((inc: any) => {
+      let zoneId = "gate-1";
+      if (inc.id === "inc-2") zoneId = "med-post";
+      else if (inc.id === "inc-4") zoneId = "food-court";
+      else if (inc.id === "inc-5") zoneId = "sec-cmd";
+      return {
+        ...inc,
+        zoneId,
+        created_at: inc.created_at || new Date().toISOString(),
+      };
+    });
+
+    const simulatedRecommendations = (stepData.recs || []).map((rec: any) => {
+      let zoneId = "gate-1";
+      if (rec.id === "rec-3" || rec.id === "rec-4") zoneId = "med-post";
+      else if (rec.id === "rec-7" || rec.id === "rec-8" || rec.id === "rec-9" || rec.id === "rec-10") zoneId = "food-court";
+      else if (rec.id === "rec-11" || rec.id === "rec-12") zoneId = "park-vip";
+      else if (rec.id === "rec-13" || rec.id === "rec-14") zoneId = "sec-cmd";
+      return {
+        ...rec,
+        zoneId,
+        confidence: rec.confidence || 0.85,
+        status: rec.status || "pending",
+        created_at: new Date().toISOString(),
+      };
+    });
+
+    // Clock calculation
+    const hours = 18 + Math.floor((step * 15) / 60);
+    const minutes = (step * 15) % 60;
+    const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+
+    // New notification object
+    const notifId = `notif-${scenario}-${step}-${Date.now()}`;
+    const newNotification = {
+      id: notifId,
+      category: "AI" as const,
+      severity: (stepData.overview.stadium_health < 0.8 ? "critical" : "warning") as any,
+      title: `${scenario} Update (Step ${step + 1})`,
+      description: stepData.notification,
+      timestamp: new Date().toLocaleTimeString(),
+      read: false,
+      referenceId: stepData.incidents?.[0]?.id || `step-${step}`,
+      type: (stepData.incidents && stepData.incidents.length > 0 ? "incident" : "recommendation") as any,
+    };
+
+    set((state) => {
+      const isAlreadyPresent = state.chatMessages.some((msg) => msg.text.includes(stepData.summary));
+      const chatMessages = isAlreadyPresent
+        ? state.chatMessages
+        : [
+            ...state.chatMessages,
+            {
+              role: "assistant" as const,
+              text: `### [Simulation Engine Update] ${scenario} (Step ${step + 1})\n\n${stepData.summary}`,
+              timestamp: new Date().toLocaleTimeString(),
+            },
+          ];
+
+      return {
+        playbackStep: step,
+        simulationClock: timeString,
+        simulatedOverview,
+        simulatedZones,
+        simulatedIncidents,
+        simulatedRecommendations,
+        toastMessage: stepData.notification,
+        localNotifications: [newNotification, ...state.localNotifications],
+        chatMessages,
+      };
+    });
+  },
+  setPlaybackActive: (active) => {
+    if (active) {
+      get().startSimulation(get().playbackScenario || "Crowd Surge");
+    } else {
+      get().stopSimulation();
+    }
+  },
+  setPlaybackScenario: (scenario) => {
+    if (scenario) {
+      get().startSimulation(scenario);
+    } else {
+      get().stopSimulation();
+    }
+  },
+  setPlaybackStep: (step) => {
+    const nextStep = typeof step === "function" ? step(get().playbackStep) : step;
+    get().updateSimulationStep(get().playbackScenario || "Crowd Surge", nextStep);
+  },
+  setPlaybackSpeed: (speed) => {
+    set({ playbackSpeed: speed });
+    if (get().playbackActive && !get().playbackIsPaused) {
+      startTimer(get);
+    }
+  },
+  setPlaybackIsPaused: (paused) => {
+    if (paused) {
+      get().pauseSimulation();
+    } else {
+      get().resumeSimulation();
+    }
+  },
 
   // Incidents State & UI Filters
   selectedIncident: null,

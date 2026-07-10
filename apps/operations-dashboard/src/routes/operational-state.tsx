@@ -180,7 +180,14 @@ const ZONE_METADATA_TEMPLATES = [
 
 function OperationalStateDashboardPage() {
   const { subscribe, unsubscribe } = useWebSocket();
-  const { selectedNodeId, setSelectedNodeId } = useGlobalStore();
+  const {
+    selectedNodeId,
+    setSelectedNodeId,
+    playbackActive,
+    simulatedZones,
+    simulatedIncidents,
+    simulatedRecommendations,
+  } = useGlobalStore();
 
   // TanStack Query
   const stateQuery = useQuery({
@@ -211,17 +218,19 @@ function OperationalStateDashboardPage() {
     };
   }, [subscribe, unsubscribe]);
 
-  const zones = stateQuery.data || [];
-  const rawIncidents = incidentsQuery.data?.items || [];
-  const rawRecs = recommendationsQuery.data?.items || [];
+  const zones = playbackActive && simulatedZones ? simulatedZones : (stateQuery.data || []);
+  const rawIncidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || []);
+  const rawRecs = playbackActive && simulatedRecommendations ? simulatedRecommendations : (recommendationsQuery.data?.items || []);
 
-  // Map incidents to zones deterministically using index/modulo since the API doesn't return zone_id directly
+  // Map incidents to zones deterministically if not already mapped
   const incidents = rawIncidents.map((inc) => {
+    if (inc.zoneId) return inc;
     const index = parseInt(inc.id.replace(/-/g, "").slice(0, 4), 16) % Math.max(1, zones.length);
     return { ...inc, zoneId: zones[index]?.zone_id || "" };
   });
 
   const recs = rawRecs.map((rec) => {
+    if (rec.zoneId) return rec;
     const index = parseInt(rec.id.replace(/-/g, "").slice(0, 4), 16) % Math.max(1, zones.length);
     return { ...rec, zoneId: zones[index]?.zone_id || "" };
   });

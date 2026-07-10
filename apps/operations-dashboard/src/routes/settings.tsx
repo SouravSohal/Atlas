@@ -61,6 +61,7 @@ function SettingsPage() {
     sessionExpiry,
     setSessionExpiry,
     userRole,
+    resetSimulation,
   } = useGlobalStore();
   const [selectedSeed, setSelectedSeed] = useState("stadium_seed_data.json");
 
@@ -408,9 +409,9 @@ function SettingsPage() {
                 </button>
                 <button
                   onClick={() => {
-                    setSimPaused(false);
+                    resetSimulation();
                     setDiagnosticLogs((prev) => [
-                      `[${new Date().toLocaleString()}] INFO: Manual Simulation Engine restart/replay triggered. Clock reset to T-120m.`,
+                      `[${new Date().toLocaleString()}] INFO: Manual Simulation Engine restart/replay triggered. Centralized Simulation Clock reset to T-120m (18:00).`,
                       ...prev
                     ]);
                   }}

@@ -47,6 +47,8 @@ function RecommendationsPage() {
     setRecFilterCategory: setFilterCategory,
     toastMessage,
     setToastMessage,
+    playbackActive,
+    simulatedRecommendations,
   } = useGlobalStore();
 
   // Fetch recommendations
@@ -56,7 +58,7 @@ function RecommendationsPage() {
     refetchInterval: 10000,
   });
 
-  const rawItems = data?.items || [];
+  const rawItems = playbackActive && simulatedRecommendations ? simulatedRecommendations : (data?.items || []);
 
   // Real-time WebSocket connection to subscribe to topic updates
   useEffect(() => {
@@ -331,8 +333,8 @@ function RecommendationsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-3.5 flex flex-wrap gap-1">
-                    {rec.resources.map((res, idx) => (
+                   <div className="mt-3.5 flex flex-wrap gap-1">
+                    {rec.resources?.map((res: any, idx: number) => (
                       <span key={idx} className="bg-muted/40 border border-border text-[8px] font-black uppercase text-muted-foreground px-2 py-0.5 rounded">
                         {res}
                       </span>

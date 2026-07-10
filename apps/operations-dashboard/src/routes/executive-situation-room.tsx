@@ -27,7 +27,14 @@ export const Route = createFileRoute("/executive-situation-room")({
 
 function ExecutiveSituationRoomPage() {
   const { subscribe, unsubscribe } = useWebSocket();
-  const { approvedRecs: approvedDecisions, setRecApproval } = useGlobalStore();
+  const {
+    approvedRecs: approvedDecisions,
+    setRecApproval,
+    playbackActive,
+    simulatedOverview,
+    simulatedZones,
+    simulatedIncidents,
+  } = useGlobalStore();
 
   useEffect(() => {
     subscribe("telemetry");
@@ -56,9 +63,9 @@ function ExecutiveSituationRoomPage() {
     refetchInterval: 5000,
   });
 
-  const overview = overviewQuery.data;
-  const states = stateQuery.data || [];
-  const incidents = incidentsQuery.data?.items || [];
+  const overview = playbackActive && simulatedOverview ? simulatedOverview : overviewQuery.data;
+  const states = playbackActive && simulatedZones ? simulatedZones : (stateQuery.data || []);
+  const incidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || []);
 
   const activeIncidents = useMemo(() => {
     return incidents.filter((inc) => !inc.resolved);
