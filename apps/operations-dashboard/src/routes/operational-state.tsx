@@ -227,17 +227,19 @@ function OperationalStateDashboardPage() {
 
   // Compute auto-layouted elements using Dagre
   const { flowNodes, flowEdges } = useMemo(() => {
-    // 1. Map raw node definitions
-    const rawNodes = zones.map((zone, index) => {
-      const template = ZONE_METADATA_TEMPLATES[index] || {
-        label: `Sector Zone ${zone.zone_id.slice(0, 4)}`,
-        type: "Gates" as const,
-        x: 100,
-        y: 100,
+    // 1. Map raw node definitions by iterating over all layout templates
+    const rawNodes = ZONE_METADATA_TEMPLATES.map((template, index) => {
+      // Safely grab the matching backend zone state, or fallback to default values
+      const zone = zones[index % Math.max(1, zones.length)] || {
+        zone_id: `zone-fallback-${index}`,
+        density: 0.15,
+        queue_waiting_minutes: 0,
       };
 
-      const zoneIncidents = incidents.filter((inc) => inc.zoneId === zone.zone_id && !inc.resolved);
-      const zoneRecs = recs.filter((rec) => rec.zoneId === zone.zone_id);
+      const zoneIdToUse = zone.zone_id || `zone-fallback-${index}`;
+
+      const zoneIncidents = incidents.filter((inc) => inc.zoneId === zoneIdToUse && !inc.resolved);
+      const zoneRecs = recs.filter((rec) => rec.zoneId === zoneIdToUse);
 
       const healthScore = Math.max(
         0,
@@ -249,7 +251,7 @@ function OperationalStateDashboardPage() {
       else if (zone.density > 0.4) status = "warning";
 
       return {
-        id: zone.zone_id,
+        id: `node-${index}`,
         type: "digitalTwinNode",
         position: { x: template.x, y: template.y },
         data: {
@@ -261,20 +263,20 @@ function OperationalStateDashboardPage() {
           alertsCount: zoneIncidents.length,
           recsCount: zoneRecs.length,
           status,
-          zoneId: zone.zone_id,
+          zoneId: zoneIdToUse,
         },
       } as TwinNode;
     });
 
     // 2. Define edge connections
     const rawEdges = [
-      { id: "e1", source: rawNodes[0]?.id || "", target: rawNodes[1]?.id || "", animated: true, style: { stroke: "#3b82f6", strokeWidth: 2 } },
-      { id: "e2", source: rawNodes[0]?.id || "", target: rawNodes[2]?.id || "", animated: true, style: { stroke: "#10b981", strokeWidth: 2 } },
-      { id: "e3", source: rawNodes[1]?.id || "", target: rawNodes[5]?.id || "", animated: true, style: { stroke: "#f59e0b", strokeWidth: 2 } },
-      { id: "e4", source: rawNodes[2]?.id || "", target: rawNodes[3]?.id || "", animated: true, style: { stroke: "#6366f1", strokeWidth: 2 } },
-      { id: "e5", source: rawNodes[3]?.id || "", target: rawNodes[4]?.id || "", animated: true, style: { stroke: "#ec4899", strokeWidth: 2 } },
-      { id: "e6", source: rawNodes[5]?.id || "", target: rawNodes[7]?.id || "", animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } },
-      { id: "e7", source: rawNodes[6]?.id || "", target: rawNodes[0]?.id || "", animated: true, style: { stroke: "#14b8a6", strokeWidth: 2 } },
+      { id: "e1", source: "node-0", target: "node-1", animated: true, style: { stroke: "#3b82f6", strokeWidth: 2 } },
+      { id: "e2", source: "node-0", target: "node-2", animated: true, style: { stroke: "#10b981", strokeWidth: 2 } },
+      { id: "e3", source: "node-1", target: "node-5", animated: true, style: { stroke: "#f59e0b", strokeWidth: 2 } },
+      { id: "e4", source: "node-2", target: "node-3", animated: true, style: { stroke: "#6366f1", strokeWidth: 2 } },
+      { id: "e5", source: "node-3", target: "node-4", animated: true, style: { stroke: "#ec4899", strokeWidth: 2 } },
+      { id: "e6", source: "node-5", target: "node-7", animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } },
+      { id: "e7", source: "node-6", target: "node-0", animated: true, style: { stroke: "#14b8a6", strokeWidth: 2 } },
     ].filter((e) => e.source && e.target) as Edge[];
 
     if (rawNodes.length === 0) {
@@ -327,7 +329,7 @@ function OperationalStateDashboardPage() {
   // Find currently selected node details
   const selectedNode = flowNodes.find((n: any) => n.id === selectedNodeId);
   const selectedNodeIncidents = selectedNode
-    ? incidents.filter((inc) => inc.zoneId === selectedNode.id && !inc.resolved)
+    ? incidents.filter((inc) => inc.zoneId === selectedNode.data.zoneId && !inc.resolved)
     : [];
 
   const actualNodeTypes = {
@@ -399,7 +401,7 @@ function OperationalStateDashboardPage() {
               <div>
                 <span className="text-[10px] font-bold text-primary uppercase block">Zone Telemetry Inspector</span>
                 <h2 className="text-lg font-black text-foreground mt-0.5">{selectedNode.data.label}</h2>
-                <span className="text-xs text-muted-foreground block font-semibold mt-1">ID: {selectedNode.id}</span>
+                <span className="text-xs text-muted-foreground block font-semibold mt-1">ID: {selectedNode.data.zoneId}</span>
               </div>
 
               {/* Status details indicators */}
