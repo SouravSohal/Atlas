@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { envConfig } from "../config/env";
 
 type WebSocketContextState = {
   connected: boolean;
@@ -38,7 +39,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const reconnectAttemptsRef = useRef(0);
 
   const connect = useCallback(() => {
-    const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws";
+    const wsUrl = envConfig.wsUrl;
 
     if (socketRef.current) {
       socketRef.current.close();

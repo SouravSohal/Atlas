@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { envConfig } from "../config/env";
+
+const API_BASE_URL = envConfig.apiUrl;
 
 export interface ApiResponse<T> {
   success: boolean;

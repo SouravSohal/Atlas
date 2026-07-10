@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Lock,
 } from "lucide-react";
+import { envConfig } from "../config/env";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -29,31 +30,31 @@ type TabId = "general" | "ai" | "database" | "simulation" | "thresholds" | "sync
 function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("general");
 
-  // State configurations
-  const [backendUrl, setBackendUrl] = useState("http://localhost:8000");
-  const [frontendUrl, setFrontendUrl] = useState("http://localhost:5173");
-  const [environment, setEnvironment] = useState("Development");
+  // State configurations connected to centralized envConfig
+  const [backendUrl, setBackendUrl] = useState(envConfig.apiUrl);
+  const [frontendUrl, setFrontendUrl] = useState(window.location.origin);
+  const [environment, setEnvironment] = useState(envConfig.environment);
   const [deploymentStatus] = useState("Operational");
 
-  const [geminiModel, setGeminiModel] = useState("gemini-2.5-pro");
+  const [geminiModel, setGeminiModel] = useState(envConfig.geminiModel);
   const [aiTestStatus, setAiTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
   const [lastAiRequest, setLastAiRequest] = useState("2026-07-10 17:21:05");
 
-  const dbEngine = "Cloud Firestore";
+  const dbEngine = envConfig.dbEngine;
   const [dbSyncStatus, setDbSyncStatus] = useState<"idle" | "syncing" | "success">("idle");
   const [dbTotalRecords, setDbTotalRecords] = useState(14820);
   const [lastDbSync, setLastDbSync] = useState("2026-07-10 17:24:18");
 
-  const [demoMode, setDemoMode] = useState(true);
-  const [simSpeed, setSimSpeed] = useState(2);
+  const [demoMode, setDemoMode] = useState(envConfig.defaultDemoMode);
+  const [simSpeed, setSimSpeed] = useState(envConfig.defaultSimulationSpeed);
   const [simPaused, setSimPaused] = useState(false);
   const [selectedSeed, setSelectedSeed] = useState("stadium_seed_data.json");
 
-  const [thresholdDensity, setThresholdDensity] = useState(75);
-  const [thresholdQueue, setThresholdQueue] = useState(15);
+  const [thresholdDensity, setThresholdDensity] = useState(envConfig.defaultCrowdDensityThreshold);
+  const [thresholdQueue, setThresholdQueue] = useState(envConfig.defaultQueueTimeThreshold);
   const [medAutoDispatch, setMedAutoDispatch] = useState(true);
   const [weatherOverride, setWeatherOverride] = useState("Medium");
-  const [confidenceThreshold, setConfidenceThreshold] = useState(80);
+  const [confidenceThreshold, setConfidenceThreshold] = useState(envConfig.defaultAiConfidenceThreshold);
 
   const wsLatency = 12;
   const activeClients = 104;
