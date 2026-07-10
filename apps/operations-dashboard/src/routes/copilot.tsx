@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
@@ -15,28 +15,23 @@ import {
   fetchOperationalState,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useGlobalStore } from "../store/useGlobalStore";
+import type { ChatMessage } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/copilot")({
   component: CopilotChatPage,
 });
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  text: string;
-  timestamp: string;
-  thinkingSteps?: string[];
-  citations?: { label: string; text: string }[];
-}
-
 function CopilotChatPage() {
   const { subscribe, unsubscribe } = useWebSocket();
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      text: "Hello! I am **ATLAS Copilot**, your operations decision-support assistant. I have direct access to the live stadium telemetry, incident logs, and volunteer distribution. Ask me any operational questions or trigger a scenario simulation.",
-      timestamp: new Date().toLocaleTimeString(),
-    },
-  ]);
+  const {
+    chatMessages: messages,
+    setChatMessages: setMessages,
+    chatInput: input,
+    setChatInput: setInput,
+    chatThinking: isThinking,
+    setChatThinking: setIsThinking,
+  } = useGlobalStore();
 
   useEffect(() => {
     subscribe("telemetry");
@@ -49,8 +44,6 @@ function CopilotChatPage() {
     };
   }, [subscribe, unsubscribe]);
 
-  const [input, setInput] = useState("");
-  const [isThinking, setIsThinking] = useState(false);
   const [thinkingStage, setThinkingStage] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 

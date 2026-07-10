@@ -29,7 +29,8 @@
     "recharts": "^3.9.2",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.2",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@tanstack/router-plugin": "^1.168.19",

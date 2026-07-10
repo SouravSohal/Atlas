@@ -20,6 +20,7 @@ import {
   Lock,
 } from "lucide-react";
 import { envConfig } from "../config/env";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -46,21 +47,28 @@ function SettingsPage() {
   const [lastDbSync, setLastDbSync] = useState("2026-07-10 17:24:18");
 
   const [demoMode, setDemoMode] = useState(envConfig.defaultDemoMode);
-  const [simSpeed, setSimSpeed] = useState(envConfig.defaultSimulationSpeed);
-  const [simPaused, setSimPaused] = useState(false);
+  const {
+    playbackSpeed: simSpeed,
+    setPlaybackSpeed: setSimSpeed,
+    playbackIsPaused: simPaused,
+    setPlaybackIsPaused: setSimPaused,
+    thresholdDensity,
+    setThresholdDensity,
+    thresholdQueue,
+    setThresholdQueue,
+    confidenceThreshold,
+    setConfidenceThreshold,
+    sessionExpiry,
+    setSessionExpiry,
+    userRole,
+  } = useGlobalStore();
   const [selectedSeed, setSelectedSeed] = useState("stadium_seed_data.json");
 
-  const [thresholdDensity, setThresholdDensity] = useState(envConfig.defaultCrowdDensityThreshold);
-  const [thresholdQueue, setThresholdQueue] = useState(envConfig.defaultQueueTimeThreshold);
   const [medAutoDispatch, setMedAutoDispatch] = useState(true);
   const [weatherOverride, setWeatherOverride] = useState("Medium");
-  const [confidenceThreshold, setConfidenceThreshold] = useState(envConfig.defaultAiConfidenceThreshold);
 
   const wsLatency = 12;
   const activeClients = 104;
-
-  const [sessionExpiry, setSessionExpiry] = useState("12 Hours");
-  const userRole = "Administrator";
 
   const [diagnosticLogs, setDiagnosticLogs] = useState<string[]>([
     "[2026-07-10 17:20:00] INFO: WebSocket client registry handshake completed (client-104)",

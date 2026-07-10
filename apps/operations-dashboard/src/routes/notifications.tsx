@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
@@ -22,6 +22,7 @@ import {
   updateIncident,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/notifications")({
   component: NotificationCenterPage,
@@ -55,10 +56,16 @@ function NotificationCenterPage() {
     };
   }, [subscribe, unsubscribe]);
 
-  const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterSeverity, setFilterSeverity] = useState<string>("all");
-  const [groupBySeverity, setGroupBySeverity] = useState(false);
-  const [localReadState, setLocalReadState] = useState<Record<string, boolean>>({});
+  const {
+    notificationFilterCategory: filterCategory,
+    setNotificationFilterCategory: setFilterCategory,
+    notificationFilterSeverity: filterSeverity,
+    setNotificationFilterSeverity: setFilterSeverity,
+    notificationGroupBySeverity: groupBySeverity,
+    setNotificationGroupBySeverity: setGroupBySeverity,
+    notificationLocalReadState: localReadState,
+    setNotificationLocalReadState: setLocalReadState,
+  } = useGlobalStore();
 
   // Query backend data
   const incidentsQuery = useQuery({

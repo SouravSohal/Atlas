@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
@@ -19,6 +19,7 @@ import {
   fetchOperationalState,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/executive-situation-room")({
   component: ExecutiveSituationRoomPage,
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/executive-situation-room")({
 
 function ExecutiveSituationRoomPage() {
   const { subscribe, unsubscribe } = useWebSocket();
-  const [approvedDecisions, setApprovedDecisions] = useState<Record<string, boolean>>({});
+  const { approvedRecs: approvedDecisions, setRecApproval } = useGlobalStore();
 
   useEffect(() => {
     subscribe("telemetry");
@@ -87,7 +88,7 @@ function ExecutiveSituationRoomPage() {
   }
 
   const handleApprove = (id: string) => {
-    setApprovedDecisions((prev) => ({ ...prev, [id]: true }));
+    setRecApproval(id, true);
   };
 
   return (

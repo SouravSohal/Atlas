@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchDashboardOverview } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/analytics")({
   component: AnalyticsPage,
@@ -22,10 +23,16 @@ export const Route = createFileRoute("/analytics")({
 
 function AnalyticsPage() {
   const { subscribe, unsubscribe } = useWebSocket();
-  const [timeRange, setTimeRange] = useState("match");
-  const [filterZone, setFilterZone] = useState("all");
-  const [filterType, setFilterType] = useState("all");
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const {
+    timeRange,
+    setTimeRange,
+    filterZone,
+    setFilterZone,
+    filterType,
+    setFilterType,
+    toastMessage,
+    setToastMessage,
+  } = useGlobalStore();
 
   useEffect(() => {
     subscribe("telemetry");

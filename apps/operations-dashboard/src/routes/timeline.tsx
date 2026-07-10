@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
@@ -17,6 +17,7 @@ import {
   fetchDashboardIncidents,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/timeline")({
   component: MatchTimelinePage,
@@ -115,11 +116,18 @@ const HISTORICAL_EVENTS: TimelineEvent[] = [
 
 function MatchTimelinePage() {
   const { subscribe, unsubscribe } = useWebSocket();
-  const [playbackActive, setPlaybackActive] = useState(false);
-  const [playbackStep, setPlaybackStep] = useState(HISTORICAL_EVENTS.length - 1);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1); // 1x, 2x, 5x
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterSeverity, setFilterSeverity] = useState<string>("all");
+  const {
+    timelinePlaybackActive: playbackActive,
+    setTimelinePlaybackActive: setPlaybackActive,
+    timelinePlaybackStep: playbackStep,
+    setTimelinePlaybackStep: setPlaybackStep,
+    timelinePlaybackSpeed: playbackSpeed,
+    setTimelinePlaybackSpeed: setPlaybackSpeed,
+    timelineFilterType: filterType,
+    setTimelineFilterType: setFilterType,
+    timelineFilterSeverity: filterSeverity,
+    setTimelineFilterSeverity: setFilterSeverity,
+  } = useGlobalStore();
 
   useEffect(() => {
     subscribe("telemetry");

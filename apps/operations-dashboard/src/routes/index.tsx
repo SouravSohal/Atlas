@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
@@ -34,6 +34,8 @@ import {
   updateIncident,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useGlobalStore } from "../store/useGlobalStore";
+import type { ChatMessage } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/")({
   component: MissionControlPage,
@@ -461,15 +463,40 @@ const SCENARIO_STEPS: Record<string, any[]> = {
 function MissionControlPage() {
   const queryClient = useQueryClient();
   const { subscribe, unsubscribe } = useWebSocket();
-  const [approvedRecs, setApprovedRecs] = useState<Record<string, boolean>>({});
-  const [demoOpen, setDemoOpen] = useState(false);
-  const [demoMessage, setDemoMessage] = useState<string | null>(null);
-
-  // Judge Demo state variables
-  const [judgeDemoActive, setJudgeDemoActive] = useState(false);
-  const [demoStatusMilestone, setDemoStatusMilestone] = useState<string>("");
-  const [focusedNodeIndex, setFocusedNodeIndex] = useState<number | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const {
+    approvedRecs,
+    setRecApproval,
+    demoOpen,
+    setDemoOpen,
+    demoMessage,
+    setDemoMessage,
+    judgeDemoActive,
+    setJudgeDemoActive,
+    demoStatusMilestone,
+    setDemoStatusMilestone,
+    focusedNodeIndex,
+    setFocusedNodeIndex,
+    toastMessage,
+    setToastMessage,
+    playbackActive,
+    setPlaybackActive,
+    playbackScenario,
+    setPlaybackScenario,
+    playbackStep,
+    setPlaybackStep,
+    playbackSpeed,
+    setPlaybackSpeed,
+    playbackIsPaused,
+    setPlaybackIsPaused,
+    localNotifications,
+    setLocalNotifications,
+    chatMessages,
+    setChatMessages,
+    chatInput,
+    setChatInput,
+    chatThinking,
+    setChatThinking,
+  } = useGlobalStore();
 
   // Real-time WebSocket connection to subscribe to updates
   useEffect(() => {
@@ -486,23 +513,6 @@ function MissionControlPage() {
 
 
   // Playback engine states
-  const [playbackActive, setPlaybackActive] = useState(false);
-  const [playbackScenario, setPlaybackScenario] = useState<string | null>(null);
-  const [playbackStep, setPlaybackStep] = useState(0);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [playbackIsPaused, setPlaybackIsPaused] = useState(false);
-  const [localNotifications, setLocalNotifications] = useState<any[]>([]);
-
-  // Copilot Chat States
-  const [chatMessages, setChatMessages] = useState<any[]>([
-    {
-      role: "assistant",
-      text: "Hello! I am your **ATLAS Copilot** operations assistant. Ask me anything about stadium health, volunteer distribution, or active recommendations.",
-      timestamp: new Date().toLocaleTimeString(),
-    },
-  ]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatThinking, setChatThinking] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Query actual backend data
@@ -710,7 +720,7 @@ function MissionControlPage() {
   };
 
   const handleApproveRecommendation = (id: string) => {
-    setApprovedRecs((prev) => ({ ...prev, [id]: true }));
+    setRecApproval(id, true);
   };
 
   const handleResolveIncident = (id: string) => {
@@ -831,7 +841,7 @@ function MissionControlPage() {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    const userMsg = {
+    const userMsg: ChatMessage = {
       role: "user",
       text: chatInput,
       timestamp: new Date().toLocaleTimeString(),
@@ -846,7 +856,7 @@ function MissionControlPage() {
       const rating = playbackActive && playbackData ? playbackData.overview.stadium_health : (overviewQuery.data?.stadium_health || 0.98);
       const summary = `System health rating is currently **${Math.round(rating * 100)}%**. We have **${activeIncidents.length} active incidents** registered. Recommended action priority is **High**.`;
 
-      const botMsg = {
+      const botMsg: ChatMessage = {
         role: "assistant",
         text: summary,
         timestamp: new Date().toLocaleTimeString(),

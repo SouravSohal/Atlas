@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchDashboardRecommendations } from "../services/api";
-import type { RecommendationItem } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useWebSocket } from "../providers/WebSocketProvider";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/recommendations")({
   component: RecommendationsPage,
@@ -26,22 +26,28 @@ export const Route = createFileRoute("/recommendations")({
 function RecommendationsPage() {
   const { subscribe, unsubscribe } = useWebSocket();
 
-  // Selected cards for bulk actions
-  const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
-  // Status tracking (local override state)
-  const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
-  // Drawer states
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedRec, setSelectedRec] = useState<RecommendationItem | null>(null);
-
-  // Filters state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterPriority, setFilterPriority] = useState("all");
-  const [filterSeverity, setFilterSeverity] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterCategory, setFilterCategory] = useState("all");
-
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const {
+    selectedIds,
+    setSelectedIds,
+    localStatuses,
+    setLocalStatuses,
+    drawerOpen,
+    setDrawerOpen,
+    selectedRec,
+    setSelectedRec,
+    recSearch: searchTerm,
+    setRecSearch: setSearchTerm,
+    recFilterPriority: filterPriority,
+    setRecFilterPriority: setFilterPriority,
+    recFilterSeverity: filterSeverity,
+    setRecFilterSeverity: setFilterSeverity,
+    recFilterStatus: filterStatus,
+    setRecFilterStatus: setFilterStatus,
+    recFilterCategory: filterCategory,
+    setRecFilterCategory: setFilterCategory,
+    toastMessage,
+    setToastMessage,
+  } = useGlobalStore();
 
   // Fetch recommendations
   const { data, isLoading } = useQuery({

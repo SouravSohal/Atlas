@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
@@ -33,6 +33,7 @@ import {
   fetchDashboardRecommendations,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/operational-state")({
   component: OperationalStateDashboardPage,
@@ -179,7 +180,7 @@ const ZONE_METADATA_TEMPLATES = [
 
 function OperationalStateDashboardPage() {
   const { subscribe, unsubscribe } = useWebSocket();
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const { selectedNodeId, setSelectedNodeId } = useGlobalStore();
 
   // TanStack Query
   const stateQuery = useQuery({

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { fetchDashboardIncidents, updateIncident, type IncidentItem } from "../services/api";
 import { useWebSocket } from "../providers/WebSocketProvider";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/incidents")({
   component: IncidentsPage,
@@ -28,17 +29,26 @@ function IncidentsPage() {
     subscribe("incidents");
     return () => unsubscribe("incidents");
   }, [subscribe, unsubscribe]);
-  const [search, setSearch] = useState("");
-  const [filterSeverity, setFilterSeverity] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
-  const [assignedVolunteer, setAssignedVolunteer] = useState<string>("");
-  const [volunteerMessage, setVolunteerMessage] = useState<string>("");
-
-  // Table Pagination / Sorting state
-  const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<"created_at" | "severity">("created_at");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const {
+    incidentSearch: search,
+    setIncidentSearch: setSearch,
+    incidentFilterSeverity: filterSeverity,
+    setIncidentFilterSeverity: setFilterSeverity,
+    incidentFilterStatus: filterStatus,
+    setIncidentFilterStatus: setFilterStatus,
+    selectedIncident,
+    setSelectedIncident,
+    assignedVolunteer,
+    setAssignedVolunteer,
+    volunteerMessage,
+    setVolunteerMessage,
+    incidentPage: page,
+    setIncidentPage: setPage,
+    incidentSortBy: sortBy,
+    setIncidentSortBy: setSortBy,
+    incidentSortOrder: sortOrder,
+    setIncidentSortOrder: setSortOrder,
+  } = useGlobalStore();
 
   // Query - refresh every 15 seconds
   const { data, isLoading, isError, refetch } = useQuery({
