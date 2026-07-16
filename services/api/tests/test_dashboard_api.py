@@ -312,3 +312,56 @@ def test_dashboard_recommendations_extra_filters(
     assert response.status_code == 200
     data = response.json()
     assert len(data["data"]["items"]) == 1
+
+
+def test_dashboard_predictions_success(
+    client: TestClient,
+    override_dashboard_dependencies: tuple[MagicMock, MagicMock, MagicMock],
+) -> None:
+    # Arrange
+    mock_incident_repo, mock_state_repo, mock_rec_repo = override_dashboard_dependencies
+    mock_state_repo.list = AsyncMock(return_value=[])
+    mock_incident_repo.list = AsyncMock(return_value=[])
+    mock_rec_repo.list = AsyncMock(return_value=[])
+
+    app = cast(FastAPI, client.app)
+    container = app.state.container
+
+    mock_task_repo = MagicMock()
+    mock_task_repo.list = AsyncMock(return_value=[])
+    container.task_repository.override(mock_task_repo)
+
+    mock_event_repo = MagicMock()
+    mock_event_repo.list = AsyncMock(return_value=[])
+    container.event_repository.override(mock_event_repo)
+
+    mock_predictions_agent = MagicMock()
+    from app.application.operational_state.predictions_agent import StadiumPredictionsResponse, PredictionItem
+    mock_response = StadiumPredictionsResponse(
+        confidence_score=0.9,
+        rationale="R",
+        queue_growth=PredictionItem(prediction="Q", confidence=0.8, reason="R", mitigation="M", timeline="T"),
+        crowd_movement=PredictionItem(prediction="C", confidence=0.8, reason="R", mitigation="M", timeline="T"),
+        volunteer_shortages=PredictionItem(prediction="V", confidence=0.8, reason="R", mitigation="M", timeline="T"),
+        medical_demand=PredictionItem(prediction="Me", confidence=0.8, reason="R", mitigation="M", timeline="T"),
+        transport_congestion=PredictionItem(prediction="Tr", confidence=0.8, reason="R", mitigation="M", timeline="T"),
+        gate_overload=PredictionItem(prediction="G", confidence=0.8, reason="R", mitigation="M", timeline="T"),
+        parking_saturation=PredictionItem(prediction="P", confidence=0.8, reason="R", mitigation="M", timeline="T"),
+        weather_impact=PredictionItem(prediction="W", confidence=0.8, reason="R", mitigation="M", timeline="T"),
+    )
+    mock_predictions_agent.generate_predictions = AsyncMock(return_value=mock_response)
+    container.stadium_predictions_agent.override(mock_predictions_agent)
+
+    # Act
+    with client:
+        response = client.get("/dashboard/predictions")
+
+    # Assert
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["data"]["queue_growth"]["prediction"] == "Q"
+
+    # Cleanup
+    container.reset_override()
+

@@ -17,6 +17,10 @@ from app.application.operational_state.summary_agent import (
     SituationSummaryAgent,
     SituationSummaryAgentResponse,
 )
+from app.application.operational_state.predictions_agent import (
+    StadiumPredictionsAgent,
+    StadiumPredictionsResponse,
+)
 from app.application.operational_state.updater import OperationalStateUpdater
 
 __all__ = [
@@ -32,6 +36,8 @@ __all__ = [
     "OperationalStateUpdater",
     "SituationSummaryAgent",
     "SituationSummaryAgentResponse",
+    "StadiumPredictionsAgent",
+    "StadiumPredictionsResponse",
     "StateNotFoundException",
     "VersionConflictException",
     "VolunteerAssigned",

@@ -8,7 +8,12 @@ from app.application.incidents import (
     ListIncidentsUseCase,
     UpdateIncidentUseCase,
 )
-from app.application.operational_state import OperationalStateService, SituationSummaryAgent, OperationalStateManager
+from app.application.operational_state import (
+    OperationalStateService,
+    SituationSummaryAgent,
+    OperationalStateManager,
+    StadiumPredictionsAgent,
+)
 from app.application.recommendations import RecommendationAgent, AIRecommendationGenerator
 from app.application.copilot.service import CopilotService
 from app.config import get_settings
@@ -108,6 +113,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     situation_summary_agent = providers.Singleton(
         SituationSummaryAgent,
+        orchestrator=ai_orchestrator,
+    )
+    stadium_predictions_agent = providers.Singleton(
+        StadiumPredictionsAgent,
         orchestrator=ai_orchestrator,
     )
     recommendation_generator = providers.Singleton(

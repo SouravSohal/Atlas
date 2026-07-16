@@ -241,3 +241,31 @@ export async function generateAIRecommendations(): Promise<RecommendationItem[]>
   const data: ApiResponse<RecommendationItem[]> = await res.json();
   return data.data;
 }
+
+export interface PredictionItem {
+  prediction: string;
+  confidence: number;
+  reason: string;
+  mitigation: string;
+  timeline: string;
+}
+
+export interface StadiumPredictions {
+  confidence_score: number;
+  rationale: string;
+  queue_growth: PredictionItem;
+  crowd_movement: PredictionItem;
+  volunteer_shortages: PredictionItem;
+  medical_demand: PredictionItem;
+  transport_congestion: PredictionItem;
+  gate_overload: PredictionItem;
+  parking_saturation: PredictionItem;
+  weather_impact: PredictionItem;
+}
+
+export async function fetchStadiumPredictions(): Promise<StadiumPredictions> {
+  const res = await fetch(`${API_BASE_URL}/dashboard/predictions`);
+  if (!res.ok) throw new Error("Failed to fetch stadium predictions");
+  const data: ApiResponse<StadiumPredictions> = await res.json();
+  return data.data;
+}
