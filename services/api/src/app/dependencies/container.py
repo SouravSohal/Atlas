@@ -126,6 +126,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         CopilotService,
         orchestrator=ai_orchestrator,
         state_manager=operational_state_manager,
+        event_repo=event_repository,
     )
 
     # Future Infrastructure/Service Providers (Placeholders for future milestones)

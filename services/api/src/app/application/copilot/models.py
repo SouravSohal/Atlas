@@ -12,6 +12,7 @@ class CopilotChatRequest(BaseModel):
     message: str = Field(..., description="The latest query or message submitted by the operator.")
     history: List[ChatMessageDTO] = Field(default_factory=list, description="Ordered conversation log history.")
     language: str = Field("English", description="Target response language.")
+    current_page: str | None = Field(None, description="The page the operator is currently viewing.")
 
 class CopilotChatResponse(AIResponse):
     """Structured response detailing the Copilot's response, model parameters, and context citation anchors."""

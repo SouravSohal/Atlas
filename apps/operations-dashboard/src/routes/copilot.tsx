@@ -113,7 +113,7 @@ function CopilotChatPage() {
       text: msg.text
     }));
 
-    postCopilotChat(textToSend, formattedHistory)
+    postCopilotChat(textToSend, formattedHistory, "en", window.location.pathname)
       .then((responseData) => {
         clearInterval(placeholderInterval);
         setIsThinking(false);

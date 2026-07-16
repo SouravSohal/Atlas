@@ -38,6 +38,15 @@ def mock_state_manager() -> MagicMock:
         timestamp=datetime.now(UTC),
     )
     state_manager.get_snapshot = AsyncMock(return_value=mock_snapshot)
+    
+    # Mock repositories for full memory context
+    state_manager.incident_repo = MagicMock()
+    state_manager.incident_repo.list = AsyncMock(return_value=[])
+    state_manager.recommendation_repo = MagicMock()
+    state_manager.recommendation_repo.list = AsyncMock(return_value=[])
+    state_manager.state_repo = MagicMock()
+    state_manager.state_repo.list = AsyncMock(return_value=[])
+    
     return state_manager
 
 def test_copilot_prompt() -> None:
@@ -57,7 +66,10 @@ async def test_copilot_service(mock_orchestrator: MagicMock, mock_state_manager:
     )
     mock_orchestrator.execute = AsyncMock(return_value=expected_response)
 
-    service = CopilotService(mock_orchestrator, mock_state_manager)
+    mock_event_repo = MagicMock()
+    mock_event_repo.list = AsyncMock(return_value=[])
+
+    service = CopilotService(mock_orchestrator, mock_state_manager, mock_event_repo)
     registered_prompt = mock_orchestrator.registry.get("atlas_copilot_agent", "latest")
     assert "You are ATLAS Copilot" in registered_prompt.template
 

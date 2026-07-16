@@ -361,6 +361,12 @@ async def get_dashboard_briefing(
         if any(str(inc.id) == str(uuid_id) for uuid_id in snapshot.active_incidents)
     ]
 
+    all_recs = await recommendation_repo.list()
+    active_recs = [
+        r for r in all_recs
+        if any(str(r.id) == str(uuid_id) for uuid_id in snapshot.recommendations)
+    ]
+
     operational_state_summary = {
         "stadium_health": snapshot.stadium_health,
         "timestamp": snapshot.timestamp.isoformat(),
@@ -394,7 +400,7 @@ async def get_dashboard_briefing(
             "details": r.details,
             "status": r.status.value,
         }
-        for r in snapshot.recommendations
+        for r in active_recs
     ]
 
     # Gather timeline events from EventRepository
@@ -478,6 +484,18 @@ async def explain_recommendations(
     )
     snapshot = await state_mgr.get_snapshot()
 
+    all_incidents = await incident_repo.list()
+    active_incidents = [
+        inc for inc in all_incidents 
+        if any(str(inc.id) == str(uuid_id) for uuid_id in snapshot.active_incidents)
+    ]
+
+    all_recs = await recommendation_repo.list()
+    active_recs = [
+        r for r in all_recs
+        if any(str(r.id) == str(uuid_id) for uuid_id in snapshot.recommendations)
+    ]
+
     operational_state_summary = {
         "stadium_health": snapshot.stadium_health,
         "timestamp": snapshot.timestamp.isoformat(),
@@ -493,7 +511,7 @@ async def explain_recommendations(
             "resolved": i.resolved,
             "created_at": i.created_at.isoformat(),
         }
-        for i in snapshot.active_incidents
+        for i in active_incidents
     ]
 
     recommendations_list = [
@@ -505,7 +523,7 @@ async def explain_recommendations(
             "details": r.details,
             "status": r.status.value,
         }
-        for r in snapshot.recommendations
+        for r in active_recs
     ]
 
     try:

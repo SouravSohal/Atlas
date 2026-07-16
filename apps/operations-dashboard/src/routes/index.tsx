@@ -32,6 +32,7 @@ import {
   fetchOperationalState,
   createIncident,
   updateIncident,
+  postCopilotChat,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { SituationAnalysisPanel } from "../components/SituationAnalysisPanel";
@@ -434,31 +435,45 @@ function MissionControlPage() {
   // Copilot submit message
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
+    const textToSend = chatInput;
+    if (!textToSend.trim()) return;
 
     const userMsg: ChatMessage = {
       role: "user",
-      text: chatInput,
+      text: textToSend,
       timestamp: new Date().toLocaleTimeString(),
     };
     setChatMessages((prev) => [...prev, userMsg]);
     setChatInput("");
     setChatThinking(true);
 
-    // Dynamic response based on current metrics
-    setTimeout(() => {
-      const activeIncidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items.filter(i => !i.resolved) || []);
-      const rating = playbackActive && simulatedOverview ? simulatedOverview.stadium_health : (overviewQuery.data?.stadium_health || 0.98);
-      const summary = `System health rating is currently **${Math.round(rating * 100)}%**. We have **${activeIncidents.length} active incidents** registered. Recommended action priority is **High**.`;
+    const formattedHistory = chatMessages.map(msg => ({
+      role: msg.role,
+      text: msg.text
+    }));
 
-      const botMsg: ChatMessage = {
-        role: "assistant",
-        text: summary,
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setChatMessages((prev) => [...prev, botMsg]);
-      setChatThinking(false);
-    }, 1200);
+    postCopilotChat(textToSend, formattedHistory, "en", window.location.pathname)
+      .then((responseData) => {
+        setChatThinking(false);
+        const assistantMsg: ChatMessage = {
+          role: "assistant",
+          text: responseData.text,
+          timestamp: new Date().toLocaleTimeString(),
+          citations: responseData.citations || [],
+          modelVersion: responseData.model_version || "Gemini 2.5 Flash",
+          executionTimeMs: responseData.execution_time_ms || 0,
+        };
+        setChatMessages((prev) => [...prev, assistantMsg]);
+      })
+      .catch((err) => {
+        setChatThinking(false);
+        const assistantMsg: ChatMessage = {
+          role: "assistant",
+          text: `Error calling Copilot: ${err.message || err}`,
+          timestamp: new Date().toLocaleTimeString(),
+        };
+        setChatMessages((prev) => [...prev, assistantMsg]);
+      });
   };
 
   if (overviewQuery.isLoading || stateQuery.isLoading || incidentsQuery.isLoading) {

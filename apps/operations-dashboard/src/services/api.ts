@@ -175,14 +175,15 @@ export interface CopilotChatResponse {
 export async function postCopilotChat(
   message: string,
   history: CopilotMessage[],
-  language = "en"
+  language = "en",
+  currentPage?: string
 ): Promise<CopilotChatResponse> {
   const res = await fetch(`${API_BASE_URL}/copilot/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ message, history, language }),
+    body: JSON.stringify({ message, history, language, current_page: currentPage }),
   });
   if (!res.ok) throw new Error("Failed to call copilot chat");
   const data: ApiResponse<CopilotChatResponse> = await res.json();
