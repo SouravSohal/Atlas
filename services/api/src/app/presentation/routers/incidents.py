@@ -13,6 +13,7 @@ from app.application.incidents import (
     UpdateIncidentUseCase,
 )
 from app.dependencies.container import ApplicationContainer
+from app.infrastructure.cache.manager import cache_manager
 from app.presentation.responses import ApiResponse
 
 from app.dependencies.auth import require_staff
@@ -28,6 +29,7 @@ async def create_incident(
     """Report and create a new incident in the system."""
     try:
         response_dto = await use_case.execute(request)
+        await cache_manager.invalidate_prefix("dashboard:")
         return ApiResponse(success=True, data=response_dto)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
@@ -70,4 +72,5 @@ async def update_incident(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Incident with ID {id} not found.",
         )
+    await cache_manager.invalidate_prefix("dashboard:")
     return ApiResponse(success=True, data=response_dto)

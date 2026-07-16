@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.dependencies.container import ApplicationContainer
 from app.infrastructure.streaming.broadcast import BroadcastService
+from app.infrastructure.cache.manager import cache_manager
 
 from atlas_core.domain.entities.stadium import Stadium
 from atlas_core.domain.services.data_loader import StadiumDataLoader
@@ -111,6 +112,9 @@ async def run_autoplay_loop(broadcast_service: BroadcastService) -> None:
             await broadcast_service.broadcast_to_topic("telemetry", payload)
             await broadcast_service.broadcast_to_topic("operational_state", payload)
 
+            # Invalidate cached dashboard metrics/overview for advanced tick state
+            await cache_manager.invalidate_prefix("dashboard:")
+
             # 5. Delay based on speed factor
             sleep_duration = max(1.0, 5.0 / demo_state.speed)
             await asyncio.sleep(sleep_duration)
@@ -163,6 +167,9 @@ async def start_demo(
     if request.mode == "autoplay":
         loop = asyncio.get_event_loop()
         demo_state.running_task = loop.create_task(run_autoplay_loop(broadcast_service))
+
+    # Invalidate dashboard cached response on fresh demo start
+    await cache_manager.invalidate_prefix("dashboard:")
 
     return {
         "status": "started",
@@ -222,6 +229,9 @@ async def step_demo(
 
     await broadcast_service.broadcast_to_topic("telemetry", payload)
     await broadcast_service.broadcast_to_topic("operational_state", payload)
+
+    # Invalidate cached dashboard metrics/overview for advanced tick state
+    await cache_manager.invalidate_prefix("dashboard:")
 
     return {"status": "stepped", "tick_index": clock.tick_index}
 

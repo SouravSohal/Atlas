@@ -282,6 +282,33 @@ class RateLimitSettings(BaseModel):
     )
 
 
+class CacheSettings(BaseModel):
+    """Configuration settings for lightweight response caching."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    overview_ttl: int = Field(
+        default=60,
+        validation_alias=AliasChoices("CACHE_TTL_OVERVIEW"),
+        description="TTL in seconds for dashboard overview cache.",
+    )
+    operational_state_ttl: int = Field(
+        default=30,
+        validation_alias=AliasChoices("CACHE_TTL_OPERATIONAL_STATE"),
+        description="TTL in seconds for operational state cache.",
+    )
+    metrics_ttl: int = Field(
+        default=60,
+        validation_alias=AliasChoices("CACHE_TTL_METRICS"),
+        description="TTL in seconds for dashboard metrics cache.",
+    )
+    briefing_ttl: int = Field(
+        default=300,
+        validation_alias=AliasChoices("CACHE_TTL_BRIEFING"),
+        description="TTL in seconds for situation briefings cache.",
+    )
+
+
 class Settings(BaseSettings):
     """Global configuration settings for the application, loaded from env files and environment variables."""
 
@@ -303,6 +330,7 @@ class Settings(BaseSettings):
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     demo: DemoSettings = Field(default_factory=DemoSettings)
     rate_limits: RateLimitSettings = Field(default_factory=RateLimitSettings)
+    cache: CacheSettings = Field(default_factory=CacheSettings)
 
 
 @lru_cache

@@ -12,8 +12,10 @@ from atlas_core.domain.repositories.operational_state_repository import Operatio
 from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
 from atlas_core.domain.repositories.task_repository import TaskRepository
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
+from app.infrastructure.cache.manager import cache_manager, check_cache_bypass
 from pydantic import BaseModel, Field
+from app.config import Settings
 
 from app.application.events import EventPublisher
 from app.application.operational_state.state_manager import OperationalStateManager
@@ -121,13 +123,21 @@ class DashboardMetricsResponse(BaseModel):
 @router.get("/overview", response_model=ApiResponse[DashboardOverviewResponse])
 @inject
 async def get_overview(
+    request: Request,
+    bypass_cache: bool = Depends(check_cache_bypass),
     state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
     incident_repo: IncidentRepository[Incident] = Depends(Provide[ApplicationContainer.incident_repository]),
     task_repo: TaskRepository[Any] = Depends(Provide[ApplicationContainer.task_repository]),
     recommendation_repo: RecommendationRepository[Recommendation] = Depends(Provide[ApplicationContainer.recommendation_repository]),
     event_publisher: EventPublisher = Depends(Provide[ApplicationContainer.event_publisher]),
+    settings: Settings = Depends(Provide[ApplicationContainer.config]),
 ) -> ApiResponse[DashboardOverviewResponse]:
     """Retrieves high-level overview metrics of the stadium's current state."""
+    cache_key = "dashboard:overview"
+    if not bypass_cache:
+        cached_val = await cache_manager.get(cache_key)
+        if cached_val is not None:
+            return ApiResponse(success=True, data=cached_val)
     state_mgr_real = OperationalStateManager(
         state_repo=state_repo,
         incident_repo=incident_repo,
@@ -147,6 +157,7 @@ async def get_overview(
         allocated_volunteers_count=len(snapshot.volunteer_allocation),
         timestamp=snapshot.timestamp,
     )
+    await cache_manager.set(cache_key, overview, settings.cache.overview_ttl)
     return ApiResponse(success=True, data=overview)
 
 
@@ -204,9 +215,17 @@ async def get_dashboard_incidents(
 @router.get("/operational-state", response_model=ApiResponse[list[OperationalStateDashboardItem]])
 @inject
 async def get_dashboard_operational_states(
+    request: Request,
+    bypass_cache: bool = Depends(check_cache_bypass),
     state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
+    settings: Settings = Depends(Provide[ApplicationContainer.config]),
 ) -> ApiResponse[list[OperationalStateDashboardItem]]:
     """Retrieves operational states for all zones."""
+    cache_key = "dashboard:operational_state"
+    if not bypass_cache:
+        cached_val = await cache_manager.get(cache_key)
+        if cached_val is not None:
+            return ApiResponse(success=True, data=cached_val)
     states = await state_repo.list()
 
     items = [
@@ -218,6 +237,7 @@ async def get_dashboard_operational_states(
         )
         for s in states
     ]
+    await cache_manager.set(cache_key, items, settings.cache.operational_state_ttl)
     return ApiResponse(success=True, data=items)
 
 
@@ -274,11 +294,19 @@ async def get_dashboard_recommendations(
 @router.get("/metrics", response_model=ApiResponse[DashboardMetricsResponse])
 @inject
 async def get_dashboard_metrics(
+    request: Request,
+    bypass_cache: bool = Depends(check_cache_bypass),
     state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
     incident_repo: IncidentRepository[Incident] = Depends(Provide[ApplicationContainer.incident_repository]),
     recommendation_repo: RecommendationRepository[Recommendation] = Depends(Provide[ApplicationContainer.recommendation_repository]),
+    settings: Settings = Depends(Provide[ApplicationContainer.config]),
 ) -> ApiResponse[DashboardMetricsResponse]:
     """Compiles detailed real-time operational and security telemetry metrics."""
+    cache_key = "dashboard:metrics"
+    if not bypass_cache:
+        cached_val = await cache_manager.get(cache_key)
+        if cached_val is not None:
+            return ApiResponse(success=True, data=cached_val)
     states = await state_repo.list()
     total_zones = len(states)
     avg_wait = sum(s.queue_estimate.waiting_minutes for s in states) / total_zones if total_zones > 0 else 0.0
@@ -312,12 +340,15 @@ async def get_dashboard_metrics(
         incidents_by_type=type_counts,
         recommendations_by_status=status_counts,
     )
+    await cache_manager.set(cache_key, metrics, settings.cache.metrics_ttl)
     return ApiResponse(success=True, data=metrics)
 
 
 @router.get("/briefing", response_model=ApiResponse[SituationSummaryAgentResponse], dependencies=[Depends(RateLimiterDependency("ai"))])
 @inject
 async def get_dashboard_briefing(
+    request: Request,
+    bypass_cache: bool = Depends(check_cache_bypass),
     state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
     incident_repo: IncidentRepository[Incident] = Depends(Provide[ApplicationContainer.incident_repository]),
     task_repo: TaskRepository[Any] = Depends(Provide[ApplicationContainer.task_repository]),
@@ -325,8 +356,14 @@ async def get_dashboard_briefing(
     event_publisher: EventPublisher = Depends(Provide[ApplicationContainer.event_publisher]),
     event_repo: EventRepository = Depends(Provide[ApplicationContainer.event_repository]),
     summary_agent: SituationSummaryAgent = Depends(Provide[ApplicationContainer.situation_summary_agent]),
+    settings: Settings = Depends(Provide[ApplicationContainer.config]),
 ) -> ApiResponse[SituationSummaryAgentResponse]:
     """Generates a dynamic real-time AI Situation Briefing using the SituationSummaryAgent."""
+    cache_key = "dashboard:briefing"
+    if not bypass_cache:
+        cached_val = await cache_manager.get(cache_key)
+        if cached_val is not None:
+            return ApiResponse(success=True, data=cached_val)
     state_mgr = OperationalStateManager(
         state_repo=state_repo,
         incident_repo=incident_repo,
@@ -429,6 +466,7 @@ async def get_dashboard_briefing(
             recommendations=recommendations_list,
             timeline=timeline_list,
         )
+        await cache_manager.set(cache_key, report, settings.cache.briefing_ttl)
         return ApiResponse(success=True, data=report)
     except Exception as e:
         logger.error("Failed to generate situation briefing", error=str(e))
