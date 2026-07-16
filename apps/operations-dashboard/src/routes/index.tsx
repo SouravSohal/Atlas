@@ -2,31 +2,8 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
-import {
-  ReactFlow,
-  Background,
-  Controls,
-  Handle,
-  Position,
-  MiniMap,
-} from "@xyflow/react";
-import type { Node, Edge, NodeProps } from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import {
-  ShieldCheck,
-  AlertTriangle,
-  Users,
-  Brain,
-  Clock,
-  Activity,
-  Sparkles,
-  Send,
-  CheckCircle,
-  Zap,
-  HelpCircle,
-  X,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import type { Edge } from "@xyflow/react";
+import { Zap } from "lucide-react";
 import {
   fetchDashboardOverview,
   fetchDashboardIncidents,
@@ -43,122 +20,20 @@ import { useGlobalStore } from "../store/useGlobalStore";
 import type { ChatMessage } from "../store/useGlobalStore";
 import { SCENARIO_STEPS } from "../store/scenarioSteps";
 
+import type { StadiumNode } from "../features/mission-control/types";
+import { KpiMatrix } from "../features/mission-control/components/KpiMatrix";
+import { DigitalTwinMap } from "../features/mission-control/components/DigitalTwinMap";
+import { AiCopilot } from "../features/mission-control/components/AiCopilot";
+import { OperationalTimeline } from "../features/mission-control/components/OperationalTimeline";
+import { ActiveRecommendations } from "../features/mission-control/components/ActiveRecommendations";
+import { DecisionIntelModal } from "../features/mission-control/components/DecisionIntelModal";
+import { PredictiveForecast } from "../features/mission-control/components/PredictiveForecast";
+import { LiveFeedIncidents } from "../features/mission-control/components/LiveFeedIncidents";
+import { JudgeDemoConsole } from "../features/mission-control/components/JudgeDemoConsole";
+
 export const Route = createFileRoute("/")({
   component: MissionControlPage,
 });
-
-type StadiumNodeData = {
-  label: string;
-  value: string;
-  status: "stable" | "warning" | "critical";
-  type: string;
-  isFocused?: boolean;
-  health: number;
-  density: number;
-  queue: number;
-  capacity: number;
-  alerts: number;
-  recs: number;
-  resources: string;
-  predictionOverlay?: any;
-};
-
-type StadiumNode = Node<StadiumNodeData, "stadiumNode">;
-
-// Custom React flow nodes configuration
-const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
-  const borderColors = {
-    stable: data.isFocused ? "border-amber-400 ring-2 ring-amber-400/50" : "border-emerald-500/50 shadow-emerald-500/5",
-    warning: data.isFocused ? "border-amber-400 ring-2 ring-amber-400/50" : "border-amber-500/50 shadow-amber-500/5",
-    critical: data.isFocused ? "border-amber-400 ring-2 ring-amber-400/50" : "border-destructive/60 shadow-destructive/5",
-  };
-
-  const bgColors = {
-    stable: "bg-emerald-500/5",
-    warning: "bg-amber-500/5",
-    critical: "bg-destructive/5 animate-pulse",
-  };
-
-  const indicatorColors = {
-    stable: "bg-emerald-500",
-    warning: "bg-amber-500",
-    critical: "bg-destructive",
-  };
-
-  return (
-    <motion.div
-      animate={data.isFocused ? { scale: [1, 1.03, 1], y: [0, -2, 0] } : {}}
-      transition={{ repeat: Infinity, duration: 2 }}
-      className={`rounded-xl border ${borderColors[data.status]} ${bgColors[data.status]} p-2.5 text-left w-44 backdrop-blur-md shadow-lg relative text-foreground`}
-    >
-      {data.isFocused && (
-        <span className="absolute -top-2.5 -right-2 bg-amber-500 text-black text-[7px] font-black px-1.5 py-0.5 rounded border border-black shadow uppercase animate-pulse">
-          🎯 focus
-        </span>
-      )}
-      <Handle type="target" position={Position.Left} className="w-1.5 h-1.5 bg-border" />
-      
-      {/* Node Title */}
-      <div className="flex items-center justify-between gap-1.5 border-b border-border/40 pb-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${indicatorColors[data.status]}`} />
-          <span className="text-[9px] font-black tracking-wide uppercase tracking-wider block truncate w-24">{data.label}</span>
-        </div>
-        <span className="text-[7px] font-mono text-muted-foreground uppercase">{data.type}</span>
-      </div>
-
-      {/* Grid details */}
-      <div className="grid grid-cols-2 gap-1.5 mt-2 text-[8px] font-mono text-muted-foreground">
-        <div>
-          <span>HEALTH</span>
-          <span className="font-bold text-foreground block">{data.health}%</span>
-        </div>
-        <div>
-          <span>DENSITY</span>
-          <span className="font-bold text-foreground block">{data.density}%</span>
-        </div>
-        <div>
-          <span>QUEUE</span>
-          <span className="font-bold text-foreground block">{data.queue}m</span>
-        </div>
-        <div>
-          <span>ALERTS</span>
-          <span className={`font-bold block ${data.alerts > 0 ? "text-destructive" : "text-foreground"}`}>
-            {data.alerts}
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-2 border-t border-border/40 pt-1.5 flex items-center justify-between text-[7px] font-mono text-muted-foreground">
-        <span>STAFF: {data.resources}</span>
-        {data.recs > 0 && <span className="text-amber-400 font-bold">RECS: {data.recs}</span>}
-      </div>
-
-      {data.predictionOverlay && (
-        <div className="mt-2.5 border-t border-purple-500/30 pt-2 flex flex-col gap-1 text-[8px] text-purple-300">
-          <div className="flex items-center gap-1 font-bold">
-            <span className="relative flex h-1.5 w-1.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500" />
-            </span>
-            <span className="uppercase font-black text-purple-400">Predicted Risk:</span>
-          </div>
-          <p className="font-medium text-foreground leading-tight line-clamp-2">{data.predictionOverlay.prediction}</p>
-          <div className="flex items-center justify-between text-[7px] font-mono mt-0.5 text-purple-400/80">
-            <span>Conf: {Math.round(data.predictionOverlay.confidence * 100)}%</span>
-            <span>Time: {data.predictionOverlay.timeline}</span>
-          </div>
-        </div>
-      )}
-
-      <Handle type="source" position={Position.Right} className="w-1.5 h-1.5 bg-border" />
-    </motion.div>
-  );
-};
-
-const nodeTypes = {
-  stadiumNode: CustomNode,
-};
 
 function MissionControlPage() {
   const queryClient = useQueryClient();
@@ -176,7 +51,6 @@ function MissionControlPage() {
     setDemoStatusMilestone,
     focusedNodeIndex,
     setFocusedNodeIndex,
-    toastMessage,
     setToastMessage,
     playbackActive,
     playbackScenario,
@@ -213,40 +87,11 @@ function MissionControlPage() {
     };
   }, [subscribe, unsubscribe]);
 
-
-
   // Playback engine states
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [showPredictionsOverlay, setShowPredictionsOverlay] = useState(false);
   const [selectedWhyRec, setSelectedWhyRec] = useState<any | null>(null);
-
-  const parseDetails = (detailsStr: string) => {
-    try {
-      const parsed = JSON.parse(detailsStr);
-      return {
-        explanation: parsed.explanation || detailsStr,
-        why: parsed.why || "Operational parameters require routing intervention to maintain target efficiency.",
-        evidence: parsed.evidence || "Sustained telemetry alerts in target sector.",
-        operational_data_used: parsed.operational_data_used || ["density", "queue_waiting_minutes"],
-        alternative_actions: parsed.alternative_actions || ["Increase monitoring intervals", "Dispatch mobile supervisor patrol"],
-        trade_offs: parsed.trade_offs || "Diverts staff from primary deployment bases.",
-        expected_impact: parsed.expected_impact || "Alleviate queue wait by 25%",
-        eta_minutes: parsed.eta_minutes || 8,
-      };
-    } catch {
-      return {
-        explanation: detailsStr,
-        why: "Operational parameters require routing intervention to maintain target efficiency.",
-        evidence: "Sustained telemetry alerts in target sector.",
-        operational_data_used: ["density", "queue_waiting_minutes"],
-        alternative_actions: ["Increase monitoring intervals", "Dispatch mobile supervisor patrol"],
-        trade_offs: "Diverts staff from primary deployment bases.",
-        expected_impact: "Alleviate queue wait by 25%",
-        eta_minutes: 8,
-      };
-    }
-  };
 
   const predictionsQuery = useQuery({
     queryKey: ["cc-predictions"],
@@ -278,8 +123,6 @@ function MissionControlPage() {
     queryFn: () => fetchDashboardRecommendations(1, 10),
     refetchInterval: 5000,
   });
-
-
 
   const startJudgeDemo = (scenarioName: string) => {
     startSimulation(scenarioName);
@@ -556,15 +399,6 @@ function MissionControlPage() {
   const incidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || []);
   const recs = playbackActive && simulatedRecommendations ? simulatedRecommendations : (recommendationsQuery.data?.items || []);
 
-  const metrics = [
-    { title: "Stadium Health", value: `${Math.round((overview?.stadium_health || 0.98) * 100)}%`, status: "Optimal", icon: <ShieldCheck className="h-4 w-4 text-emerald-400" /> },
-    { title: "Active Incidents", value: overview?.active_incidents_count || 0, status: "Urgent", icon: <AlertTriangle className="h-4 w-4 text-destructive" /> },
-    { title: "Crowd Density", value: `${Math.round((overview?.average_crowd_density || 0.45) * 100)}%`, status: "Moderate", icon: <Users className="h-4 w-4 text-primary" /> },
-    { title: "Volunteers Allocated", value: overview?.allocated_volunteers_count || 0, status: "Active", icon: <Users className="h-4 w-4 text-primary" /> },
-    { title: "AI Confidence", value: "96.4%", status: "Optimal", icon: <Brain className="h-4 w-4 text-emerald-400" /> },
-    { title: "Avg Queue Time", value: "8 min", status: "Optimal", icon: <Clock className="h-4 w-4 text-emerald-400" /> },
-  ];
-
   return (
     <div className="flex flex-col gap-6 text-left h-full">
       {/* Title Header */}
@@ -592,7 +426,7 @@ function MissionControlPage() {
           </div>
           <div>
             <h3 className="text-sm font-bold text-foreground">Scenario Playback Engine</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Replay hypothetical stadium incidents in real-time.</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 font-semibold">Replay hypothetical stadium incidents in real-time.</p>
           </div>
         </div>
 
@@ -682,776 +516,82 @@ function MissionControlPage() {
       </div>
 
       {/* Flagship KPI Matrix */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-        {metrics.map((m) => (
-          <motion.div
-            key={`${m.title}-${m.value}`}
-            initial={{ scale: 0.95, opacity: 0.8 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="rounded-xl border border-border bg-card/45 backdrop-blur-md p-4 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-[10px] font-bold uppercase tracking-wider">{m.title}</span>
-              {m.icon}
-            </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-2xl font-black tracking-tight">{m.value}</span>
-              <span className="text-[9px] font-bold text-muted-foreground uppercase">{m.status}</span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      <KpiMatrix overview={overview} />
 
       {/* Main Grid: Row 1: Digital Twin & AI Copilot */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Digital Twin Widget */}
-        <div className="lg:col-span-2 rounded-2xl border border-border bg-card/45 backdrop-blur-md overflow-hidden h-[540px] flex flex-col relative shadow-sm">
-          {/* Header Controls */}
-          <div className="p-4 border-b border-border bg-muted/20 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-left">
-              <span className="text-xs font-bold text-foreground block">Stadium Digital Twin</span>
-              <span className="text-[9px] text-muted-foreground mt-0.5 block">Interact to inspect flow vectors.</span>
-            </div>
-
-            {/* Quick Node Search Select */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowPredictionsOverlay(!showPredictionsOverlay)}
-                className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-bold transition-all ${
-                  showPredictionsOverlay
-                    ? "bg-purple-500/20 border-purple-500/40 text-purple-300 shadow-md shadow-purple-500/10"
-                    : "bg-card border-border hover:bg-muted text-muted-foreground"
-                }`}
-              >
-                <Brain className={`h-3 w-3 ${showPredictionsOverlay ? "text-purple-400 animate-pulse" : ""}`} />
-                <span>Predictions Overlay</span>
-              </button>
-
-              <span className="text-[9px] font-black text-muted-foreground uppercase font-mono border-l border-border/60 pl-2">Go to:</span>
-              <select
-                value={focusedNodeIndex !== null ? `node-${focusedNodeIndex}` : ""}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (!val) {
-                    setFocusedNodeIndex(null);
-                  } else {
-                    const idx = parseInt(val.split("-")[1]);
-                    setFocusedNodeIndex(idx);
-                  }
-                }}
-                className="rounded-lg border border-border bg-card px-2 py-1 text-[10px] font-bold outline-none cursor-pointer text-foreground"
-              >
-                <option value="">Select Sector...</option>
-                {flowNodes.map((n, idx) => (
-                  <option key={n.id} value={`node-${idx}`}>{n.data.label}</option>
-                ))}
-              </select>
-              {focusedNodeIndex !== null && (
-                <button
-                  onClick={() => setFocusedNodeIndex(null)}
-                  className="p-1 rounded bg-muted hover:bg-muted/40 text-[9px] font-black uppercase text-muted-foreground"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex-1 flex flex-col md:flex-row h-full w-full overflow-hidden">
-            {/* Map Canvas */}
-            <div className="flex-1 h-full relative border-r border-border/40">
-              <ReactFlow
-                nodes={flowNodes}
-                edges={flowEdges}
-                nodeTypes={nodeTypes}
-                fitView
-                onNodeClick={(_, node) => {
-                  const idx = flowNodes.findIndex((n) => n.id === node.id);
-                  if (idx !== -1) setFocusedNodeIndex(idx);
-                }}
-                className="bg-muted/10 h-full w-full"
-              >
-                <Background color="var(--color-border)" gap={16} size={1} />
-                <Controls showInteractive={false} className="bg-card border-border fill-foreground" />
-                <MiniMap
-                  className="bg-card border-border border rounded-xl"
-                  nodeColor={(node) => {
-                    if (node.data?.status === "critical") return "#ef4444";
-                    if (node.data?.status === "warning") return "#f59e0b";
-                    return "#10b981";
-                  }}
-                  maskColor="rgba(0, 0, 0, 0.4)"
-                />
-              </ReactFlow>
-            </div>
-
-            {/* Inspector Panel */}
-            <div className="w-full md:w-64 h-full bg-card/25 backdrop-blur-md p-4 flex flex-col justify-between overflow-y-auto border-t md:border-t-0 md:border-l border-border/40 text-left">
-              {focusedNodeIndex !== null && flowNodes[focusedNodeIndex] ? (
-                (() => {
-                  const node = flowNodes[focusedNodeIndex];
-                  const statusColors = {
-                    stable: "text-emerald-400",
-                    warning: "text-amber-500",
-                    critical: "text-destructive",
-                  };
-
-                  return (
-                    <div className="flex flex-col gap-4 h-full justify-between">
-                      <div className="flex flex-col gap-3.5">
-                        <div className="border-b border-border/40 pb-2">
-                          <span className={`text-[8px] font-black uppercase font-mono ${statusColors[node.data.status]}`}>
-                            {node.data.type} status: {node.data.status}
-                          </span>
-                          <h4 className="text-xs font-black uppercase text-foreground mt-0.5">
-                            {node.data.label}
-                          </h4>
-                        </div>
-
-                        {/* Telemetry specs */}
-                        <div className="grid grid-cols-2 gap-2 text-[9px] font-mono text-muted-foreground bg-muted/20 p-2.5 rounded-lg border border-border/40">
-                          <div>
-                            <span>HEALTH</span>
-                            <span className="font-bold text-foreground block">{node.data.health}%</span>
-                          </div>
-                          <div>
-                            <span>DENSITY</span>
-                            <span className="font-bold text-foreground block">{node.data.density}%</span>
-                          </div>
-                          <div>
-                            <span>WAIT TIME</span>
-                            <span className="font-bold text-foreground block">{node.data.queue} min</span>
-                          </div>
-                          <div>
-                            <span>LIMIT</span>
-                            <span className="font-bold text-foreground block">{node.data.capacity} pax</span>
-                          </div>
-                        </div>
-
-                        {/* Staff / Alerts */}
-                        <div className="flex flex-col gap-1 text-[9px] font-mono">
-                          <span className="text-muted-foreground uppercase">ASSIGNED STAFF:</span>
-                          <span className="font-bold text-foreground uppercase">{node.data.resources}</span>
-                        </div>
-
-                        {node.data.recs > 0 && (
-                          <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-500 leading-relaxed font-semibold">
-                            ⚠️ AI Recommendations active: Reallocate volunteer squad to clear local bottlenecks.
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Action */}
-                      <button
-                        onClick={() => {
-                          setToastMessage(`Command dispatched: Staff rerouted to ${node.data.label}.`);
-                          setTimeout(() => setToastMessage(null), 3000);
-                        }}
-                        className="w-full rounded-lg bg-primary py-2 text-[10px] font-black uppercase text-primary-foreground tracking-wider hover:opacity-90 transition-opacity"
-                      >
-                        Optimize Sector
-                      </button>
-                    </div>
-                  );
-                })()
-              ) : (
-                <div className="flex flex-col justify-between h-full">
-                  <div className="flex flex-col gap-4">
-                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest border-b border-border/40 pb-2">
-                      Sector Inspector
-                    </span>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Click any node on the stadium map to inspect real-time flow telemetry, pending recommendations, incident history, and workforce assignments.
-                    </p>
-                  </div>
-
-                  {/* Legend */}
-                  <div className="flex flex-col gap-1.5 border-t border-border/40 pt-4 text-[8px] font-black uppercase text-muted-foreground tracking-wider">
-                    <span className="mb-1 block text-[7px] text-muted-foreground">Status Legend</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" /> Nominal state
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" /> Warning limits
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" /> Critical bottleneck
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <DigitalTwinMap
+          flowNodes={flowNodes}
+          flowEdges={flowEdges}
+          focusedNodeIndex={focusedNodeIndex}
+          setFocusedNodeIndex={setFocusedNodeIndex}
+          showPredictionsOverlay={showPredictionsOverlay}
+          setShowPredictionsOverlay={setShowPredictionsOverlay}
+          setToastMessage={setToastMessage}
+        />
 
         {/* Col 3 Sidebar: AI Situation Analysis & Copilot */}
         <div className="flex flex-col gap-6">
           <SituationAnalysisPanel />
 
           {/* AI Copilot Widget */}
-          <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md overflow-hidden h-[400px] flex flex-col justify-between shadow-sm">
-            <div className="p-4 border-b border-border bg-muted/20 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Brain className="h-4 w-4 text-primary animate-pulse" />
-                <span className="text-xs font-bold text-foreground">ATLAS Copilot</span>
-              </div>
-              <span className="text-[9px] text-muted-foreground font-mono">Gemini 2.5 Flash</span>
-            </div>
-
-            {/* Conversation history */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-              {playbackActive && (
-                <div className="p-3 rounded-xl border border-primary/30 bg-primary/5 flex items-start gap-2 text-left">
-                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5 animate-pulse" />
-                  <div>
-                    <span className="font-bold block text-primary text-[10px] uppercase">AI Situation Summary:</span>
-                    <p className="text-foreground mt-0.5">{SCENARIO_STEPS[playbackScenario || ""]?.[playbackStep]?.summary}</p>
-                  </div>
-                </div>
-              )}
-              
-              {chatMessages.map((msg, idx) => (
-                <div key={idx} className={`flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                  <div className={`p-3 rounded-2xl border ${
-                    msg.role === "user" ? "bg-primary text-primary-foreground border-primary" : "bg-muted/30 border-border"
-                  } max-w-[85%] text-left`}>
-                    {msg.text.split("\n").map((line: string, iIdx: number) => (
-                      <p key={iIdx}>{line}</p>
-                    ))}
-                  </div>
-                  <span className="text-[8px] text-muted-foreground px-1">{msg.timestamp}</span>
-                </div>
-              ))}
-              {chatThinking && (
-                <div className="flex items-center gap-1.5 text-muted-foreground italic">
-                  <div className="h-3 w-3 rounded-full border border-primary border-t-transparent animate-spin" />
-                  <span>Copilot is thinking...</span>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Form input */}
-            <form onSubmit={handleChatSubmit} className="p-3 border-t border-border bg-muted/10 flex gap-2">
-              <input
-                type="text"
-                placeholder="Ask Copilot a question..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-xs outline-none text-foreground"
-              />
-              <button type="submit" className="rounded-lg bg-primary p-2 text-primary-foreground hover:opacity-90 transition-opacity">
-                <Send className="h-3.5 w-3.5" />
-              </button>
-            </form>
-          </div>
+          <AiCopilot
+            playbackActive={playbackActive}
+            playbackScenario={playbackScenario}
+            playbackStep={playbackStep}
+            chatMessages={chatMessages}
+            chatThinking={chatThinking}
+            chatInput={chatInput}
+            setChatInput={setChatInput}
+            handleChatSubmit={handleChatSubmit}
+            chatEndRef={chatEndRef}
+          />
         </div>
       </div>
 
       {/* Row 2: Timeline & Recommendations */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Timeline Widget */}
-        <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md p-6 flex flex-col h-[320px] shadow-sm">
-          <div className="mb-4">
-            <h2 className="text-base font-bold">Operational Timeline</h2>
-            <p className="text-xs text-muted-foreground">Chronological sequence of logs in the current shift.</p>
-          </div>
-          <div className="flex-1 overflow-y-auto pl-6 border-l border-border space-y-5 text-left">
-            {incidents.length === 0 ? (
-              <div className="text-xs text-muted-foreground py-4">No events logged.</div>
-            ) : (
-              incidents.slice(0, 5).map((inc: any) => (
-                <div key={inc.id} className="relative text-left">
-                  <div className="absolute -left-[31px] mt-0.5 rounded-full bg-card border-2 border-border p-1 text-primary">
-                    <Clock className="h-3 w-3" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold">{inc.resolved ? "Incident Resolved" : "Incident Created"}</span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5">{inc.description}</span>
-                    <span className="text-[9px] text-primary font-bold mt-1">
-                      {new Date(inc.created_at).toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        <OperationalTimeline incidents={incidents} />
 
         {/* Recommendations Widget */}
-        <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md p-6 flex flex-col h-[320px] shadow-sm">
-          <div className="mb-4">
-            <h2 className="text-base font-bold">Active Recommendations</h2>
-            <p className="text-xs text-muted-foreground">Mitigations evaluated by the cognitive engine.</p>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-3">
-            {recs.length === 0 ? (
-              <div className="text-xs text-muted-foreground text-center py-10">All parameters stable. No recommendations.</div>
-            ) : (
-              recs.slice(0, 4).map((rec: any) => {
-                const details = parseDetails(rec.details);
-                return (
-                  <div key={rec.id} className="p-3 border border-border rounded-xl bg-muted/20 flex items-center justify-between gap-3 text-left">
-                    <div className="flex flex-col gap-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-bold text-primary uppercase truncate max-w-[120px]">{rec.action_type}</span>
-                        <span className="text-[9px] font-semibold text-muted-foreground">{rec.priority} priority</span>
-                        <span className="text-[8px] font-mono bg-purple-500/10 border border-purple-500/20 text-purple-400 px-1 rounded">
-                          {(rec.confidence * 100).toFixed(0)}% Conf
-                        </span>
-                      </div>
-                      <p className="text-xs font-medium text-foreground truncate">{details.explanation}</p>
-                    </div>
-                    
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => setSelectedWhyRec(rec)}
-                        className="rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 px-2 py-1 text-[9px] font-bold uppercase tracking-wider flex items-center gap-0.5 transition-colors"
-                      >
-                        <HelpCircle className="h-3 w-3" />
-                        Why?
-                      </button>
-
-                      {approvedRecs[rec.id] ? (
-                        <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400 px-2 py-1 flex items-center gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          Approved
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleApproveRecommendation(rec.id)}
-                          className="rounded-lg bg-primary px-2.5 py-1 text-[9px] font-bold text-primary-foreground hover:opacity-90 transition-opacity"
-                        >
-                          Approve
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Selected Why Decision Modal Backdrop & Container for index.tsx */}
-        <AnimatePresence>
-          {selectedWhyRec && (() => {
-            const details = parseDetails(selectedWhyRec.details);
-            return (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md"
-              >
-                <motion.div
-                  initial={{ scale: 0.95, y: 15 }}
-                  animate={{ scale: 1, y: 0 }}
-                  exit={{ scale: 0.95, y: 15 }}
-                  className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-purple-500/30 bg-card p-6 shadow-2xl text-left"
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
-
-                  {/* Header */}
-                  <div className="flex items-start justify-between border-b border-border pb-3.5 mb-5">
-                    <div>
-                      <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest block font-mono">
-                        AI Decision Intelligence Context
-                      </span>
-                      <h3 className="text-sm font-black text-foreground uppercase mt-1">
-                        {selectedWhyRec.action_type}
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setSelectedWhyRec(null)}
-                      className="rounded-lg p-1.5 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* Body Content */}
-                  <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
-                    {/* Why */}
-                    <div>
-                      <span className="text-[8px] font-black text-purple-400 uppercase tracking-wider block font-mono">Why is this action recommended?</span>
-                      <p className="text-xs text-foreground mt-1 leading-relaxed font-semibold">
-                        {details.why}
-                      </p>
-                    </div>
-
-                    {/* Evidence */}
-                    <div>
-                      <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">Evidence base</span>
-                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                        {details.evidence}
-                      </p>
-                    </div>
-
-                    {/* Operational Data Used */}
-                    <div>
-                      <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">Operational parameters analyzed</span>
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {details.operational_data_used.map((field: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="rounded-md border border-border bg-muted/30 px-2 py-0.5 text-[9px] font-mono font-bold text-foreground uppercase"
-                          >
-                            {field}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Confidence Score */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">Confidence Level</span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-1 text-[10px] font-mono font-black text-purple-400 uppercase mt-1">
-                          {(selectedWhyRec.confidence * 100).toFixed(0)}% Certitude
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">Priority Classification</span>
-                        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-mono font-black uppercase mt-1 ${
-                          selectedWhyRec.priority === "critical"
-                            ? "bg-destructive/10 border-destructive/20 text-destructive"
-                            : "bg-amber-500/10 border-amber-500/20 text-amber-500"
-                        }`}>
-                          {selectedWhyRec.priority}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Alternative Actions */}
-                    <div>
-                      <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">Alternative responses</span>
-                      <ul className="list-disc pl-4 space-y-1 mt-1 text-xs text-muted-foreground">
-                        {details.alternative_actions.map((act: string, idx: number) => (
-                          <li key={idx}>{act}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Trade-offs */}
-                    <div>
-                      <span className="text-[8px] font-black text-purple-400/80 uppercase tracking-wider block font-mono">Operational trade-offs</span>
-                      <p className="text-xs text-purple-200 mt-1 leading-relaxed bg-purple-500/5 border border-purple-500/10 p-2.5 rounded-xl">
-                        {details.trade_offs}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-end border-t border-border pt-4 mt-5">
-                    <button
-                      onClick={() => setSelectedWhyRec(null)}
-                      className="rounded-xl border border-border bg-card hover:bg-muted px-4 py-2 text-xs font-black uppercase tracking-wider transition-colors"
-                    >
-                      Dismiss Review
-                    </button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            );
-          })()}
-        </AnimatePresence>
+        <ActiveRecommendations
+          recs={recs}
+          approvedRecs={approvedRecs}
+          setSelectedWhyRec={setSelectedWhyRec}
+          handleApproveRecommendation={handleApproveRecommendation}
+        />
       </div>
+
+      {/* Selected Why Decision Modal */}
+      <DecisionIntelModal
+        selectedWhyRec={selectedWhyRec}
+        onClose={() => setSelectedWhyRec(null)}
+      />
 
       {/* Row 3: Predictive Intelligence (Gemini Predictions) */}
-      <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md p-6 flex flex-col shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b border-border/40 pb-4">
-          <div className="text-left">
-            <h2 className="text-base font-bold flex items-center gap-2">
-              <Brain className="h-5 w-5 text-purple-400 animate-pulse" />
-              Gemini Predictive Intelligence
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Live forecasting models analyzing crowd flows, safety thresholds, and venue resources.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => predictionsQuery.refetch()}
-              disabled={predictionsQuery.isFetching}
-              className="rounded-lg border border-border bg-card hover:bg-muted px-3 py-1.5 text-xs font-bold text-foreground transition-all flex items-center gap-1.5 disabled:opacity-60"
-            >
-              <Zap className={`h-3 w-3 ${predictionsQuery.isFetching ? "animate-spin" : ""}`} />
-              {predictionsQuery.isFetching ? "Analyzing..." : "Run Forecast"}
-            </button>
-            
-            <div className="flex items-center gap-1.5 rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-[10px] font-bold text-purple-400 uppercase font-mono">
-              Confidence: {predictionsQuery.data ? `${Math.round(predictionsQuery.data.confidence_score * 100)}%` : "N/A"}
-            </div>
-          </div>
-        </div>
-
-        {predictionsQuery.isLoading ? (
-          <div className="text-xs text-muted-foreground text-center py-12 flex flex-col items-center justify-center gap-3">
-            <div className="relative flex h-8 w-8 items-center justify-center">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-20" />
-              <Brain className="h-6 w-6 text-purple-400 animate-pulse" />
-            </div>
-            <span>Running predictive analysis models...</span>
-          </div>
-        ) : predictionsQuery.error ? (
-          <div className="text-xs text-destructive text-center py-10">
-            Failed to load Gemini predictions. Ensure the backend server is running.
-          </div>
-        ) : !predictionsQuery.data ? (
-          <div className="text-xs text-muted-foreground text-center py-10">
-            No predictive data available.
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Object.entries({
-              "Queue Growth": { data: predictionsQuery.data.queue_growth, icon: <Clock className="h-4 w-4 text-purple-400" /> },
-              "Crowd Movement": { data: predictionsQuery.data.crowd_movement, icon: <Users className="h-4 w-4 text-purple-400" /> },
-              "Volunteer Shortages": { data: predictionsQuery.data.volunteer_shortages, icon: <Brain className="h-4 w-4 text-purple-400" /> },
-              "Medical Demand": { data: predictionsQuery.data.medical_demand, icon: <Activity className="h-4 w-4 text-purple-400" /> },
-              "Transport Congestion": { data: predictionsQuery.data.transport_congestion, icon: <Zap className="h-4 w-4 text-purple-400" /> },
-              "Gate Overload": { data: predictionsQuery.data.gate_overload, icon: <ShieldCheck className="h-4 w-4 text-purple-400" /> },
-              "Parking Saturation": { data: predictionsQuery.data.parking_saturation, icon: <Activity className="h-4 w-4 text-purple-400" /> },
-              "Weather Impact": { data: predictionsQuery.data.weather_impact, icon: <AlertTriangle className="h-4 w-4 text-purple-400" /> },
-            }).map(([title, item]) => {
-              const confidenceColor = 
-                item.data.confidence > 0.85 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-                item.data.confidence > 0.70 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
-                "text-red-400 bg-red-500/10 border-red-500/20";
-              
-              return (
-                <div key={title} className="rounded-xl border border-border bg-card/65 p-4 hover:shadow-lg transition-all duration-300 flex flex-col justify-between text-left group hover:border-purple-500/30">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
-                          {item.icon}
-                        </div>
-                        <h4 className="text-xs font-black uppercase text-foreground">{title}</h4>
-                      </div>
-                      <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded border ${confidenceColor}`}>
-                        {Math.round(item.data.confidence * 100)}%
-                      </span>
-                    </div>
-
-                    <div className="mt-2.5">
-                      <span className="text-[8px] font-black uppercase tracking-wider text-purple-400 block font-mono">Prediction</span>
-                      <p className="text-xs font-semibold text-foreground mt-0.5 leading-relaxed">{item.data.prediction}</p>
-                    </div>
-
-                    <div className="mt-2.5">
-                      <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block font-mono">Reason</span>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{item.data.reason}</p>
-                    </div>
-
-                    <div className="mt-2.5 bg-purple-500/5 p-2 rounded-lg border border-purple-500/10">
-                      <span className="text-[8px] font-black uppercase tracking-wider text-purple-400 block font-mono">Suggested Mitigation</span>
-                      <p className="text-[10px] text-purple-200 mt-0.5 leading-relaxed font-medium">{item.data.mitigation}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-2.5 border-t border-border/40 flex items-center justify-between text-[9px] font-mono text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      {item.data.timeline}
-                    </span>
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] font-black text-purple-400 uppercase tracking-widest">Live Alert</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <PredictiveForecast predictionsQuery={predictionsQuery} />
 
       {/* Row 4: Live Feed & Active Incidents */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Live Feed Widget */}
-        <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md p-6 flex flex-col h-[320px] shadow-sm">
-          <div className="mb-4">
-            <h2 className="text-base font-bold flex items-center gap-2">
-              <Zap className="h-4 w-4 text-amber-400" />
-              Live Activity Feed
-            </h2>
-            <p className="text-xs text-muted-foreground">Real-time telemetry event streams and dispatcher updates.</p>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-2.5 text-left">
-            {/* Show animated local notifications during playback */}
-            {playbackActive && localNotifications.map((notif) => (
-              <div key={notif.id} className="flex items-start gap-2.5 p-2 bg-primary/5 border border-primary/20 rounded-xl text-xs animate-pulse">
-                <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-bold text-primary block truncate">{notif.text}</span>
-                  <span className="text-[9px] text-muted-foreground mt-0.5 block">{notif.timestamp}</span>
-                </div>
-              </div>
-            ))}
-            
-            {incidents.length === 0 && localNotifications.length === 0 ? (
-              <div className="text-xs text-muted-foreground py-4">No activity events.</div>
-            ) : (
-              incidents.map((inc: any) => (
-                <div key={inc.id} className="flex items-start gap-2.5 p-2 border-b border-border/40 text-xs">
-                  <Activity className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <span className="font-semibold block text-foreground truncate">{inc.description}</span>
-                    <span className="text-[9px] text-muted-foreground mt-0.5 block uppercase font-mono">
-                      Type: {inc.incident_type} &bull; Timestamp: {new Date(inc.created_at).toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Active Incidents Queue */}
-        <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md p-6 flex flex-col h-[320px] shadow-sm">
-          <div className="mb-4">
-            <h2 className="text-base font-bold">Active Incidents Queue</h2>
-            <p className="text-xs text-muted-foreground">Unresolved safety or medical logs under dispatch.</p>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-3">
-            {incidents.filter((i: any) => !i.resolved).length === 0 ? (
-              <div className="text-xs text-muted-foreground text-center py-10 flex flex-col items-center justify-center gap-2">
-                <CheckCircle className="h-8 w-8 text-emerald-500" />
-                <span>All incidents cleared.</span>
-              </div>
-            ) : (
-              incidents.filter((i: any) => !i.resolved).map((inc: any) => (
-                <div key={inc.id} className="p-3 border border-border rounded-xl bg-muted/20 flex items-center justify-between gap-3 text-left">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
-                        inc.severity === "critical" ? "bg-destructive/10 text-destructive border border-destructive/20 animate-pulse" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                      }`}>
-                        {inc.severity.toUpperCase()}
-                      </span>
-                      <span className="text-[9px] font-bold text-muted-foreground uppercase">{inc.incident_type}</span>
-                    </div>
-                    <p className="text-xs font-semibold text-foreground truncate">{inc.description}</p>
-                  </div>
-                  <button
-                    onClick={() => handleResolveIncident(inc.id)}
-                    className="rounded-lg border border-border hover:bg-muted px-2.5 py-1 text-[9px] font-bold shrink-0 transition-colors"
-                  >
-                    Resolve
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+      <LiveFeedIncidents
+        playbackActive={playbackActive}
+        localNotifications={localNotifications}
+        incidents={incidents}
+        handleResolveIncident={handleResolveIncident}
+      />
 
       {/* Floating Demo Control Panel (Judge Demo Mode Console) */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-        <AnimatePresence>
-          {demoOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="mb-3 w-96 rounded-2xl border border-amber-500/30 bg-card/95 backdrop-blur-md shadow-2xl p-5 overflow-hidden text-left relative"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-              
-              <div className="flex items-center justify-between border-b border-border pb-2.5 mb-4">
-                <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4" />
-                  🏆 ATLAS JUDGE DEMO MODE
-                </span>
-                <button
-                  onClick={() => setDemoOpen(false)}
-                  className="text-muted-foreground hover:text-foreground text-xs"
-                >
-                  Hide
-                </button>
-              </div>
-
-              <p className="text-[10px] text-muted-foreground mb-4">
-                Select a playbook to run the automated demo. Focuses Digital Twin cameras, animates metrics, dispatches backend events, and reviews live AI briefs.
-              </p>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { name: "Crowd Surge", desc: "Gate congestion surge egress" },
-                  { name: "Medical Emergency", desc: "Spectator health heat stroke" },
-                  { name: "Heavy Rain", desc: "Plaza shelter diversion" },
-                  { name: "Lost Child", desc: "Section 208 tracking search" },
-                  { name: "Match End", desc: "Outflow bottleneck clearance" }
-                ].map((scen) => (
-                  <button
-                    key={scen.name}
-                    onClick={() => startJudgeDemo(scen.name)}
-                    className={`rounded-xl border p-3 text-left transition-all flex flex-col justify-between h-20 ${
-                      playbackScenario === scen.name
-                        ? "bg-amber-500/10 border-amber-500 text-amber-400 font-bold"
-                        : "bg-muted/30 border-border hover:bg-amber-500/5 hover:border-amber-500/20 text-foreground"
-                    }`}
-                  >
-                    <span className="text-xs font-black leading-tight block">{scen.name}</span>
-                    <span className="text-[8px] text-muted-foreground leading-normal block">{scen.desc}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Milestones status indicator */}
-              {judgeDemoActive && (
-                <div className="mt-4 rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 flex flex-col gap-2">
-                  <div className="flex items-center justify-between text-[9px] font-mono text-amber-400">
-                    <span className="animate-pulse">{demoStatusMilestone}</span>
-                    <span>TICK PROGRESS</span>
-                  </div>
-                  <div className="w-full bg-amber-950/30 rounded-full h-1 overflow-hidden">
-                    <motion.div
-                      className="bg-amber-400 h-1"
-                      animate={{ width: `${((playbackStep + 1) / (SCENARIO_STEPS[playbackScenario || ""]?.length || 5)) * 100}%` }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {demoMessage && (
-                <div className="mt-4 rounded-xl bg-primary/10 border border-primary/20 p-3 text-[10px] font-bold text-primary animate-pulse text-center">
-                  {demoMessage}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <button
-          onClick={() => setDemoOpen(!demoOpen)}
-          className="flex items-center gap-2 rounded-full bg-amber-500 px-5 py-3 text-xs font-black text-black shadow-2xl hover:opacity-90 transition-all border border-amber-400/20 focus-visible:ring-2 focus-visible:ring-amber-500 outline-none uppercase tracking-wider"
-        >
-          <Sparkles className="h-4 w-4" />
-          🏆 Judge Demo Mode
-        </button>
-      </div>
-
-      {/* Dynamic Toast Notifications */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-6 right-6 z-50 rounded-2xl border border-amber-500/30 bg-card/95 backdrop-blur-md p-4 shadow-2xl flex items-center gap-3 max-w-xs text-left"
-          >
-            <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
-              <Sparkles className="h-4 w-4 animate-pulse" />
-            </div>
-            <div>
-              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider block">Live Event Alert</span>
-              <p className="text-xs font-semibold text-foreground mt-0.5 leading-normal">{toastMessage}</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <JudgeDemoConsole
+        demoOpen={demoOpen}
+        setDemoOpen={setDemoOpen}
+        demoMessage={demoMessage}
+        judgeDemoActive={judgeDemoActive}
+        demoStatusMilestone={demoStatusMilestone}
+        playbackScenario={playbackScenario}
+        playbackStep={playbackStep}
+        startJudgeDemo={startJudgeDemo}
+      />
     </div>
   );
 }
