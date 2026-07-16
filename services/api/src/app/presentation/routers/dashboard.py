@@ -640,6 +640,11 @@ async def generate_ai_recommendations(
                 "eta_minutes": item.estimated_recovery_time_minutes,
                 "trigger_reason": item.operational_reasoning,
                 "explanation": item.explanation,
+                "why": item.why,
+                "evidence": item.evidence,
+                "operational_data_used": item.operational_data_used,
+                "alternative_actions": item.alternative_actions,
+                "trade_offs": item.trade_offs,
             }
 
             rec = Recommendation(

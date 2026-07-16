@@ -14,6 +14,11 @@ class AIRecommendationItem(BaseModel):
     action_type: str = Field(..., description="The name/action of the recommendation (e.g. 'Reroute Volunteers to Ingress Gate 1').")
     priority: str = Field(..., description="Priority level of the recommendation: 'low', 'medium', 'high', 'critical'.")
     confidence: float = Field(..., description="Confidence score of this recommendation (0.0 to 1.0).")
+    why: str = Field(..., description="Concise operator-facing description of why this recommendation is needed.")
+    evidence: str = Field(..., description="Specific operational evidence supporting this action.")
+    operational_data_used: List[str] = Field(..., description="Specific operational/telemetry data parameters utilized.")
+    alternative_actions: List[str] = Field(..., description="List of alternative actions available to the operator.")
+    trade_offs: str = Field(..., description="Operator-facing description of operational trade-offs for this recommendation.")
     explanation: str = Field(..., description="Human-readable explanation of the recommendation details.")
     estimated_impact: str = Field(..., description="Estimated operational impact (e.g. 'Reduce queue bottleneck by 25%').")
     estimated_recovery_time_minutes: int = Field(..., description="Estimated recovery time in minutes.")
@@ -46,12 +51,18 @@ class AIRecommendationGeneratorPrompt(BasePrompt):
                     "- Active Incidents: {incidents}\n"
                     "- Operational State: {operational_state}\n\n"
                     "Based on these conditions, generate human-readable logistical, routing, safety, and volunteer allocation recommendations.\n"
-                    "For every recommendation, you must:\n"
-                    "1. Explain what needs to be done clearly.\n"
-                    "2. Prioritize it appropriate to the situation ('low', 'medium', 'high', 'critical').\n"
-                    "3. Estimate the operational impact and recovery time.\n"
-                    "4. Generate a concise operational reasoning referencing specific telemetry bounds, active incidents, or state elements.\n"
-                    "Format your response to match the requested schema.\n"
+                    "For every recommendation, you must include:\n"
+                    "1. action_type, priority, confidence.\n"
+                    "2. why: Concise operator-facing explanation of why it is needed.\n"
+                    "3. evidence: The evidence supporting this action.\n"
+                    "4. operational_data_used: Specific telemetry or event fields referenced (e.g. average_crowd_density, queue_waiting_minutes).\n"
+                    "5. alternative_actions: Alternative responses the operator can select.\n"
+                    "6. trade_offs: Operational trade-offs of executing this recommendation.\n"
+                    "7. explanation, estimated_impact, estimated_recovery_time_minutes, operational_reasoning.\n\n"
+                    "CRITICAL RULES:\n"
+                    "- Never expose chain of thought (internal planning or reasoning steps) in any of the fields.\n"
+                    "- Use concise, professional, operator-facing language appropriate for a mission control dashboard.\n"
+                    "Format your response to match the requested structured schema.\n"
                 )
             )
         ]

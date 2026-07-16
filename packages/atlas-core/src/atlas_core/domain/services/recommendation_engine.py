@@ -43,7 +43,13 @@ class StadiumRecommendationEngine:
                     "eta_minutes": 5,
                     "required_personnel": "2 EMT responders",
                     "required_resources": "Trauma kit and emergency stretcher",
-                    "trigger_reason": f"Active medical incident reported at {target_node.name}"
+                    "trigger_reason": f"Active medical incident reported at {target_node.name}",
+                    "explanation": f"Deploy immediate medical first aid response to {target_node.name}.",
+                    "why": f"Active medical incident requiring first-aid intervention has occurred at {target_node.name}.",
+                    "evidence": f"Incident log specifies type: medical, severity: {incident.severity.value}.",
+                    "operational_data_used": ["incident_type", "severity", "zone_id"],
+                    "alternative_actions": ["Reroute nearby patrol with minor first aid kit", "Direct spectator to nearest fixed medical post"],
+                    "trade_offs": "Direct response team deployment temporarily reduces active staff availability at base alpha."
                 }
                 rec = Recommendation(
                     action_type="Deploy Medical Response Team",
@@ -59,7 +65,13 @@ class StadiumRecommendationEngine:
                     "eta_minutes": 8,
                     "required_personnel": "4 security officers",
                     "required_resources": "Crowd barriers and radio comms",
-                    "trigger_reason": f"Active security incident reported at {target_node.name}"
+                    "trigger_reason": f"Active security incident reported at {target_node.name}",
+                    "explanation": f"Dispatch localized security patrol to contain incident at {target_node.name}.",
+                    "why": f"Active security breach or disturbance at {target_node.name} requires physical containment.",
+                    "evidence": f"Incident log flags type: security, severity: {incident.severity.value}.",
+                    "operational_data_used": ["incident_type", "severity", "zone_id"],
+                    "alternative_actions": ["Reroute concourse supervisor patrol", "Activate stationary sector security stewards"],
+                    "trade_offs": "Concentrating security responders at target node increases response times in adjacent stands."
                 }
                 rec = Recommendation(
                     action_type="Deploy Security Patrol",
@@ -75,7 +87,13 @@ class StadiumRecommendationEngine:
                     "eta_minutes": 6,
                     "required_personnel": "6 safety officers",
                     "required_resources": "Fire extinguishers and thermal sensor cameras",
-                    "trigger_reason": f"Active fire outbreak reported at {target_node.name}"
+                    "trigger_reason": f"Active fire outbreak reported at {target_node.name}",
+                    "explanation": f"Initiate fire containment protocols and clear exit path corridors at {target_node.name}.",
+                    "why": f"Active thermal outbreak at {target_node.name} poses immediate safety risks to stand spectators.",
+                    "evidence": f"Sensors and manual dispatch logs indicate active smoke/fire in zone: {target_node.name}.",
+                    "operational_data_used": ["incident_type", "severity", "zone_id"],
+                    "alternative_actions": ["Localised sector evacuation to outer plaza", "Manual fire warden suppression deployment"],
+                    "trade_offs": "Evacuating zone sectors creates temporary concourse ingress congestion at nearby gates."
                 }
                 rec = Recommendation(
                     action_type="Evacuate Stand Sector",
@@ -95,7 +113,13 @@ class StadiumRecommendationEngine:
                     "eta_minutes": 10,
                     "required_personnel": "6 volunteers",
                     "required_resources": "Mobile hand-held validation terminals",
-                    "trigger_reason": f"Turnstile queue wait time is {wait_time} minutes at {node.name}"
+                    "trigger_reason": f"Turnstile queue wait time is {wait_time} minutes at {node.name}",
+                    "explanation": f"Deploy auxiliary stewards to assist with ticket pre-checks at {node.name}.",
+                    "why": f"Wait queue times at {node.name} have exceeded the maximum target threshold of 10 minutes.",
+                    "evidence": f"Telemetry indicates wait_time: {wait_time} minutes, exceeds 15 minute action line.",
+                    "operational_data_used": ["queue_waiting_minutes", "allocated_volunteers_count"],
+                    "alternative_actions": ["Redirect arriving spectators to adjacent lower-load ingress gates", "Switch to manual backup barcode scanner list checks"],
+                    "trade_offs": "Reassigning volunteers to ticket gates reduces general information booth assistance personnel."
                 }
                 rec = Recommendation(
                     action_type="Reroute Volunteers to Ingress Queue",
@@ -114,7 +138,13 @@ class StadiumRecommendationEngine:
                     "eta_minutes": 15,
                     "required_personnel": "4 crowd marshals",
                     "required_resources": "Digital signage path redirection",
-                    "trigger_reason": f"Crowd density ratio is {density * 100:.1f}% at {node.name}"
+                    "trigger_reason": f"Crowd density ratio is {density * 100:.1f}% at {node.name}",
+                    "explanation": f"Redirect pedestrian corridor flow away from saturated sectors around {node.name}.",
+                    "why": f"Crowd density at {node.name} has breached the warning comfort threshold of 80%.",
+                    "evidence": f"Telemetry reports crowd density value: {density * 100:.1f}%.",
+                    "operational_data_used": ["density_value", "zone_id"],
+                    "alternative_actions": ["Deploy physical rope gates to guide spectator queues", "Restrict new entries to outer concourse areas"],
+                    "trade_offs": "Diverting path routes increases walking times for spectator ingress to high stands."
                 }
                 rec = Recommendation(
                     action_type="Redirect Pedestrian Corridor Flow",
