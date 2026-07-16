@@ -90,6 +90,22 @@ async def test_copilot_service(mock_orchestrator: MagicMock, mock_state_manager:
 def test_copilot_chat_endpoint() -> None:
     client = TestClient(app)
     
+    # Override auth dependencies locally for this test's client
+    from app.dependencies.auth import get_current_user, require_staff, require_commander_or_above
+    from atlas_core.domain.entities.user import User
+    from atlas_core.domain.enums.user_role import UserRole
+    import uuid
+    
+    mock_user = User(
+        id=uuid.uuid4(),
+        name="Test Administrator",
+        role=UserRole.ADMINISTRATOR,
+        email="admin@test.com",
+    )
+    client.app.dependency_overrides[get_current_user] = lambda: mock_user
+    client.app.dependency_overrides[require_staff] = lambda: mock_user
+    client.app.dependency_overrides[require_commander_or_above] = lambda: mock_user
+    
     # Overwrite container dependencies to inject mock service
     container = app.state.container
     mock_service = MagicMock(spec=CopilotService)

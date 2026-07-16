@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
   Bell,
-  User,
+  User as UserIcon,
   Search,
   LayoutDashboard,
   AlertTriangle,
@@ -20,7 +20,6 @@ import {
   Wifi,
   WifiOff,
   ShieldCheck,
-  HelpCircle,
   LogOut,
   Terminal,
   CornerDownLeft,
@@ -29,17 +28,43 @@ import {
 } from "lucide-react";
 import { useTheme } from "../providers/ThemeProvider";
 import { motion, AnimatePresence } from "framer-motion";
+import { useGlobalStore } from "../store/useGlobalStore";
+import { auth, signOut } from "../services/firebase";
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const navigate = useNavigate();
+  const { user, isDemoSession } = useGlobalStore();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { theme, setTheme } = useTheme();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.warn("Logout error", e);
+    }
+    localStorage.removeItem("atlas_access_token");
+    localStorage.removeItem("atlas_refresh_token");
+    localStorage.removeItem("atlas_user");
+    localStorage.removeItem("atlas_is_demo");
+
+    useGlobalStore.setState({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      userRole: "Administrator",
+      isDemoSession: false,
+    });
+
+    navigate({ to: "/login" });
+  };
 
   // Command Palette State variables
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -218,12 +243,12 @@ export function AppShell({ children }: AppShellProps) {
         <div className="border-t border-border p-4">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <User className="h-5 w-5" />
+              <UserIcon className="h-5 w-5" />
             </div>
             {sidebarOpen && (
               <div className="flex flex-col text-left">
-                <span className="text-xs font-bold truncate text-foreground">Ops Commander</span>
-                <span className="text-[10px] text-muted-foreground truncate">commander@atlas.com</span>
+                <span className="text-xs font-bold truncate text-foreground">{user?.name || "Ops Commander"}</span>
+                <span className="text-[10px] text-muted-foreground truncate">{user?.email || "commander@atlas.com"}</span>
               </div>
             )}
           </div>
@@ -273,6 +298,17 @@ export function AppShell({ children }: AppShellProps) {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
             </div>
+
+            {/* Demo Session Indicator Badge */}
+            {isDemoSession && (
+              <div
+                title="You are currently using the preconfigured demonstration environment."
+                className="flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-400 px-3 py-1 text-xs font-semibold select-none cursor-help hover:bg-purple-500/20 transition-all duration-200"
+              >
+                <Terminal className="h-3.5 w-3.5 animate-pulse text-purple-400" />
+                <span>Demo Session</span>
+              </div>
+            )}
 
             {/* Connection Status Pill */}
             <div
@@ -378,7 +414,7 @@ export function AppShell({ children }: AppShellProps) {
                 aria-haspopup="true"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-muted border border-border hover:bg-muted/70 transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
               >
-                <User className="h-5 w-5 text-muted-foreground" />
+                <UserIcon className="h-5 w-5 text-muted-foreground" />
               </button>
 
               {/* User Dropdown Options list */}
@@ -388,28 +424,50 @@ export function AppShell({ children }: AppShellProps) {
                   aria-label="User profile items"
                   className="absolute right-0 mt-3 w-56 rounded-2xl border border-border bg-card shadow-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200"
                 >
-                  <div className="px-4 py-3 border-b border-border">
-                    <span className="block text-xs font-bold text-foreground">Stadium Director</span>
-                    <span className="block text-[10px] text-muted-foreground mt-0.5">director@atlas.com</span>
+                  <div className="px-4 py-3 border-b border-border text-left">
+                    <span className="block text-xs font-bold text-foreground truncate">{user?.name || "Stadium Director"}</span>
+                    <span className="block text-[9px] text-muted-foreground mt-0.5 truncate">{user?.email || "director@atlas.com"}</span>
+                    <span className="inline-block text-[8px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded px-1.5 py-0.5 mt-2 uppercase font-mono">
+                      {user?.role || "Administrator"}
+                    </span>
                   </div>
                   <div className="mt-2 space-y-0.5">
-                    <button
+                    <div className="px-4 py-2 text-[9px] font-mono text-muted-foreground uppercase flex items-center justify-between border-b border-border/40 pb-2 mb-1.5">
+                      <span>ENVIRONMENT</span>
+                      <span className={`font-bold ${isDemoSession ? "text-purple-400" : "text-emerald-400"}`}>
+                        {isDemoSession ? "DEMO SESSION" : "PRODUCTION"}
+                      </span>
+                    </div>
+
+                    <Link
+                      to="/settings"
+                      onClick={() => setProfileOpen(false)}
                       role="menuitem"
-                      className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
+                      className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none text-left"
                     >
                       <Settings className="h-4 w-4" />
                       Configuration Settings
-                    </button>
+                    </Link>
+
                     <button
                       role="menuitem"
-                      className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        setTheme(theme === "dark" ? "light" : "dark");
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none text-left"
                     >
-                      <HelpCircle className="h-4 w-4" />
-                      Operations Manual
+                      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                      Switch Theme ({theme === "dark" ? "Light" : "Dark"})
                     </button>
+
                     <button
                       role="menuitem"
-                      className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        handleLogout();
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none text-left"
                     >
                       <LogOut className="h-4 w-4" />
                       End Operations Session

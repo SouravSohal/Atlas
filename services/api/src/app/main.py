@@ -17,6 +17,7 @@ from app.presentation.routers.version import router as version_router
 from app.presentation.routers.copilot import router as copilot_router
 from app.presentation.routers.streaming import router as streaming_router
 from app.presentation.routers.demo_engine import router as demo_router
+from app.presentation.routers.auth import router as auth_router
 
 logger = structlog.get_logger()
 
@@ -36,6 +37,38 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize Container Resources
     container: ApplicationContainer = app.state.container
     container.init_resources()
+
+    # Seed Demo User if demo mode is enabled or app is in development env
+    if settings.demo.mode or settings.app.environment == Environment.DEVELOPMENT:
+        try:
+            import uuid
+            from datetime import datetime, UTC
+            from atlas_core.domain.enums.user_role import UserRole
+            from firebase_admin import auth
+
+            demo_email = (settings.demo.email or "demo@atlas.com").strip().lower()
+            demo_password = settings.demo.password or "demo-secure-pass-1234"
+            role_str = settings.demo.role.lower().replace(" ", "_")
+            try:
+                demo_role = UserRole(role_str)
+            except ValueError:
+                demo_role = UserRole.ADMINISTRATOR
+
+            # 1. Sync user inside Firebase Authentication
+            try:
+                firebase_user = auth.get_user_by_email(demo_email)
+                # Update password to stay in sync with configuration env variables
+                auth.update_user(firebase_user.uid, password=demo_password)
+            except Exception:
+                # UserNotFoundError or other error: Create the user
+                firebase_user = auth.create_user(
+                    email=demo_email,
+                    password=demo_password,
+                    display_name="ATLAS Demo User",
+                )
+                logger.info("Successfully seeded demo user in Firebase Authentication", email=demo_email)
+        except Exception as e:
+            logger.error("Lifespan: Failed to seed Firebase demo user", error=str(e))
 
     logger.info(
         "ATLAS API service startup complete",
@@ -93,6 +126,7 @@ def create_app() -> FastAPI:
     app.include_router(copilot_router)
     app.include_router(streaming_router)
     app.include_router(demo_router)
+    app.include_router(auth_router)
 
     return app
 

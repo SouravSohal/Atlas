@@ -6,7 +6,9 @@ from app.application.copilot.service import CopilotService
 from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
-router = APIRouter(prefix="/copilot", tags=["Copilot"])
+from app.dependencies.auth import get_current_user
+
+router = APIRouter(prefix="/copilot", tags=["Copilot"], dependencies=[Depends(get_current_user)])
 
 @router.post("/chat", response_model=ApiResponse[CopilotChatResponse])
 @inject

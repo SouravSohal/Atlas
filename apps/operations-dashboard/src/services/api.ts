@@ -1,6 +1,85 @@
 import { envConfig } from "../config/env";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 const API_BASE_URL = envConfig.apiUrl;
+
+async function authFetch(url: string, init?: RequestInit): Promise<Response> {
+  const store = useGlobalStore.getState();
+  const token = store.accessToken || localStorage.getItem("atlas_access_token");
+
+  const headers = new Headers(init?.headers || {});
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const newInit: RequestInit = {
+    ...init,
+    headers,
+  };
+
+  let res = await fetch(url, newInit);
+
+  // Auto-refresh token if 401 Unauthorized occurs
+  if (res.status === 401) {
+    const refresh = store.refreshToken || localStorage.getItem("atlas_refresh_token");
+    if (refresh) {
+      try {
+        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh_token: refresh }),
+        });
+
+        if (refreshRes.ok) {
+          const payload = await refreshRes.json();
+          const { access_token, refresh_token: new_refresh, user } = payload.data;
+
+          localStorage.setItem("atlas_access_token", access_token);
+          localStorage.setItem("atlas_refresh_token", new_refresh);
+          localStorage.setItem("atlas_user", JSON.stringify(user));
+
+          useGlobalStore.setState({
+            accessToken: access_token,
+            refreshToken: new_refresh,
+            user,
+            userRole: user.role,
+          });
+
+          headers.set("Authorization", `Bearer ${access_token}`);
+          res = await fetch(url, newInit);
+          return res;
+        }
+      } catch (err) {
+        console.error("Token refresh failed", err);
+      }
+    }
+
+    localStorage.removeItem("atlas_access_token");
+    localStorage.removeItem("atlas_refresh_token");
+    localStorage.removeItem("atlas_user");
+    localStorage.removeItem("atlas_is_demo");
+    useGlobalStore.setState({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      userRole: "Administrator",
+      isDemoSession: false,
+    });
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+  }
+
+  if (res.status === 403) {
+    if (window.location.pathname !== "/access-denied") {
+      window.location.href = "/access-denied";
+    }
+  }
+
+  return res;
+}
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -75,7 +154,7 @@ export interface DashboardMetrics {
 }
 
 export async function fetchDashboardOverview(): Promise<DashboardOverview> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/overview`);
+  const res = await authFetch(`${API_BASE_URL}/dashboard/overview`);
   if (!res.ok) throw new Error("Failed to fetch dashboard overview");
   const data: ApiResponse<DashboardOverview> = await res.json();
   return data.data;
@@ -87,7 +166,7 @@ export async function fetchDashboardIncidents(
   sortBy = "created_at",
   order = "desc"
 ): Promise<IncidentsResponse> {
-  const res = await fetch(
+  const res = await authFetch(
     `${API_BASE_URL}/dashboard/incidents?page=${page}&limit=${limit}&sort_by=${sortBy}&order=${order}`
   );
   if (!res.ok) throw new Error("Failed to fetch incidents");
@@ -96,21 +175,21 @@ export async function fetchDashboardIncidents(
 }
 
 export async function fetchOperationalState(): Promise<OperationalStateItem[]> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/operational-state`);
+  const res = await authFetch(`${API_BASE_URL}/dashboard/operational-state`);
   if (!res.ok) throw new Error("Failed to fetch operational state");
   const data: ApiResponse<OperationalStateItem[]> = await res.json();
   return data.data;
 }
 
 export async function fetchDashboardRecommendations(page = 1, limit = 10): Promise<RecommendationsResponse> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/recommendations?page=${page}&limit=${limit}`);
+  const res = await authFetch(`${API_BASE_URL}/dashboard/recommendations?page=${page}&limit=${limit}`);
   if (!res.ok) throw new Error("Failed to fetch recommendations");
   const data: ApiResponse<RecommendationsResponse> = await res.json();
   return data.data;
 }
 
 export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/metrics`);
+  const res = await authFetch(`${API_BASE_URL}/dashboard/metrics`);
   if (!res.ok) throw new Error("Failed to fetch dashboard metrics");
   const data: ApiResponse<DashboardMetrics> = await res.json();
   return data.data;
@@ -122,7 +201,7 @@ export async function updateIncident(
   severity?: string,
   description?: string
 ): Promise<IncidentItem> {
-  const res = await fetch(`${API_BASE_URL}/incidents/${id}`, {
+  const res = await authFetch(`${API_BASE_URL}/incidents/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -147,7 +226,7 @@ export interface CreateIncidentPayload {
 export async function createIncident(
   payload: CreateIncidentPayload
 ): Promise<IncidentItem> {
-  const res = await fetch(`${API_BASE_URL}/incidents`, {
+  const res = await authFetch(`${API_BASE_URL}/incidents`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -178,7 +257,7 @@ export async function postCopilotChat(
   language = "en",
   currentPage?: string
 ): Promise<CopilotChatResponse> {
-  const res = await fetch(`${API_BASE_URL}/copilot/chat`, {
+  const res = await authFetch(`${API_BASE_URL}/copilot/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -202,7 +281,7 @@ export interface DashboardBriefingResponse {
 }
 
 export async function fetchDashboardBriefing(): Promise<DashboardBriefingResponse> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/briefing`);
+  const res = await authFetch(`${API_BASE_URL}/dashboard/briefing`);
   if (!res.ok) throw new Error("Failed to fetch dashboard briefing");
   const data: ApiResponse<DashboardBriefingResponse> = await res.json();
   return data.data;
@@ -224,14 +303,14 @@ export interface RecommendationsExplanationResponse {
 }
 
 export async function fetchRecommendationsExplanation(): Promise<RecommendationsExplanationResponse> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/recommendations/explain`);
+  const res = await authFetch(`${API_BASE_URL}/dashboard/recommendations/explain`);
   if (!res.ok) throw new Error("Failed to fetch recommendations explanation");
   const data: ApiResponse<RecommendationsExplanationResponse> = await res.json();
   return data.data;
 }
 
 export async function generateAIRecommendations(): Promise<RecommendationItem[]> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/recommendations/generate`, {
+  const res = await authFetch(`${API_BASE_URL}/dashboard/recommendations/generate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -264,7 +343,7 @@ export interface StadiumPredictions {
 }
 
 export async function fetchStadiumPredictions(): Promise<StadiumPredictions> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/predictions`);
+  const res = await authFetch(`${API_BASE_URL}/dashboard/predictions`);
   if (!res.ok) throw new Error("Failed to fetch stadium predictions");
   const data: ApiResponse<StadiumPredictions> = await res.json();
   return data.data;

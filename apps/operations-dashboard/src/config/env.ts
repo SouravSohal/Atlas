@@ -10,6 +10,10 @@ export interface AppConfig {
   defaultDemoMode: boolean;
   defaultSimulationSpeed: number;
   dbEngine: string;
+  demoEmail: string;
+  demoPassword: string;
+  demoRole: string;
+  firebaseProjectId: string;
 }
 
 export const envConfig: AppConfig = {
@@ -24,4 +28,8 @@ export const envConfig: AppConfig = {
   defaultDemoMode: import.meta.env.VITE_DEMO_MODE !== "false",
   defaultSimulationSpeed: Number(import.meta.env.VITE_SIMULATION_SPEED || "2"),
   dbEngine: import.meta.env.VITE_DB_ENGINE || "Cloud Firestore",
+  demoEmail: import.meta.env.VITE_DEMO_EMAIL || "demo@atlas.com",
+  demoPassword: import.meta.env.VITE_DEMO_PASSWORD || "demo-secure-pass-1234",
+  demoRole: import.meta.env.VITE_DEMO_ROLE || "Administrator",
+  firebaseProjectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "atlas-stadium-twin",
 };

@@ -5,7 +5,9 @@ from app.config import Settings
 from app.dependencies import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
-router = APIRouter(tags=["System"])
+from app.dependencies.auth import get_current_user
+
+router = APIRouter(tags=["System"], dependencies=[Depends(get_current_user)])
 
 @router.get("/version", response_model=ApiResponse[dict[str, str]])
 @inject

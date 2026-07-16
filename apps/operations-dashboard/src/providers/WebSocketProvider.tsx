@@ -39,7 +39,10 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const reconnectAttemptsRef = useRef(0);
 
   const connect = useCallback(() => {
-    const wsUrl = envConfig.wsUrl;
+    const token = localStorage.getItem("atlas_access_token");
+    const wsUrl = token
+      ? `${envConfig.wsUrl}?token=${encodeURIComponent(token)}`
+      : envConfig.wsUrl;
 
     if (socketRef.current) {
       socketRef.current.onclose = null;

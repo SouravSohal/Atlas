@@ -16,7 +16,9 @@ from atlas_core.domain.services.simulation_engine import SimulationContext, Simu
 from atlas_core.domain.services.scenario_runner import ScenarioRunner
 from atlas_core.domain.services.recommendation_engine import StadiumRecommendationEngine
 
-router = APIRouter(prefix="/demo", tags=["Judge Demo"])
+from app.dependencies.auth import require_commander_or_above
+
+router = APIRouter(prefix="/demo", tags=["Judge Demo"], dependencies=[Depends(require_commander_or_above)])
 logger = structlog.get_logger()
 
 class DemoState:

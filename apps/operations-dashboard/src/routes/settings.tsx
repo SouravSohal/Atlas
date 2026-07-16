@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { envConfig } from "../config/env";
 import { useGlobalStore } from "../store/useGlobalStore";
+import { auth } from "../services/firebase";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -59,7 +60,6 @@ function SettingsPage() {
     confidenceThreshold,
     setConfidenceThreshold,
     sessionExpiry,
-    setSessionExpiry,
     userRole,
     resetSimulation,
   } = useGlobalStore();
@@ -578,25 +578,69 @@ function SettingsPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Authentication Provider</label>
+                  <div className="bg-muted/40 border border-border rounded-xl px-3.5 py-2 text-xs font-bold text-foreground">
+                    Firebase Authentication
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Current Firebase Project</label>
+                  <div className="bg-muted/40 border border-border rounded-xl px-3.5 py-2 text-xs font-bold text-foreground font-mono">
+                    {envConfig.firebaseProjectId}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Current User UID</label>
+                  <div className="bg-muted/40 border border-border rounded-xl px-3.5 py-2 text-xs font-bold text-foreground font-mono truncate" title={auth.currentUser?.uid || "N/A"}>
+                    {auth.currentUser?.uid || "N/A"}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Current User Email</label>
+                  <div className="bg-muted/40 border border-border rounded-xl px-3.5 py-2 text-xs font-bold text-foreground truncate">
+                    {auth.currentUser?.email || "N/A"}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Authentication Status</label>
+                  <div className="flex items-center justify-between bg-muted/40 border border-border rounded-xl px-3.5 py-2 text-xs font-bold text-foreground">
+                    <span>{auth.currentUser ? "Session Active" : "Unauthenticated"}</span>
+                    <span className={`flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] font-black uppercase ${
+                      auth.currentUser ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-destructive/10 border-destructive/20 text-destructive"
+                    }`}>
+                      {auth.currentUser ? "CONNECTED" : "DISCONNECTED"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Current User Role</label>
                   <div className="flex items-center justify-between bg-muted/40 border border-border rounded-xl px-3.5 py-2 text-xs font-bold text-foreground">
                     <span>{userRole}</span>
                     <span className="flex items-center gap-0.5 rounded bg-primary/10 border border-primary/20 px-1.5 py-0.5 text-[9px] font-black text-primary uppercase">
-                      SYSTEM ADMIN
+                      SYSTEM USER
                     </span>
                   </div>
                 </div>
+
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Session JWT Lifetime</label>
-                  <select
-                    value={sessionExpiry}
-                    onChange={(e) => setSessionExpiry(e.target.value)}
-                    className="w-full text-xs bg-muted/40 border border-border rounded-xl px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-bold"
-                  >
-                    <option value="1 Hour">1 Hour (High Security)</option>
-                    <option value="12 Hours">12 Hours (Standard shift duration)</option>
-                    <option value="24 Hours">24 Hours (Operations extended)</option>
-                  </select>
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Last Authentication Time</label>
+                  <div className="bg-muted/40 border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-bold">
+                    {auth.currentUser?.metadata.lastSignInTime
+                      ? new Date(auth.currentUser.metadata.lastSignInTime).toLocaleString()
+                      : "N/A"}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Token Expiration (Configured)</label>
+                  <div className="bg-muted/40 border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-bold">
+                    {sessionExpiry} (Standard Firebase Session)
+                  </div>
                 </div>
               </div>
 
@@ -604,7 +648,7 @@ function SettingsPage() {
                 <Lock className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <h4 className="text-xs font-bold text-foreground">Security Key Management</h4>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Authorization checks are routed directly via Firebase Admin credentials and JWT verification middleware.</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Authorization checks are routed directly via Firebase Admin credentials and ID token verification middleware.</p>
                 </div>
               </div>
             </div>

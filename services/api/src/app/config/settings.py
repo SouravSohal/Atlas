@@ -30,7 +30,7 @@ class ApplicationSettings(BaseModel):
     )
     environment: Environment = Field(
         default=Environment.DEVELOPMENT,
-        validation_alias=AliasChoices("APP__ENVIRONMENT", "ENVIRONMENT"),
+        validation_alias=AliasChoices("APP__ENVIRONMENT", "ENVIRONMENT", "APP_ENV"),
         description="Target environment.",
     )
     debug: bool = Field(
@@ -205,6 +205,33 @@ class LoggingSettings(BaseModel):
         return v.upper()
 
 
+class DemoSettings(BaseModel):
+    """Demonstration configuration settings."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    mode: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("DEMO_MODE"),
+        description="Whether demo mode is enabled."
+    )
+    email: str = Field(
+        default="demo@atlas.com",
+        validation_alias=AliasChoices("DEMO_EMAIL"),
+        description="Demo account email."
+    )
+    password: str = Field(
+        default="demo-secure-pass-1234",
+        validation_alias=AliasChoices("DEMO_PASSWORD"),
+        description="Demo account password."
+    )
+    role: str = Field(
+        default="Administrator",
+        validation_alias=AliasChoices("DEMO_ROLE"),
+        description="Demo account role."
+    )
+
+
 class Settings(BaseSettings):
     """Global configuration settings for the application, loaded from env files and environment variables."""
 
@@ -224,6 +251,7 @@ class Settings(BaseSettings):
     firebase: FirebaseSettings = Field(default_factory=FirebaseSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
+    demo: DemoSettings = Field(default_factory=DemoSettings)
 
 
 @lru_cache

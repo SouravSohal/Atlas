@@ -2,8 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
-def test_judge_demo_engine_endpoints() -> None:
-    client = TestClient(app)
+def test_judge_demo_engine_endpoints(client: TestClient) -> None:
 
     # 1. Start Demo
     response = client.post("/demo/start", json={

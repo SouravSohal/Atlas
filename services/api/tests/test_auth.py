@@ -1,6 +1,5 @@
-from unittest.mock import MagicMock, patch
-
 import pytest
+from unittest.mock import MagicMock, patch
 from atlas_core.domain.enums.user_role import UserRole
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
@@ -9,10 +8,12 @@ from app.config import Settings
 from app.dependencies.auth import get_current_user
 from app.infrastructure.auth.firebase import FirebaseAuthProvider
 
-
 @pytest.fixture
 def mock_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    settings.demo.email = "demo@atlas.com"
+    settings.demo.role = "Administrator"
+    return settings
 
 @pytest.fixture
 def auth_provider(mock_settings: Settings) -> FirebaseAuthProvider:
@@ -78,26 +79,32 @@ def test_verify_token_failure(mock_verify: MagicMock, auth_provider: FirebaseAut
 async def test_get_current_user_dependency_success(auth_provider: FirebaseAuthProvider) -> None:
     # Arrange
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="valid_token")
-    decoded = {"uid": "user123", "email": "test@example.com", "role": "operator"}
-
-    auth_provider.verify_token = MagicMock(return_value=decoded)  # type: ignore
+    decoded = {"uid": "user123", "email": "test@example.com", "name": "Test User"}
+    
+    auth_provider.verify_token = MagicMock(return_value=decoded)
 
     # Act
-    user = await get_current_user(credentials=credentials, auth_provider=auth_provider)
+    user = await get_current_user(
+        credentials=credentials,
+        auth_provider=auth_provider,
+    )
 
     # Assert
     assert user.email == "test@example.com"
-    assert user.role == UserRole.OPERATOR
+    assert user.role == UserRole.FAN
 
 @pytest.mark.asyncio
 async def test_get_current_user_dependency_unauthorized(auth_provider: FirebaseAuthProvider) -> None:
     # Arrange
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid_token")
-    auth_provider.verify_token = MagicMock(side_effect=ValueError("Token invalid"))  # type: ignore
+    auth_provider.verify_token = MagicMock(side_effect=ValueError("Token invalid"))
 
     # Act & Assert
     with pytest.raises(HTTPException) as exc_info:
-        await get_current_user(credentials=credentials, auth_provider=auth_provider)
+        await get_current_user(
+            credentials=credentials,
+            auth_provider=auth_provider,
+        )
 
     assert exc_info.value.status_code == 401
     assert "Token invalid" in exc_info.value.detail

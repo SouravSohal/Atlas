@@ -64,6 +64,15 @@ interface GlobalState {
   sessionExpiry: string;
   setUserRole: (role: string) => void;
   setSessionExpiry: (expiry: string) => void;
+  accessToken: string | null;
+  refreshToken: string | null;
+  user: any | null;
+  isDemoSession: boolean;
+  hasSeenWelcome: boolean;
+  setTokens: (access: string | null, refresh: string | null) => void;
+  setUser: (user: any) => void;
+  setIsDemoSession: (isDemo: boolean) => void;
+  setHasSeenWelcome: (seen: boolean) => void;
 
   // Volunteers State
   volunteers: Volunteer[];
@@ -244,6 +253,15 @@ export const useGlobalStore = create<GlobalState>((set, get) => ({
   sessionExpiry: "12 Hours",
   setUserRole: (role) => set({ userRole: role }),
   setSessionExpiry: (expiry) => set({ sessionExpiry: expiry }),
+  accessToken: null,
+  refreshToken: null,
+  user: null,
+  isDemoSession: false,
+  hasSeenWelcome: false,
+  setTokens: (access, refresh) => set({ accessToken: access, refreshToken: refresh }),
+  setUser: (u) => set({ user: u, userRole: u ? u.role : "Administrator" }),
+  setIsDemoSession: (isDemo) => set({ isDemoSession: isDemo }),
+  setHasSeenWelcome: (seen) => set({ hasSeenWelcome: seen }),
 
   // Volunteers State
   volunteers: [

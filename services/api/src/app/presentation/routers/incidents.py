@@ -15,7 +15,9 @@ from app.application.incidents import (
 from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
-router = APIRouter(prefix="/incidents", tags=["Incidents"])
+from app.dependencies.auth import require_staff
+
+router = APIRouter(prefix="/incidents", tags=["Incidents"], dependencies=[Depends(require_staff)])
 
 @router.post("", response_model=ApiResponse[IncidentResponse], status_code=status.HTTP_201_CREATED)
 @inject

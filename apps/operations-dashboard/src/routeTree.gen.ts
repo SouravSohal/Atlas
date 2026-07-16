@@ -17,12 +17,14 @@ import { Route as OperationalStateRouteImport } from './routes/operational-state
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NavigationRouteImport } from './routes/navigation'
 import { Route as MetricsRouteImport } from './routes/metrics'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as FinalDemoRouteImport } from './routes/final-demo'
 import { Route as ExecutiveSituationRoomRouteImport } from './routes/executive-situation-room'
 import { Route as CrowdIntelligenceRouteImport } from './routes/crowd-intelligence'
 import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AccessDeniedRouteImport } from './routes/access-denied'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VolunteersRoute = VolunteersRouteImport.update({
@@ -65,6 +67,11 @@ const MetricsRoute = MetricsRouteImport.update({
   path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IncidentsRoute = IncidentsRouteImport.update({
   id: '/incidents',
   path: '/incidents',
@@ -95,6 +102,11 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccessDeniedRoute = AccessDeniedRouteImport.update({
+  id: '/access-denied',
+  path: '/access-denied',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -103,12 +115,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/analytics': typeof AnalyticsRoute
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/executive-situation-room': typeof ExecutiveSituationRoomRoute
   '/final-demo': typeof FinalDemoRoute
   '/incidents': typeof IncidentsRoute
+  '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
   '/notifications': typeof NotificationsRoute
@@ -120,12 +134,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/analytics': typeof AnalyticsRoute
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/executive-situation-room': typeof ExecutiveSituationRoomRoute
   '/final-demo': typeof FinalDemoRoute
   '/incidents': typeof IncidentsRoute
+  '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
   '/notifications': typeof NotificationsRoute
@@ -138,12 +154,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/analytics': typeof AnalyticsRoute
   '/copilot': typeof CopilotRoute
   '/crowd-intelligence': typeof CrowdIntelligenceRoute
   '/executive-situation-room': typeof ExecutiveSituationRoomRoute
   '/final-demo': typeof FinalDemoRoute
   '/incidents': typeof IncidentsRoute
+  '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/navigation': typeof NavigationRoute
   '/notifications': typeof NotificationsRoute
@@ -157,12 +175,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/access-denied'
     | '/analytics'
     | '/copilot'
     | '/crowd-intelligence'
     | '/executive-situation-room'
     | '/final-demo'
     | '/incidents'
+    | '/login'
     | '/metrics'
     | '/navigation'
     | '/notifications'
@@ -174,12 +194,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/access-denied'
     | '/analytics'
     | '/copilot'
     | '/crowd-intelligence'
     | '/executive-situation-room'
     | '/final-demo'
     | '/incidents'
+    | '/login'
     | '/metrics'
     | '/navigation'
     | '/notifications'
@@ -191,12 +213,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/access-denied'
     | '/analytics'
     | '/copilot'
     | '/crowd-intelligence'
     | '/executive-situation-room'
     | '/final-demo'
     | '/incidents'
+    | '/login'
     | '/metrics'
     | '/navigation'
     | '/notifications'
@@ -209,12 +233,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccessDeniedRoute: typeof AccessDeniedRoute
   AnalyticsRoute: typeof AnalyticsRoute
   CopilotRoute: typeof CopilotRoute
   CrowdIntelligenceRoute: typeof CrowdIntelligenceRoute
   ExecutiveSituationRoomRoute: typeof ExecutiveSituationRoomRoute
   FinalDemoRoute: typeof FinalDemoRoute
   IncidentsRoute: typeof IncidentsRoute
+  LoginRoute: typeof LoginRoute
   MetricsRoute: typeof MetricsRoute
   NavigationRoute: typeof NavigationRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -283,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/incidents': {
       id: '/incidents'
       path: '/incidents'
@@ -325,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/access-denied': {
+      id: '/access-denied'
+      path: '/access-denied'
+      fullPath: '/access-denied'
+      preLoaderRoute: typeof AccessDeniedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -337,12 +377,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccessDeniedRoute: AccessDeniedRoute,
   AnalyticsRoute: AnalyticsRoute,
   CopilotRoute: CopilotRoute,
   CrowdIntelligenceRoute: CrowdIntelligenceRoute,
   ExecutiveSituationRoomRoute: ExecutiveSituationRoomRoute,
   FinalDemoRoute: FinalDemoRoute,
   IncidentsRoute: IncidentsRoute,
+  LoginRoute: LoginRoute,
   MetricsRoute: MetricsRoute,
   NavigationRoute: NavigationRoute,
   NotificationsRoute: NotificationsRoute,

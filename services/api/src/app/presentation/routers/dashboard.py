@@ -28,7 +28,9 @@ from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
 logger = structlog.get_logger()
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+from app.dependencies.auth import require_staff
+
+router = APIRouter(prefix="/dashboard", tags=["Dashboard"], dependencies=[Depends(require_staff)])
 
 
 # --- DTO Response Models ---
