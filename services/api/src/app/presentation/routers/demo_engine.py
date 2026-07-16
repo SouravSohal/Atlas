@@ -17,8 +17,13 @@ from atlas_core.domain.services.scenario_runner import ScenarioRunner
 from atlas_core.domain.services.recommendation_engine import StadiumRecommendationEngine
 
 from app.dependencies.auth import require_commander_or_above
+from app.infrastructure.security.rate_limiter import RateLimiterDependency
 
-router = APIRouter(prefix="/demo", tags=["Judge Demo"], dependencies=[Depends(require_commander_or_above)])
+router = APIRouter(
+    prefix="/demo",
+    tags=["Judge Demo"],
+    dependencies=[Depends(require_commander_or_above), Depends(RateLimiterDependency("simulation"))]
+)
 logger = structlog.get_logger()
 
 class DemoState:

@@ -29,6 +29,7 @@ from app.presentation.responses import ApiResponse
 
 logger = structlog.get_logger()
 from app.dependencies.auth import require_staff
+from app.infrastructure.security.rate_limiter import RateLimiterDependency
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"], dependencies=[Depends(require_staff)])
 
@@ -341,7 +342,7 @@ async def get_dashboard_metrics(
     return ApiResponse(success=True, data=metrics)
 
 
-@router.get("/briefing", response_model=ApiResponse[SituationSummaryAgentResponse])
+@router.get("/briefing", response_model=ApiResponse[SituationSummaryAgentResponse], dependencies=[Depends(RateLimiterDependency("ai"))])
 @inject
 async def get_dashboard_briefing(
     state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
@@ -471,7 +472,7 @@ async def get_dashboard_briefing(
         return ApiResponse(success=True, data=fallback)
 
 
-@router.get("/recommendations/explain", response_model=ApiResponse[RecommendationAgentResponse])
+@router.get("/recommendations/explain", response_model=ApiResponse[RecommendationAgentResponse], dependencies=[Depends(RateLimiterDependency("ai"))])
 @inject
 async def explain_recommendations(
     state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
@@ -551,7 +552,7 @@ async def explain_recommendations(
         return ApiResponse(success=True, data=fallback)
 
 
-@router.post("/recommendations/generate", response_model=ApiResponse[list[RecommendationDashboardItem]])
+@router.post("/recommendations/generate", response_model=ApiResponse[list[RecommendationDashboardItem]], dependencies=[Depends(RateLimiterDependency("ai"))])
 @inject
 async def generate_ai_recommendations(
     state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
@@ -680,7 +681,7 @@ async def generate_ai_recommendations(
         return ApiResponse(success=False, error={"code": "AI_ERROR", "message": f"Recommendation generation failed: {str(e)}"})
 
 
-@router.get("/predictions", response_model=ApiResponse[StadiumPredictionsResponse])
+@router.get("/predictions", response_model=ApiResponse[StadiumPredictionsResponse], dependencies=[Depends(RateLimiterDependency("ai"))])
 @inject
 async def get_predictions(
     state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),

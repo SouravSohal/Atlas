@@ -11,6 +11,7 @@ from app.dependencies.container import ApplicationContainer
 from app.dependencies.auth import get_current_user
 from app.config import Settings
 from app.presentation.responses.standard import ApiResponse
+from app.infrastructure.security.rate_limiter import RateLimiterDependency
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -35,7 +36,7 @@ class LoginResponse(BaseModel):
     refresh_token: str
     user: UserResponse
 
-@router.post("/login", response_model=ApiResponse[LoginResponse])
+@router.post("/login", response_model=ApiResponse[LoginResponse], dependencies=[Depends(RateLimiterDependency("auth"))])
 @inject
 async def login(
     request: LoginRequest,
@@ -101,7 +102,7 @@ async def login(
         ),
     )
 
-@router.post("/refresh", response_model=ApiResponse[LoginResponse])
+@router.post("/refresh", response_model=ApiResponse[LoginResponse], dependencies=[Depends(RateLimiterDependency("auth"))])
 @inject
 async def refresh(
     request: RefreshRequest,

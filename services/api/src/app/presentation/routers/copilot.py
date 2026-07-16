@@ -7,8 +7,13 @@ from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
 from app.dependencies.auth import get_current_user
+from app.infrastructure.security.rate_limiter import RateLimiterDependency
 
-router = APIRouter(prefix="/copilot", tags=["Copilot"], dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/copilot",
+    tags=["Copilot"],
+    dependencies=[Depends(get_current_user), Depends(RateLimiterDependency("copilot"))]
+)
 
 @router.post("/chat", response_model=ApiResponse[CopilotChatResponse])
 @inject

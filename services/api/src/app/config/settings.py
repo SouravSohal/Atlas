@@ -245,6 +245,43 @@ class DemoSettings(BaseModel):
     )
 
 
+class RateLimitSettings(BaseModel):
+    """Configuration settings for production-grade rate limiting."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    auth: str = Field(
+        default="5/minute",
+        validation_alias=AliasChoices("RATE_LIMIT_AUTH"),
+        description="Rate limit for authentication endpoints.",
+    )
+    copilot: str = Field(
+        default="10/minute",
+        validation_alias=AliasChoices("RATE_LIMIT_COPILOT"),
+        description="Rate limit for copilot assistant.",
+    )
+    ai: str = Field(
+        default="20/minute",
+        validation_alias=AliasChoices("RATE_LIMIT_AI"),
+        description="Rate limit for intelligence/AI endpoints.",
+    )
+    simulation: str = Field(
+        default="30/minute",
+        validation_alias=AliasChoices("RATE_LIMIT_SIMULATION"),
+        description="Rate limit for simulation demo controls.",
+    )
+    ws: str = Field(
+        default="10/minute",
+        validation_alias=AliasChoices("RATE_LIMIT_WS"),
+        description="Rate limit for WebSocket handshakes.",
+    )
+    default: str = Field(
+        default="60/minute",
+        validation_alias=AliasChoices("RATE_LIMIT_DEFAULT"),
+        description="Default rate limit fallback.",
+    )
+
+
 class Settings(BaseSettings):
     """Global configuration settings for the application, loaded from env files and environment variables."""
 
@@ -265,6 +302,7 @@ class Settings(BaseSettings):
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     demo: DemoSettings = Field(default_factory=DemoSettings)
+    rate_limits: RateLimitSettings = Field(default_factory=RateLimitSettings)
 
 
 @lru_cache
