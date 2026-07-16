@@ -166,7 +166,7 @@ async def test_model_gateway() -> None:
         # Act
         response_text = await gateway.generate_response(
             prompt="Analyze this",
-            model="gemini-2.5-pro",
+            model="gemini-2.5-flash",
         )
 
         # Assert

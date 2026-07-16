@@ -17,6 +17,7 @@ import {
   fetchDashboardOverview,
   fetchDashboardIncidents,
   fetchOperationalState,
+  fetchDashboardBriefing,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useGlobalStore } from "../store/useGlobalStore";
@@ -63,6 +64,12 @@ function ExecutiveSituationRoomPage() {
     refetchInterval: 5000,
   });
 
+  const briefingQuery = useQuery({
+    queryKey: ["cc-briefing"],
+    queryFn: fetchDashboardBriefing,
+    refetchInterval: 10000,
+  });
+
   const overview = playbackActive && simulatedOverview ? simulatedOverview : overviewQuery.data;
   const states = playbackActive && simulatedZones ? simulatedZones : (stateQuery.data || []);
   const incidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || []);
@@ -80,6 +87,9 @@ function ExecutiveSituationRoomPage() {
 
   // AI Narrative Generator
   const executiveBriefing = useMemo(() => {
+    if (briefingQuery.data?.executive_summary) {
+      return briefingQuery.data.executive_summary;
+    }
     if (activeIncidents.length === 0) {
       return "All stadium sectors are operating at peak efficiency. Ingress flow is standard across primary Gates 1 and 2, with queue times averaging under 8 minutes. Staffing levels are fully optimized with 20 volunteers deployed.";
     }
@@ -88,7 +98,7 @@ function ExecutiveSituationRoomPage() {
       return `ALERT: Response units have been dispatched to handle a ${criticalInc.severity} ${criticalInc.incident_type} incident: "${criticalInc.description}". Secondary egress corridors are being opened to balance stadium density and prevent secondary bottlenecks.`;
     }
     return `Stadium operations are currently managed. We have ${activeIncidents.length} active warnings in progress. Ingress queue wait times have temporarily spiked to 12 minutes in select sectors. Rerouting rules have been active to divert spectator flow.`;
-  }, [activeIncidents]);
+  }, [briefingQuery.data, activeIncidents]);
 
   if (overviewQuery.isLoading || stateQuery.isLoading || incidentsQuery.isLoading) {
     return <LoadingScreen />;

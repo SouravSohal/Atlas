@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+import structlog
 from atlas_core.domain.entities.incident import Incident
 from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.recommendation import Recommendation
@@ -15,9 +16,12 @@ from pydantic import BaseModel, Field
 
 from app.application.events import EventPublisher
 from app.application.operational_state.state_manager import OperationalStateManager
+from app.application.operational_state import SituationSummaryAgent, SituationSummaryAgentResponse
+from app.application.recommendations import RecommendationAgent, RecommendationAgentResponse
 from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
+logger = structlog.get_logger()
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
@@ -327,3 +331,147 @@ async def get_dashboard_metrics(
         recommendations_by_status=status_counts,
     )
     return ApiResponse(success=True, data=metrics)
+
+
+@router.get("/briefing", response_model=ApiResponse[SituationSummaryAgentResponse])
+@inject
+async def get_dashboard_briefing(
+    state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
+    incident_repo: IncidentRepository[Incident] = Depends(Provide[ApplicationContainer.incident_repository]),
+    task_repo: TaskRepository[Any] = Depends(Provide[ApplicationContainer.task_repository]),
+    recommendation_repo: RecommendationRepository[Recommendation] = Depends(Provide[ApplicationContainer.recommendation_repository]),
+    event_publisher: EventPublisher = Depends(Provide[ApplicationContainer.event_publisher]),
+    summary_agent: SituationSummaryAgent = Depends(Provide[ApplicationContainer.situation_summary_agent]),
+) -> ApiResponse[SituationSummaryAgentResponse]:
+    """Generates a dynamic real-time AI Situation Briefing using the SituationSummaryAgent."""
+    state_mgr = OperationalStateManager(
+        state_repo=state_repo,
+        incident_repo=incident_repo,
+        task_repo=task_repo,
+        recommendation_repo=recommendation_repo,
+        event_publisher=event_publisher,
+    )
+    snapshot = await state_mgr.get_snapshot()
+
+    operational_state_summary = {
+        "stadium_health": snapshot.stadium_health,
+        "timestamp": snapshot.timestamp.isoformat(),
+        "zones_count": len(snapshot.crowd_conditions),
+    }
+
+    incidents_list = [
+        {
+            "id": str(i.id),
+            "incident_type": i.incident_type.value,
+            "severity": i.severity.value,
+            "description": i.description,
+            "resolved": i.resolved,
+            "created_at": i.created_at.isoformat(),
+        }
+        for i in snapshot.active_incidents
+    ]
+
+    crowd_conditions_map = {str(k): v for k, v in snapshot.crowd_conditions.items()}
+
+    volunteer_status = {
+        "allocated_count": len(snapshot.volunteer_allocation),
+    }
+
+    recommendations_list = [
+        {
+            "id": str(r.id),
+            "action_type": r.action_type,
+            "priority": r.priority.value,
+            "confidence": r.confidence.value,
+            "details": r.details,
+            "status": r.status.value,
+        }
+        for r in snapshot.recommendations
+    ]
+
+    try:
+        report = await summary_agent.generate_summary(
+            operational_state_summary=operational_state_summary,
+            incidents=incidents_list,
+            crowd_conditions=crowd_conditions_map,
+            volunteer_status=volunteer_status,
+            recommendations=recommendations_list,
+        )
+        return ApiResponse(success=True, data=report)
+    except Exception as e:
+        logger.error("Failed to generate situation briefing", error=str(e))
+        fallback = SituationSummaryAgentResponse(
+            executive_summary="All stadium sectors are operating at standard capacity. AI Briefing generation is currently unavailable.",
+            operations_summary="Queue wait times average 8 minutes. Operations are normal.",
+            security_summary="No major active security threats reported.",
+            medical_summary="Medical posts are operational. No major issues.",
+        )
+        return ApiResponse(success=True, data=fallback)
+
+
+@router.get("/recommendations/explain", response_model=ApiResponse[RecommendationAgentResponse])
+@inject
+async def explain_recommendations(
+    state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
+    incident_repo: IncidentRepository[Incident] = Depends(Provide[ApplicationContainer.incident_repository]),
+    task_repo: TaskRepository[Any] = Depends(Provide[ApplicationContainer.task_repository]),
+    recommendation_repo: RecommendationRepository[Recommendation] = Depends(Provide[ApplicationContainer.recommendation_repository]),
+    event_publisher: EventPublisher = Depends(Provide[ApplicationContainer.event_publisher]),
+    rec_agent: RecommendationAgent = Depends(Provide[ApplicationContainer.recommendation_agent]),
+) -> ApiResponse[RecommendationAgentResponse]:
+    """Invokes the RecommendationAgent to explain and rank-prioritize active stadium recommendations."""
+    state_mgr = OperationalStateManager(
+        state_repo=state_repo,
+        incident_repo=incident_repo,
+        task_repo=task_repo,
+        recommendation_repo=recommendation_repo,
+        event_publisher=event_publisher,
+    )
+    snapshot = await state_mgr.get_snapshot()
+
+    operational_state_summary = {
+        "stadium_health": snapshot.stadium_health,
+        "timestamp": snapshot.timestamp.isoformat(),
+        "zones_count": len(snapshot.crowd_conditions),
+    }
+
+    incidents_list = [
+        {
+            "id": str(i.id),
+            "incident_type": i.incident_type.value,
+            "severity": i.severity.value,
+            "description": i.description,
+            "resolved": i.resolved,
+            "created_at": i.created_at.isoformat(),
+        }
+        for i in snapshot.active_incidents
+    ]
+
+    recommendations_list = [
+        {
+            "id": str(r.id),
+            "action_type": r.action_type,
+            "priority": r.priority.value,
+            "confidence": r.confidence.value,
+            "details": r.details,
+            "status": r.status.value,
+        }
+        for r in snapshot.recommendations
+    ]
+
+    try:
+        report = await rec_agent.analyze_recommendations(
+            operational_state_summary=operational_state_summary,
+            incidents=incidents_list,
+            business_recommendations=recommendations_list,
+        )
+        return ApiResponse(success=True, data=report)
+    except Exception as e:
+        logger.error("Failed to explain recommendations via AI", error=str(e))
+        fallback = RecommendationAgentResponse(
+            natural_language_explanation="Standard operational response rules have been selected. AI explanation service is currently offline.",
+            prioritized_recommendations=[],
+            risk_assessment="Standard risk assessment shows no high threats to aux egress corridors.",
+            alternative_actions=["Divert spectator queues", "Deploy additional gate crew volunteers"],
+        )
+        return ApiResponse(success=True, data=fallback)

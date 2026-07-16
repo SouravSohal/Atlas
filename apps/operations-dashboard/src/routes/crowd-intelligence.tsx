@@ -15,6 +15,7 @@ import {
   fetchDashboardOverview,
   fetchDashboardIncidents,
   fetchDashboardRecommendations,
+  fetchDashboardBriefing,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useGlobalStore } from "../store/useGlobalStore";
@@ -51,21 +52,30 @@ function CrowdIntelligencePage() {
     queryFn: () => fetchDashboardRecommendations(1, 10),
   });
 
+  const briefingQuery = useQuery({
+    queryKey: ["ci-briefing"],
+    queryFn: fetchDashboardBriefing,
+    refetchInterval: 10000,
+  });
+
   const overview = playbackActive && simulatedOverview ? simulatedOverview : overviewQuery.data;
   const activeIncidentsCount = overview?.active_incidents_count || 0;
   const averageDensity = overview?.average_crowd_density || 0;
 
   // Generate dynamic summary based on backend API data
-  const finalSummaryText = `EXECUTIVE SUMMARY: Operational telemetry shows average crowd density is at ${Math.round(
+  const rawSummaryText = briefingQuery.data?.executive_summary;
+  const fallbackSummaryText = `EXECUTIVE SUMMARY: Operational telemetry shows average crowd density is at ${Math.round(
     averageDensity * 100
   )}% capacity. There are currently ${activeIncidentsCount} active unresolved incidents under dispatch. Safety margins are stable at ${Math.round(
     (overview?.stadium_health || 0.98) * 100
   )}%, though ingress bottlenecks at Gate 1 are escalating. Security patrols are actively deployed to direct crowd queues.`;
 
+  const finalSummaryText = rawSummaryText || fallbackSummaryText;
+
   const thinkingStages = [
     "Retrieving live operational state and zone metrics...",
     "Scanning active incident logs and volunteer locations...",
-    "Invoking Gemini 2.5 Pro model orchestrator...",
+    "Invoking Gemini 2.5 Flash model orchestrator...",
     "Running deterministic risk evaluation policy...",
     "Compiling structured situation report...",
   ];
@@ -174,7 +184,7 @@ function CrowdIntelligencePage() {
               <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
                 <span className="flex items-center gap-1">
                   <Cpu className="h-3 w-3" />
-                  Model: Gemini 2.5 Pro (Active)
+                  Model: Gemini 2.5 Flash (Active)
                 </span>
                 {analysisTimestamp && (
                   <span>

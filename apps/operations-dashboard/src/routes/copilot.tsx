@@ -15,7 +15,7 @@ const CO_THINKING_STAGES = [
   "Analyzing user request...",
   "Querying live operational telemetry...",
   "Formatting prompt constraints...",
-  "Invoking Gemini 2.5 Pro model...",
+  "Invoking Gemini 2.5 Flash model...",
   "Structuring response payload..."
 ];
 
@@ -95,7 +95,7 @@ function CopilotChatPage() {
       "Analyzing user request...",
       "Querying live operational telemetry...",
       "Formatting prompt constraints...",
-      "Invoking Gemini 2.5 Pro model...",
+      "Invoking Gemini 2.5 Flash model...",
       "Structuring response payload..."
     ];
 
@@ -124,7 +124,7 @@ function CopilotChatPage() {
           timestamp: new Date().toLocaleTimeString(),
           thinkingSteps: responseData.thinking || defaultThinking,
           citations: responseData.citations || [],
-          modelVersion: responseData.model_version || "Gemini 2.5 Pro",
+          modelVersion: responseData.model_version || "Gemini 2.5 Flash",
           executionTimeMs: responseData.execution_time_ms || 0,
         };
 

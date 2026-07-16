@@ -188,3 +188,39 @@ export async function postCopilotChat(
   const data: ApiResponse<CopilotChatResponse> = await res.json();
   return data.data;
 }
+
+export interface DashboardBriefingResponse {
+  executive_summary: string;
+  operations_summary: string;
+  security_summary: string;
+  medical_summary: string;
+}
+
+export async function fetchDashboardBriefing(): Promise<DashboardBriefingResponse> {
+  const res = await fetch(`${API_BASE_URL}/dashboard/briefing`);
+  if (!res.ok) throw new Error("Failed to fetch dashboard briefing");
+  const data: ApiResponse<DashboardBriefingResponse> = await res.json();
+  return data.data;
+}
+
+export interface PrioritizedRecommendationItem {
+  recommendation_id: string;
+  action_type: string;
+  priority_order: number;
+  priority_level: string;
+  explanation: string;
+}
+
+export interface RecommendationsExplanationResponse {
+  natural_language_explanation: string;
+  prioritized_recommendations: PrioritizedRecommendationItem[];
+  risk_assessment: string;
+  alternative_actions: string[];
+}
+
+export async function fetchRecommendationsExplanation(): Promise<RecommendationsExplanationResponse> {
+  const res = await fetch(`${API_BASE_URL}/dashboard/recommendations/explain`);
+  if (!res.ok) throw new Error("Failed to fetch recommendations explanation");
+  const data: ApiResponse<RecommendationsExplanationResponse> = await res.json();
+  return data.data;
+}

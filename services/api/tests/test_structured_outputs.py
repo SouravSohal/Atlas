@@ -83,7 +83,7 @@ def test_response_envelope() -> None:
 
     envelope = ResponseEnvelope[AIRecommendation](
         trace_id="trace-1234",
-        model_name="gemini-2.5-pro",
+        model_name="gemini-2.5-flash",
         prompt_version="v1.2.0",
         execution_time_ms=125.5,
         data=rec,

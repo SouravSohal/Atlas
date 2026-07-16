@@ -73,7 +73,7 @@ function SettingsPage() {
 
   const [diagnosticLogs, setDiagnosticLogs] = useState<string[]>([
     "[2026-07-10 17:20:00] INFO: WebSocket client registry handshake completed (client-104)",
-    "[2026-07-10 17:21:05] SUCCESS: AI prompt situation compilation successfully generated via Gemini-2.5-pro",
+    "[2026-07-10 17:21:05] SUCCESS: AI prompt situation compilation successfully generated via Gemini-2.5-flash",
     "[2026-07-10 17:22:15] WARN: Crowd density warning limit breached at Gate 1 Turnstiles",
     "[2026-07-10 17:23:44] DATABASE: Firestore transaction committed for Incident resolution (ID: inc-041)",
     "[2026-07-10 17:24:18] INFO: Digital Twin telemetry synchronization cycle complete"
@@ -231,8 +231,8 @@ function SettingsPage() {
                     onChange={(e) => setGeminiModel(e.target.value)}
                     className="w-full text-xs bg-muted/40 border border-border rounded-xl px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-bold"
                   >
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Operational - Recommended)</option>
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Latency Optimization)</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Operational - Recommended)</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (High Complexity)</option>
                     <option value="gemini-1.5-pro">Gemini 1.5 Pro Legacy</option>
                   </select>
                 </div>
@@ -667,7 +667,7 @@ function SettingsPage() {
                 <div className="grid gap-3 sm:grid-cols-2 pt-4 border-t border-border/40">
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase block">AI Reasoning Engine</span>
-                    <span className="font-bold text-foreground block">Gemini 2.5 Pro APIs</span>
+                    <span className="font-bold text-foreground block">Gemini 2.5 Flash APIs</span>
                   </div>
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase block">Graph Layout Compiler</span>

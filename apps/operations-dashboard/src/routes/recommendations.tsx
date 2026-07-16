@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { fetchDashboardRecommendations } from "../services/api";
+import { fetchDashboardRecommendations, fetchRecommendationsExplanation } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useWebSocket } from "../providers/WebSocketProvider";
 import { useGlobalStore } from "../store/useGlobalStore";
@@ -55,6 +55,12 @@ function RecommendationsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["cc-recommendations"],
     queryFn: () => fetchDashboardRecommendations(1, 40),
+    refetchInterval: 10000,
+  });
+
+  const explainQuery = useQuery({
+    queryKey: ["cc-recommendations-explain"],
+    queryFn: fetchRecommendationsExplanation,
     refetchInterval: 10000,
   });
 
@@ -124,8 +130,32 @@ function RecommendationsPage() {
   // Dynamic drawer detailed calculations
   const explanationDetails = useMemo(() => {
     if (!selectedRec) return null;
+    
+    // Find prioritized detail explanation if available
+    const prioritizedMatch = explainQuery.data?.prioritized_recommendations?.find(
+      (p) => p.recommendation_id === selectedRec.id
+    );
+
+    const whyText = prioritizedMatch?.explanation 
+      || explainQuery.data?.natural_language_explanation 
+      || `The ATLAS telemetry pipeline detected congestion bounds nearing capacity constraints. Triggering a preventative override distributes inflow weights safely.`;
+
+    const alternatives = explainQuery.data?.alternative_actions && explainQuery.data.alternative_actions.length > 0
+      ? explainQuery.data.alternative_actions
+      : [
+          "Divert entry traffic to Parking Lot B corridors",
+          "Keep gates active and deploy temporary guides"
+        ];
+
+    const risks = explainQuery.data?.risk_assessment
+      ? [explainQuery.data.risk_assessment]
+      : [
+          "Slight staff displacement in security sector C",
+          "Temporary queue confusion at Gate 2 corridors"
+        ];
+
     return {
-      why: `The ATLAS telemetry pipeline detected congestion bounds nearing capacity constraints. Triggering a preventative override distributes inflow weights safely.`,
+      why: whyText,
       data_considered: [
         `Crowd Density: ${Math.round((selectedRec.confidence || 0.95) * 100)}%`,
         `Average Gate queue: 14 minutes`,
@@ -135,17 +165,11 @@ function RecommendationsPage() {
         "Rule 305: Divert crowd ingress vectors if turnstile congestion index exceeds 0.70 threshold.",
         "Rule 112: Reallocate local security squads when severity markers reach warning boundaries."
       ],
-      alternatives: [
-        "Divert entry traffic to Parking Lot B corridors",
-        "Keep gates active and deploy temporary guides"
-      ],
+      alternatives: alternatives,
       confidence: selectedRec.confidence || 0.95,
-      risks: [
-        "Slight staff displacement in security sector C",
-        "Temporary queue confusion at Gate 2 corridors"
-      ]
+      risks: risks
     };
-  }, [selectedRec]);
+  }, [selectedRec, explainQuery.data]);
 
   if (isLoading) {
     return <LoadingScreen />;

@@ -105,6 +105,8 @@ class AIOrchestrator:
         if context_zone_id is not None:
             context_data = await self.context_retriever.retrieve_zone_context(context_zone_id)
             context_str = json.dumps(context_data, indent=2, default=str)
+        elif "context" in prompt_vars:
+            context_str = prompt_vars.pop("context")
 
         final_prompt = PromptBuilder.build(
             template=prompt_ver.template,

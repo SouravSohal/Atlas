@@ -46,6 +46,7 @@ class RecommendationAgentPrompt(BasePrompt):
                     "Your job is ONLY to prioritize, explain, and summarize them, and provide a risk assessment.\n"
                     "DO NOT generate new recommendations from scratch.\n"
                     "Format your response to match the requested schema.\n"
+                    "Operational Conditions: {context}\n"
                     "Pre-generated Business Recommendations: {business_recs}\n"
                 )
             )
