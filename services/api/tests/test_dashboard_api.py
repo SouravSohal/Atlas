@@ -28,6 +28,67 @@ def override_dashboard_dependencies(client: TestClient) -> Iterator[tuple[MagicM
     mock_state_repo = MagicMock()
     mock_rec_repo = MagicMock()
 
+    # Dynamic mock implementation for incident list_paginated
+    async def mock_incident_list_paginated(
+        page=1, limit=10, resolved=None, severity=None, incident_type=None, sort_by="created_at", order="desc"
+    ):
+        items = []
+        if isinstance(mock_incident_repo.list, AsyncMock):
+            try:
+                items = await mock_incident_repo.list()
+            except Exception:
+                pass
+        
+        if resolved is not None:
+            items = [i for i in items if i.resolved == resolved]
+        if severity is not None:
+            items = [i for i in items if i.severity.value == severity]
+        if incident_type is not None:
+            items = [i for i in items if i.incident_type.value == incident_type]
+            
+        severity_order = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+        if sort_by == "severity":
+            items = sorted(items, key=lambda x: severity_order.get(x.severity.value, 0), reverse=(order == "desc"))
+        else:
+            items = sorted(items, key=lambda x: x.created_at, reverse=(order == "desc"))
+            
+        total = len(items)
+        start = (page - 1) * limit
+        paginated = items[start:start+limit]
+        return paginated, total
+
+    mock_incident_repo.list_paginated = AsyncMock(side_effect=mock_incident_list_paginated)
+
+    # Dynamic mock implementation for recommendation list_paginated
+    async def mock_rec_list_paginated(
+        page=1, limit=10, status=None, priority=None, action_type=None, sort_by="created_at", order="desc"
+    ):
+        items = []
+        if isinstance(mock_rec_repo.list, AsyncMock):
+            try:
+                items = await mock_rec_repo.list()
+            except Exception:
+                pass
+        
+        if status is not None:
+            items = [r for r in items if r.status.value == status]
+        if priority is not None:
+            items = [r for r in items if r.priority.value == priority]
+        if action_type is not None:
+            items = [r for r in items if r.action_type == action_type]
+            
+        if sort_by == "confidence":
+            items = sorted(items, key=lambda x: x.confidence.value, reverse=(order == "desc"))
+        else:
+            items = sorted(items, key=lambda x: x.created_at, reverse=(order == "desc"))
+            
+        total = len(items)
+        start = (page - 1) * limit
+        paginated = items[start:start+limit]
+        return paginated, total
+
+    mock_rec_repo.list_paginated = AsyncMock(side_effect=mock_rec_list_paginated)
+
     container.incident_repository.override(mock_incident_repo)
     container.operational_state_repository.override(mock_state_repo)
     container.recommendation_repository.override(mock_rec_repo)

@@ -50,8 +50,54 @@ class IncidentMapper(CollectionMapper[Incident]):
             resolved_at=data.get("resolved_at"),
         )
 
+from google.cloud import firestore
+from collections.abc import Sequence
+
 class FirestoreIncidentRepository(BaseRepository[Incident], IncidentRepository[Incident]):
     """Firestore implementation of the IncidentRepository interface."""
 
     def __init__(self, client: FirestoreClient) -> None:
         super().__init__(client, "incidents", IncidentMapper())
+
+    async def list_paginated(
+        self,
+        page: int = 1,
+        limit: int = 10,
+        resolved: bool | None = None,
+        severity: str | None = None,
+        incident_type: str | None = None,
+        sort_by: str = "created_at",
+        order: str = "desc",
+    ) -> tuple[Sequence[Incident], int]:
+        """Retrieves a paginated, filtered, and sorted list of incidents and the total count directly from Firestore."""
+        query = self.collection_ref
+
+        # Apply filters in Firestore
+        if resolved is not None:
+            query = query.where("resolved", "==", resolved)
+        if severity is not None:
+            query = query.where("severity", "==", severity)
+        if incident_type is not None:
+            query = query.where("incident_type", "==", incident_type)
+
+        # Get total count via aggregation query (extremely lightweight/performant)
+        count_query = query.count()
+        count_result = await count_query.get()
+        total_count = count_result[0][0].value
+
+        # Apply sort in Firestore
+        direction = firestore.Query.DESCENDING if order == "desc" else firestore.Query.ASCENDING
+        query = query.order_by(sort_by, direction=direction)
+
+        # Apply pagination limit and offset in Firestore
+        start = (page - 1) * limit
+        query = query.offset(start).limit(limit)
+
+        # Stream documents from Firestore
+        results = []
+        async for doc in query.stream():
+            data = doc.to_dict()
+            if data is not None:
+                results.append(self.mapper.to_entity(doc.id, data))
+
+        return results, total_count

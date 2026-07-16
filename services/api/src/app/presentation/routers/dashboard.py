@@ -163,29 +163,15 @@ async def get_dashboard_incidents(
     incident_repo: IncidentRepository[Incident] = Depends(Provide[ApplicationContainer.incident_repository]),
 ) -> ApiResponse[IncidentDashboardListResponse]:
     """Lists incidents with pagination, sorting, and filtering support."""
-    incidents = await incident_repo.list()
-
-    # Filter
-    if resolved is not None:
-        incidents = [i for i in incidents if i.resolved == resolved]
-    if severity is not None:
-        incidents = [i for i in incidents if i.severity.value == severity]
-    if incident_type is not None:
-        incidents = [i for i in incidents if i.incident_type.value == incident_type]
-
-    # Sort
-    severity_order = {"low": 1, "medium": 2, "high": 3, "critical": 4}
-    if sort_by == "severity":
-        incidents = sorted(incidents, key=lambda x: severity_order.get(x.severity.value, 0), reverse=(order == "desc"))
-    else:
-        # Default created_at
-        incidents = sorted(incidents, key=lambda x: x.created_at, reverse=(order == "desc"))
-
-    # Paginate
-    total_count = len(incidents)
-    start = (page - 1) * limit
-    end = start + limit
-    paginated = incidents[start:end]
+    paginated, total_count = await incident_repo.list_paginated(
+        page=page,
+        limit=limit,
+        resolved=resolved,
+        severity=severity,
+        incident_type=incident_type,
+        sort_by=sort_by,
+        order=order,
+    )
 
     items = [
         IncidentDashboardItem(
@@ -248,28 +234,15 @@ async def get_dashboard_recommendations(
     recommendation_repo: RecommendationRepository[Recommendation] = Depends(Provide[ApplicationContainer.recommendation_repository]),
 ) -> ApiResponse[RecommendationDashboardListResponse]:
     """Lists pre-generated routing and operational recommendations."""
-    recs = await recommendation_repo.list()
-
-    # Filter
-    if status is not None:
-        recs = [r for r in recs if r.status.value == status]
-    if priority is not None:
-        recs = [r for r in recs if r.priority.value == priority]
-    if action_type is not None:
-        recs = [r for r in recs if r.action_type == action_type]
-
-    # Sort
-    if sort_by == "confidence":
-        recs = sorted(recs, key=lambda x: x.confidence.value, reverse=(order == "desc"))
-    else:
-        # Default created_at
-        recs = sorted(recs, key=lambda x: x.created_at, reverse=(order == "desc"))
-
-    # Paginate
-    total_count = len(recs)
-    start = (page - 1) * limit
-    end = start + limit
-    paginated = recs[start:end]
+    paginated, total_count = await recommendation_repo.list_paginated(
+        page=page,
+        limit=limit,
+        status=status,
+        priority=priority,
+        action_type=action_type,
+        sort_by=sort_by,
+        order=order,
+    )
 
     items = [
         RecommendationDashboardItem(
