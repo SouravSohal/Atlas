@@ -32,7 +32,7 @@ export function AiCopilot({
           <Brain className="h-4 w-4 text-primary animate-pulse" />
           <span className="text-xs font-bold text-foreground">ATLAS Copilot</span>
         </div>
-        <span className="text-[9px] text-muted-foreground font-mono">Gemini 2.5 Flash</span>
+        <span className="text-xs text-muted-foreground font-mono">Gemini 2.5 Flash</span>
       </div>
 
       {/* Conversation history */}
@@ -41,7 +41,7 @@ export function AiCopilot({
           <div className="p-3 rounded-xl border border-primary/30 bg-primary/5 flex items-start gap-2 text-left">
             <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5 animate-pulse" />
             <div>
-              <span className="font-bold block text-primary text-[10px] uppercase">AI Situation Summary:</span>
+              <span className="font-bold block text-primary text-xs uppercase">AI Situation Summary:</span>
               <p className="text-foreground mt-0.5">
                 {SCENARIO_STEPS[playbackScenario || ""]?.[playbackStep]?.summary}
               </p>
@@ -62,7 +62,7 @@ export function AiCopilot({
                 <p key={iIdx}>{line}</p>
               ))}
             </div>
-            <span className="text-[8px] text-muted-foreground px-1">{msg.timestamp}</span>
+            <span className="text-xs text-muted-foreground px-1">{msg.timestamp}</span>
           </div>
         ))}
         {chatThinking && (

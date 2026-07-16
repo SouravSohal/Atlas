@@ -25,13 +25,13 @@ export function PredictiveForecast({ predictionsQuery }: PredictiveForecastProps
           <button
             onClick={() => predictionsQuery.refetch()}
             disabled={isFetching}
-            className="rounded-lg border border-border bg-card hover:bg-muted px-3 py-1.5 text-xs font-bold text-foreground transition-all flex items-center gap-1.5 disabled:opacity-60"
+            className="rounded-lg border border-border bg-card hover:bg-muted px-3 py-1.5 text-xs font-bold text-foreground transition-all flex items-center gap-1.5 disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none"
           >
             <Zap className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
             {isFetching ? "Analyzing..." : "Run Forecast"}
           </button>
 
-          <div className="flex items-center gap-1.5 rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-[10px] font-bold text-purple-400 uppercase font-mono">
+          <div className="flex items-center gap-1.5 rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-400 uppercase font-mono">
             Confidence: {data ? `${Math.round(data.confidence_score * 100)}%` : "N/A"}
           </div>
         </div>
@@ -85,13 +85,13 @@ export function PredictiveForecast({ predictionsQuery }: PredictiveForecastProps
                       </div>
                       <h4 className="text-xs font-black uppercase text-foreground">{title}</h4>
                     </div>
-                    <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded border ${confidenceColor}`}>
+                    <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${confidenceColor}`}>
                       {Math.round(item.data.confidence * 100)}%
                     </span>
                   </div>
 
                   <div className="mt-2.5">
-                    <span className="text-[8px] font-black uppercase tracking-wider text-purple-400 block font-mono">
+                    <span className="text-xs font-black uppercase tracking-wider text-purple-400 block font-mono">
                       Prediction
                     </span>
                     <p className="text-xs font-semibold text-foreground mt-0.5 leading-relaxed">
@@ -100,30 +100,30 @@ export function PredictiveForecast({ predictionsQuery }: PredictiveForecastProps
                   </div>
 
                   <div className="mt-2.5">
-                    <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block font-mono">
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground block font-mono">
                       Reason
                     </span>
-                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                       {item.data.reason}
                     </p>
                   </div>
 
                   <div className="mt-2.5 bg-purple-500/5 p-2 rounded-lg border border-purple-500/10">
-                    <span className="text-[8px] font-black uppercase tracking-wider text-purple-400 block font-mono">
+                    <span className="text-xs font-black uppercase tracking-wider text-purple-400 block font-mono">
                       Suggested Mitigation
                     </span>
-                    <p className="text-[10px] text-purple-200 mt-0.5 leading-relaxed font-medium">
+                    <p className="text-xs font-medium text-purple-200 mt-0.5 leading-relaxed">
                       {item.data.mitigation}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-2.5 border-t border-border/40 flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+                <div className="mt-4 pt-2.5 border-t border-border/40 flex items-center justify-between text-xs font-mono text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-muted-foreground" />
                     {item.data.timeline}
                   </span>
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] font-black text-purple-400 uppercase tracking-widest">
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-black text-purple-400 uppercase tracking-widest">
                     Live Alert
                   </span>
                 </div>

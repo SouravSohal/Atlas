@@ -22,8 +22,8 @@ export function OperationalTimeline({ incidents }: OperationalTimelineProps) {
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-bold">{inc.resolved ? "Incident Resolved" : "Incident Created"}</span>
-                <span className="text-[10px] text-muted-foreground mt-0.5">{inc.description}</span>
-                <span className="text-[9px] text-primary font-bold mt-1 font-mono">
+                <span className="text-xs text-muted-foreground mt-0.5">{inc.description}</span>
+                <span className="text-xs text-primary font-bold mt-1 font-mono">
                   {new Date(inc.created_at).toLocaleTimeString()}
                 </span>
               </div>

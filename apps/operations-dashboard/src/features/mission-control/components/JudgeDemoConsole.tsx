@@ -43,12 +43,16 @@ export function JudgeDemoConsole({
                 <Sparkles className="h-4 w-4" />
                 🏆 ATLAS JUDGE DEMO MODE
               </span>
-              <button onClick={() => setDemoOpen(false)} className="text-muted-foreground hover:text-foreground text-xs font-bold">
+              <button
+                onClick={() => setDemoOpen(false)}
+                className="text-muted-foreground hover:text-foreground text-xs font-bold focus-visible:ring-2 focus-visible:ring-primary outline-none"
+                aria-label="Hide demo console"
+              >
                 Hide
               </button>
             </div>
 
-            <p className="text-[10px] text-muted-foreground mb-4 font-semibold">
+            <p className="text-xs text-muted-foreground mb-4 font-semibold">
               Select a playbook to run the automated demo. Focuses Digital Twin cameras, animates metrics, dispatches backend events, and reviews live AI briefs.
             </p>
 
@@ -63,14 +67,14 @@ export function JudgeDemoConsole({
                 <button
                   key={scen.name}
                   onClick={() => startJudgeDemo(scen.name)}
-                  className={`rounded-xl border p-3 text-left transition-all flex flex-col justify-between h-20 ${
+                  className={`rounded-xl border p-3 text-left transition-all flex flex-col justify-between h-20 focus-visible:ring-2 focus-visible:ring-primary outline-none ${
                     playbackScenario === scen.name
                       ? "bg-amber-500/10 border-amber-500 text-amber-400 font-bold"
                       : "bg-muted/30 border-border hover:bg-amber-500/5 hover:border-amber-500/20 text-foreground"
                   }`}
                 >
                   <span className="text-xs font-black leading-tight block">{scen.name}</span>
-                  <span className="text-[8px] text-muted-foreground leading-normal block">{scen.desc}</span>
+                  <span className="text-xs text-muted-foreground leading-normal block">{scen.desc}</span>
                 </button>
               ))}
             </div>
@@ -78,7 +82,7 @@ export function JudgeDemoConsole({
             {/* Milestones status indicator */}
             {judgeDemoActive && (
               <div className="mt-4 rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 flex flex-col gap-2">
-                <div className="flex items-center justify-between text-[9px] font-mono text-amber-400">
+                <div className="flex items-center justify-between text-xs font-mono text-amber-400">
                   <span className="animate-pulse">{demoStatusMilestone}</span>
                   <span>TICK PROGRESS</span>
                 </div>
@@ -93,7 +97,7 @@ export function JudgeDemoConsole({
             )}
 
             {demoMessage && (
-              <div className="mt-4 rounded-xl bg-primary/10 border border-primary/20 p-3 text-[10px] font-bold text-primary animate-pulse text-center">
+              <div className="mt-4 rounded-xl bg-primary/10 border border-primary/20 p-3 text-xs font-bold text-primary animate-pulse text-center">
                 {demoMessage}
               </div>
             )}
@@ -103,7 +107,9 @@ export function JudgeDemoConsole({
 
       <button
         onClick={() => setDemoOpen(!demoOpen)}
-        className="flex items-center gap-2 rounded-full bg-amber-500 px-5 py-3 text-xs font-black text-black shadow-2xl hover:opacity-90 transition-all border border-amber-400/20 focus-visible:ring-2 focus-visible:ring-amber-500 outline-none uppercase tracking-wider"
+        className="flex items-center gap-2 rounded-full bg-amber-500 px-5 py-3 text-xs font-black text-black shadow-2xl hover:opacity-90 transition-all border border-amber-400/20 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 outline-none uppercase tracking-wider"
+        aria-expanded={demoOpen}
+        aria-label="Toggle Judge Demo Mode Menu"
       >
         <Sparkles className="h-4 w-4" />
         🏆 Judge Demo Mode

@@ -10,6 +10,7 @@ import { Sparkles, X } from "lucide-react";
 import { auth } from "../services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { envConfig } from "../config/env";
+import { AriaLiveAnnouncer } from "../components/AriaLiveAnnouncer";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -132,6 +133,7 @@ function RootComponent() {
           </AppShell>
         )}
         <CommandPalette />
+        <AriaLiveAnnouncer />
 
         {/* Welcome Dialog Modal */}
         <AnimatePresence>

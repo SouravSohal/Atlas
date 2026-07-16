@@ -45,7 +45,7 @@ const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
       className={`rounded-xl border ${borderColors[data.status]} ${bgColors[data.status]} p-2.5 text-left w-44 backdrop-blur-md shadow-lg relative text-foreground`}
     >
       {data.isFocused && (
-        <span className="absolute -top-2.5 -right-2 bg-amber-500 text-black text-[7px] font-black px-1.5 py-0.5 rounded border border-black shadow uppercase animate-pulse">
+        <span className="absolute -top-2.5 -right-2 bg-amber-500 text-black text-xs font-black px-1.5 py-0.5 rounded border border-black shadow uppercase animate-pulse">
           🎯 focus
         </span>
       )}
@@ -54,16 +54,17 @@ const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
       {/* Node Title */}
       <div className="flex items-center justify-between gap-1.5 border-b border-border/40 pb-1.5">
         <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${indicatorColors[data.status]}`} />
-          <span className="text-[9px] font-black tracking-wide uppercase tracking-wider block truncate w-24">
+          <span className={`h-1.5 w-1.5 rounded-full ${indicatorColors[data.status]}`} aria-hidden="true" />
+          <span className="sr-only">Status: {data.status}. </span>
+          <span className="text-xs font-black tracking-wide uppercase block truncate w-24">
             {data.label}
           </span>
         </div>
-        <span className="text-[7px] font-mono text-muted-foreground uppercase">{data.type}</span>
+        <span className="text-xs font-mono text-muted-foreground uppercase">{data.type}</span>
       </div>
 
       {/* Grid details */}
-      <div className="grid grid-cols-2 gap-1.5 mt-2 text-[8px] font-mono text-muted-foreground">
+      <div className="grid grid-cols-2 gap-1.5 mt-2 text-xs font-mono text-muted-foreground">
         <div>
           <span>HEALTH</span>
           <span className="font-bold text-foreground block">{data.health}%</span>
@@ -84,24 +85,25 @@ const CustomNode = ({ data }: NodeProps<StadiumNode>) => {
         </div>
       </div>
 
-      <div className="mt-2 border-t border-border/40 pt-1.5 flex items-center justify-between text-[7px] font-mono text-muted-foreground">
+      <div className="mt-2 border-t border-border/40 pt-1.5 flex items-center justify-between text-xs font-mono text-muted-foreground">
         <span>STAFF: {data.resources}</span>
         {data.recs > 0 && <span className="text-amber-400 font-bold">RECS: {data.recs}</span>}
       </div>
 
       {data.predictionOverlay && (
-        <div className="mt-2.5 border-t border-purple-500/30 pt-2 flex flex-col gap-1 text-[8px] text-purple-300">
+        <div className="mt-2.5 border-t border-purple-500/30 pt-2 flex flex-col gap-1 text-xs text-purple-300">
           <div className="flex items-center gap-1 font-bold">
-            <span className="relative flex h-1.5 w-1.5 shrink-0">
+            <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden="true">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500" />
             </span>
+            <span className="sr-only">Prediction alert. </span>
             <span className="uppercase font-black text-purple-400">Predicted Risk:</span>
           </div>
           <p className="font-medium text-foreground leading-tight line-clamp-2">
             {data.predictionOverlay.prediction}
           </p>
-          <div className="flex items-center justify-between text-[7px] font-mono mt-0.5 text-purple-400/80">
+          <div className="flex items-center justify-between text-xs font-mono mt-0.5 text-purple-400/80">
             <span>Conf: {Math.round(data.predictionOverlay.confidence * 100)}%</span>
             <span>Time: {data.predictionOverlay.timeline}</span>
           </div>
@@ -144,14 +146,14 @@ export function DigitalTwinMap({
       <div className="p-4 border-b border-border bg-muted/20 flex flex-wrap items-center justify-between gap-3">
         <div className="text-left">
           <span className="text-xs font-bold text-foreground block">Stadium Digital Twin</span>
-          <span className="text-[9px] text-muted-foreground mt-0.5 block">Interact to inspect flow vectors.</span>
+          <span className="text-xs text-muted-foreground mt-0.5 block">Interact to inspect flow vectors.</span>
         </div>
 
         {/* Quick Node Search Select */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowPredictionsOverlay(!showPredictionsOverlay)}
-            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold transition-all ${
               showPredictionsOverlay
                 ? "bg-purple-500/20 border-purple-500/40 text-purple-300 shadow-md shadow-purple-500/10"
                 : "bg-card border-border hover:bg-muted text-muted-foreground"
@@ -161,7 +163,7 @@ export function DigitalTwinMap({
             <span>Predictions Overlay</span>
           </button>
 
-          <span className="text-[9px] font-black text-muted-foreground uppercase font-mono border-l border-border/60 pl-2">
+          <span className="text-xs font-black text-muted-foreground uppercase font-mono border-l border-border/60 pl-2">
             Go to:
           </span>
           <select
@@ -175,7 +177,7 @@ export function DigitalTwinMap({
                 setFocusedNodeIndex(idx);
               }
             }}
-            className="rounded-lg border border-border bg-card px-2 py-1 text-[10px] font-bold outline-none cursor-pointer text-foreground"
+            className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-bold outline-none cursor-pointer text-foreground"
           >
             <option value="">Select Sector...</option>
             {flowNodes.map((n, idx) => (
@@ -187,7 +189,7 @@ export function DigitalTwinMap({
           {focusedNodeIndex !== null && (
             <button
               onClick={() => setFocusedNodeIndex(null)}
-              className="p-1 rounded bg-muted hover:bg-muted/40 text-[9px] font-black uppercase text-muted-foreground"
+              className="p-1 rounded bg-muted hover:bg-muted/40 text-xs font-black uppercase text-muted-foreground"
             >
               Clear
             </button>
@@ -238,7 +240,7 @@ export function DigitalTwinMap({
                 <div className="flex flex-col gap-4 h-full justify-between">
                   <div className="flex flex-col gap-3.5">
                     <div className="border-b border-border/40 pb-2">
-                      <span className={`text-[8px] font-black uppercase font-mono ${statusColors[node.data.status]}`}>
+                      <span className={`text-xs font-black uppercase font-mono ${statusColors[node.data.status]}`}>
                         {node.data.type} status: {node.data.status}
                       </span>
                       <h4 className="text-xs font-black uppercase text-foreground mt-0.5">
@@ -247,7 +249,7 @@ export function DigitalTwinMap({
                     </div>
 
                     {/* Telemetry specs */}
-                    <div className="grid grid-cols-2 gap-2 text-[9px] font-mono text-muted-foreground bg-muted/20 p-2.5 rounded-lg border border-border/40">
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono text-muted-foreground bg-muted/20 p-2.5 rounded-lg border border-border/40">
                       <div>
                         <span>HEALTH</span>
                         <span className="font-bold text-foreground block">{node.data.health}%</span>
@@ -267,13 +269,13 @@ export function DigitalTwinMap({
                     </div>
 
                     {/* Staff / Alerts */}
-                    <div className="flex flex-col gap-1 text-[9px] font-mono">
+                    <div className="flex flex-col gap-1 text-xs font-mono">
                       <span className="text-muted-foreground uppercase">ASSIGNED STAFF:</span>
                       <span className="font-bold text-foreground uppercase">{node.data.resources}</span>
                     </div>
 
                     {node.data.recs > 0 && (
-                      <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-500 leading-relaxed font-semibold">
+                      <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500 leading-relaxed font-semibold">
                         ⚠️ AI Recommendations active: Reallocate volunteer squad to clear local bottlenecks.
                       </div>
                     )}
@@ -285,7 +287,7 @@ export function DigitalTwinMap({
                       setToastMessage(`Command dispatched: Staff rerouted to ${node.data.label}.`);
                       setTimeout(() => setToastMessage(null), 3000);
                     }}
-                    className="w-full rounded-lg bg-primary py-2 text-[10px] font-black uppercase text-primary-foreground tracking-wider hover:opacity-90 transition-opacity"
+                    className="w-full rounded-lg bg-primary py-2 text-xs font-black uppercase text-primary-foreground tracking-wider hover:opacity-90 transition-opacity"
                   >
                     Optimize Sector
                   </button>
@@ -295,17 +297,17 @@ export function DigitalTwinMap({
           ) : (
             <div className="flex flex-col justify-between h-full">
               <div className="flex flex-col gap-4">
-                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest border-b border-border/40 pb-2">
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-widest border-b border-border/40 pb-2">
                   Sector Inspector
                 </span>
-                <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">
+                <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                   Click any node on the stadium map to inspect real-time flow telemetry, pending recommendations, incident history, and workforce assignments.
                 </p>
               </div>
 
               {/* Legend */}
-              <div className="flex flex-col gap-1.5 border-t border-border/40 pt-4 text-[8px] font-black uppercase text-muted-foreground tracking-wider">
-                <span className="mb-1 block text-[7px] text-muted-foreground font-semibold">Status Legend</span>
+              <div className="flex flex-col gap-1.5 border-t border-border/40 pt-4 text-xs font-black uppercase text-muted-foreground tracking-wider">
+                <span className="mb-1 block text-xs text-muted-foreground font-semibold">Status Legend</span>
                 <div className="flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" /> Nominal state
                 </div>

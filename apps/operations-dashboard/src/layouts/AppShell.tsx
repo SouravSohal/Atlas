@@ -195,6 +195,14 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground transition-colors duration-300">
+      {/* Skip Navigation Link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-4 focus:left-4 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2.5 focus:rounded-xl focus:font-extrabold focus:outline-none focus:ring-2 focus:ring-primary focus:shadow-lg transition-all"
+      >
+        Skip to Main Content
+      </a>
+
       {/* LEFT COLLAPSIBLE SIDEBAR */}
       <aside
         aria-label="Sidebar Navigation"
@@ -248,7 +256,7 @@ export function AppShell({ children }: AppShellProps) {
             {sidebarOpen && (
               <div className="flex flex-col text-left">
                 <span className="text-xs font-bold truncate text-foreground">{user?.name || "Ops Commander"}</span>
-                <span className="text-[10px] text-muted-foreground truncate">{user?.email || "commander@atlas.com"}</span>
+                <span className="text-xs text-muted-foreground truncate">{user?.email || "commander@atlas.com"}</span>
               </div>
             )}
           </div>
@@ -277,7 +285,7 @@ export function AppShell({ children }: AppShellProps) {
                 <Search className="h-4 w-4" />
                 Search (Ctrl+K)...
               </span>
-              <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded bg-card border border-border px-1.5 font-mono text-[9px] font-medium text-muted-foreground">
+              <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded bg-card border border-border px-1.5 font-mono text-xs font-medium text-muted-foreground">
                 Ctrl K
               </kbd>
             </button>
@@ -386,10 +394,10 @@ export function AppShell({ children }: AppShellProps) {
                         </div>
                         <div className="flex flex-col text-left">
                           <span className="text-xs font-bold">{notif.title}</span>
-                          <span className="text-[10px] text-muted-foreground mt-0.5">
+                          <span className="text-xs text-muted-foreground mt-0.5">
                             {notif.description}
                           </span>
-                          <span className="text-[9px] text-primary font-medium mt-1.5">
+                          <span className="text-xs text-primary font-medium mt-1.5">
                             {notif.time}
                           </span>
                         </div>
@@ -426,13 +434,13 @@ export function AppShell({ children }: AppShellProps) {
                 >
                   <div className="px-4 py-3 border-b border-border text-left">
                     <span className="block text-xs font-bold text-foreground truncate">{user?.name || "Stadium Director"}</span>
-                    <span className="block text-[9px] text-muted-foreground mt-0.5 truncate">{user?.email || "director@atlas.com"}</span>
-                    <span className="inline-block text-[8px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded px-1.5 py-0.5 mt-2 uppercase font-mono">
+                    <span className="block text-xs text-muted-foreground mt-0.5 truncate">{user?.email || "director@atlas.com"}</span>
+                    <span className="inline-block text-xs font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded px-1.5 py-0.5 mt-2 uppercase font-mono">
                       {user?.role || "Administrator"}
                     </span>
                   </div>
                   <div className="mt-2 space-y-0.5">
-                    <div className="px-4 py-2 text-[9px] font-mono text-muted-foreground uppercase flex items-center justify-between border-b border-border/40 pb-2 mb-1.5">
+                    <div className="px-4 py-2 text-xs font-mono text-muted-foreground uppercase flex items-center justify-between border-b border-border/40 pb-2 mb-1.5">
                       <span>ENVIRONMENT</span>
                       <span className={`font-bold ${isDemoSession ? "text-purple-400" : "text-emerald-400"}`}>
                         {isDemoSession ? "DEMO SESSION" : "PRODUCTION"}
@@ -516,7 +524,7 @@ export function AppShell({ children }: AppShellProps) {
                   className="flex-1 bg-transparent text-sm text-foreground outline-none border-none placeholder-muted-foreground"
                   autoFocus
                 />
-                <span className="text-[10px] font-bold text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded uppercase font-mono">
+                <span className="text-xs font-bold text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded uppercase font-mono">
                   ESC
                 </span>
               </div>
@@ -536,7 +544,7 @@ export function AppShell({ children }: AppShellProps) {
                       <Terminal className="h-3.5 w-3.5" />
                       Command Result
                     </span>
-                    <span className="text-[9px] font-mono text-muted-foreground uppercase">
+                    <span className="text-xs font-mono text-muted-foreground uppercase">
                       98% Confidence &bull; Gemini 2.5
                     </span>
                   </div>
@@ -546,7 +554,7 @@ export function AppShell({ children }: AppShellProps) {
 
               {/* Suggested Commands List */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block px-1">
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-wider block px-1">
                   Suggested Commands
                 </span>
                 <div className="space-y-1 max-h-56 overflow-y-auto">
@@ -568,17 +576,17 @@ export function AppShell({ children }: AppShellProps) {
               {/* Command History */}
               {commandHistory.length > 0 && (
                 <div className="border-t border-border/60 pt-3 space-y-1.5">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block px-1">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider block px-1">
                     Recent Command History
                   </span>
                   <div className="space-y-1">
                     {commandHistory.map((cmd) => (
                       <div
                         key={cmd}
-                        className="flex items-center justify-between text-[11px] text-muted-foreground px-3 py-1.5 border border-border/40 rounded-lg bg-muted/10 font-mono"
+                        className="flex items-center justify-between text-xs text-muted-foreground px-3 py-1.5 border border-border/40 rounded-lg bg-muted/10 font-mono"
                       >
                         <span className="truncate">{cmd}</span>
-                        <span className="text-[8px] uppercase font-bold text-muted-foreground/60">executed</span>
+                        <span className="text-xs uppercase font-bold text-muted-foreground/60">executed</span>
                       </div>
                     ))}
                   </div>

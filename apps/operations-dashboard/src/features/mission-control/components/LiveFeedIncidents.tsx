@@ -37,7 +37,7 @@ export function LiveFeedIncidents({
                 <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <span className="font-bold text-primary block truncate">{notif.text}</span>
-                  <span className="text-[9px] text-muted-foreground mt-0.5 block">{notif.timestamp}</span>
+                  <span className="text-xs text-muted-foreground mt-0.5 block">{notif.timestamp}</span>
                 </div>
               </div>
             ))}
@@ -50,7 +50,7 @@ export function LiveFeedIncidents({
                 <Activity className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold block text-foreground truncate">{inc.description}</span>
-                  <span className="text-[9px] text-muted-foreground mt-0.5 block uppercase font-mono">
+                  <span className="text-xs text-muted-foreground mt-0.5 block uppercase font-mono">
                     Type: {inc.incident_type} &bull; Timestamp: {new Date(inc.created_at).toLocaleTimeString()}
                   </span>
                 </div>
@@ -81,7 +81,7 @@ export function LiveFeedIncidents({
                 <div className="flex flex-col gap-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                      className={`text-xs font-black px-1.5 py-0.5 rounded ${
                         inc.severity === "critical"
                           ? "bg-destructive/10 text-destructive border border-destructive/20 animate-pulse"
                           : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
@@ -89,13 +89,13 @@ export function LiveFeedIncidents({
                     >
                       {inc.severity.toUpperCase()}
                     </span>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase">{inc.incident_type}</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase">{inc.incident_type}</span>
                   </div>
                   <p className="text-xs font-semibold text-foreground truncate">{inc.description}</p>
                 </div>
                 <button
                   onClick={() => handleResolveIncident(inc.id)}
-                  className="rounded-lg border border-border hover:bg-muted px-2.5 py-1 text-[9px] font-bold shrink-0 transition-colors"
+                  className="rounded-lg border border-border hover:bg-muted px-2.5 py-1 text-xs font-bold shrink-0 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none"
                 >
                   Resolve
                 </button>

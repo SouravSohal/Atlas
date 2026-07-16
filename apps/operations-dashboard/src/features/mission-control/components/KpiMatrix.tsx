@@ -56,12 +56,12 @@ export function KpiMatrix({ overview }: KpiMatrixProps) {
           className="rounded-xl border border-border bg-card/45 backdrop-blur-md p-4 hover:shadow-md transition-shadow text-left"
         >
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-[10px] font-bold uppercase tracking-wider">{m.title}</span>
+            <span className="text-xs font-bold uppercase tracking-wider">{m.title}</span>
             {m.icon}
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-black tracking-tight">{m.value}</span>
-            <span className="text-[9px] font-bold text-muted-foreground uppercase">{m.status}</span>
+            <span className="text-xs font-bold text-muted-foreground uppercase">{m.status}</span>
           </div>
         </motion.div>
       ))}

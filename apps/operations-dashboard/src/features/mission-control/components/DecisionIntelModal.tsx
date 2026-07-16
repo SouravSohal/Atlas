@@ -59,7 +59,7 @@ export function DecisionIntelModal({
               {/* Header */}
               <div className="flex items-start justify-between border-b border-border pb-3.5 mb-5">
                 <div>
-                  <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest block font-mono">
+                  <span className="text-xs font-black text-purple-400 uppercase tracking-widest block font-mono">
                     AI Decision Intelligence Context
                   </span>
                   <h3 className="text-sm font-black text-foreground uppercase mt-1">
@@ -68,7 +68,8 @@ export function DecisionIntelModal({
                 </div>
                 <button
                   onClick={onClose}
-                  className="rounded-lg p-1.5 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  className="rounded-lg p-1.5 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
+                  aria-label="Close details"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -78,7 +79,7 @@ export function DecisionIntelModal({
               <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
                 {/* Why */}
                 <div>
-                  <span className="text-[8px] font-black text-purple-400 uppercase tracking-wider block font-mono">
+                  <span className="text-xs font-black text-purple-400 uppercase tracking-wider block font-mono">
                     Why is this action recommended?
                   </span>
                   <p className="text-xs text-foreground mt-1 leading-relaxed font-semibold">
@@ -88,7 +89,7 @@ export function DecisionIntelModal({
 
                 {/* Evidence */}
                 <div>
-                  <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider block font-mono">
                     Evidence base
                   </span>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -98,14 +99,14 @@ export function DecisionIntelModal({
 
                 {/* Operational Data Used */}
                 <div>
-                  <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider block font-mono">
                     Operational parameters analyzed
                   </span>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     {details.operational_data_used.map((field: string, idx: number) => (
                       <span
                         key={idx}
-                        className="rounded-md border border-border bg-muted/30 px-2 py-0.5 text-[9px] font-mono font-bold text-foreground uppercase"
+                        className="rounded-md border border-border bg-muted/30 px-2 py-0.5 text-xs font-mono font-bold text-foreground uppercase"
                       >
                         {field}
                       </span>
@@ -116,19 +117,19 @@ export function DecisionIntelModal({
                 {/* Confidence Level & Priority */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">
+                    <span className="text-xs font-black text-muted-foreground uppercase tracking-wider block font-mono">
                       Confidence Level
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-1 text-[10px] font-mono font-black text-purple-400 uppercase mt-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-1 text-xs font-mono font-black text-purple-400 uppercase mt-1">
                       {((selectedWhyRec.confidence || 0.95) * 100).toFixed(0)}% Certitude
                     </span>
                   </div>
                   <div>
-                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">
+                    <span className="text-xs font-black text-muted-foreground uppercase tracking-wider block font-mono">
                       Priority Classification
                     </span>
                     <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-mono font-black uppercase mt-1 ${
+                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-mono font-black uppercase mt-1 ${
                         selectedWhyRec.priority === "critical"
                           ? "bg-destructive/10 border-destructive/20 text-destructive"
                           : "bg-amber-500/10 border-amber-500/20 text-amber-500"
@@ -141,7 +142,7 @@ export function DecisionIntelModal({
 
                 {/* Alternative Actions */}
                 <div>
-                  <span className="text-[8px] font-black text-muted-foreground uppercase tracking-wider block font-mono">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider block font-mono">
                     Alternative responses
                   </span>
                   <ul className="list-disc pl-4 space-y-1 mt-1 text-xs text-muted-foreground">
@@ -153,7 +154,7 @@ export function DecisionIntelModal({
 
                 {/* Trade-offs */}
                 <div>
-                  <span className="text-[8px] font-black text-purple-400/80 uppercase tracking-wider block font-mono">
+                  <span className="text-xs font-black text-purple-400/80 uppercase tracking-wider block font-mono">
                     Operational trade-offs
                   </span>
                   <p className="text-xs text-purple-200 mt-1 leading-relaxed bg-purple-500/5 border border-purple-500/10 p-2.5 rounded-xl">
