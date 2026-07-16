@@ -5,7 +5,6 @@ import { useWebSocket } from "../providers/WebSocketProvider";
 import {
   ShieldCheck,
   AlertTriangle,
-  Brain,
   Cloud,
   Train,
   Sliders,
@@ -17,9 +16,9 @@ import {
   fetchDashboardOverview,
   fetchDashboardIncidents,
   fetchOperationalState,
-  fetchDashboardBriefing,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { SituationAnalysisPanel } from "../components/SituationAnalysisPanel";
 import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/executive-situation-room")({
@@ -64,11 +63,7 @@ function ExecutiveSituationRoomPage() {
     refetchInterval: 5000,
   });
 
-  const briefingQuery = useQuery({
-    queryKey: ["cc-briefing"],
-    queryFn: fetchDashboardBriefing,
-    refetchInterval: 10000,
-  });
+
 
   const overview = playbackActive && simulatedOverview ? simulatedOverview : overviewQuery.data;
   const states = playbackActive && simulatedZones ? simulatedZones : (stateQuery.data || []);
@@ -85,20 +80,6 @@ function ExecutiveSituationRoomPage() {
   const healthScore = overview?.stadium_health ?? 0.98;
   const isHealthy = healthScore >= 0.92;
 
-  // AI Narrative Generator
-  const executiveBriefing = useMemo(() => {
-    if (briefingQuery.data?.executive_summary) {
-      return briefingQuery.data.executive_summary;
-    }
-    if (activeIncidents.length === 0) {
-      return "All stadium sectors are operating at peak efficiency. Ingress flow is standard across primary Gates 1 and 2, with queue times averaging under 8 minutes. Staffing levels are fully optimized with 20 volunteers deployed.";
-    }
-    const criticalInc = activeIncidents.find((i) => i.severity === "critical");
-    if (criticalInc) {
-      return `ALERT: Response units have been dispatched to handle a ${criticalInc.severity} ${criticalInc.incident_type} incident: "${criticalInc.description}". Secondary egress corridors are being opened to balance stadium density and prevent secondary bottlenecks.`;
-    }
-    return `Stadium operations are currently managed. We have ${activeIncidents.length} active warnings in progress. Ingress queue wait times have temporarily spiked to 12 minutes in select sectors. Rerouting rules have been active to divert spectator flow.`;
-  }, [briefingQuery.data, activeIncidents]);
 
   if (overviewQuery.isLoading || stateQuery.isLoading || incidentsQuery.isLoading) {
     return <LoadingScreen />;
@@ -204,32 +185,7 @@ function ExecutiveSituationRoomPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Col 1 & 2: Briefing and Active Decisions */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          {/* Executive Briefing Card */}
-          <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md p-6 shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-            
-            <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
-              <span className="text-xs font-black text-primary uppercase tracking-widest flex items-center gap-1.5">
-                <Brain className="h-4 w-4 text-primary animate-pulse" />
-                AI Executive Briefing Report
-              </span>
-              <span className="text-[9px] font-mono text-muted-foreground">GENERATED LIVE</span>
-            </div>
-
-            <p className="text-sm font-medium leading-relaxed text-foreground/90">
-              {executiveBriefing}
-            </p>
-
-            <div className="mt-5 p-4 rounded-xl bg-muted/30 border border-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sliders className="h-4 w-4 text-amber-500" />
-                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Predictive Insight:</span>
-              </div>
-              <span className="text-[11px] font-bold text-foreground font-mono">
-                Egress congestion bottleneck expected at Gate 2 plaza in 45m. Reroute corridor is ready.
-              </span>
-            </div>
-          </div>
+          <SituationAnalysisPanel />
 
           {/* Active Decisions / Actions Center Review */}
           <div className="rounded-2xl border border-border bg-card/45 backdrop-blur-md p-6 shadow-lg">

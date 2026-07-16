@@ -191,9 +191,13 @@ export async function postCopilotChat(
 
 export interface DashboardBriefingResponse {
   executive_summary: string;
-  operations_summary: string;
-  security_summary: string;
-  medical_summary: string;
+  situation_assessment: string;
+  immediate_risks: string[];
+  recommended_actions: string[];
+  predicted_outcome: string;
+  confidence_score: number;
+  assumptions: string[];
+  alternative_strategies: string[];
 }
 
 export async function fetchDashboardBriefing(): Promise<DashboardBriefingResponse> {
