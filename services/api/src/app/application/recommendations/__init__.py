@@ -8,6 +8,7 @@ from app.application.recommendations.engine import RecommendationEngine
 from app.application.recommendations.evaluator import EvaluationResult, RecommendationEvaluator
 from app.application.recommendations.factory import RecommendationFactory
 from app.application.recommendations.validator import RecommendationValidator
+from app.application.recommendations.generator import AIRecommendationGenerator, AIRecommendationGeneratorResponse
 
 __all__ = [
     "EvaluationResult",
@@ -19,4 +20,6 @@ __all__ = [
     "RecommendationFactory",
     "RecommendationPriorityCalculator",
     "RecommendationValidator",
+    "AIRecommendationGenerator",
+    "AIRecommendationGeneratorResponse",
 ]

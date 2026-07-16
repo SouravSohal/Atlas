@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { fetchDashboardRecommendations, fetchRecommendationsExplanation } from "../services/api";
+import { fetchDashboardRecommendations, fetchRecommendationsExplanation, generateAIRecommendations } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useWebSocket } from "../providers/WebSocketProvider";
 import { useGlobalStore } from "../store/useGlobalStore";
@@ -52,11 +52,39 @@ function RecommendationsPage() {
   } = useGlobalStore();
 
   // Fetch recommendations
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["cc-recommendations"],
     queryFn: () => fetchDashboardRecommendations(1, 40),
     refetchInterval: 10000,
   });
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateAIRecommendations = async () => {
+    setIsGenerating(true);
+    setToastMessage("Generating AI recommendations via Gemini 2.5 Flash...");
+    try {
+      await generateAIRecommendations();
+      await refetch();
+      setToastMessage("AI recommendations generated successfully!");
+    } catch (err: any) {
+      setToastMessage(`Error: ${err.message || "Failed to generate recommendations"}`);
+    } finally {
+      setIsGenerating(false);
+      setTimeout(() => setToastMessage(null), 4000);
+    }
+  };
+  const formatDetails = (detailsStr: string) => {
+    try {
+      const parsed = JSON.parse(detailsStr);
+      if (parsed.explanation) return parsed.explanation;
+      if (parsed.trigger_reason) return parsed.trigger_reason;
+      if (parsed.expected_impact) return `Impact: ${parsed.expected_impact}`;
+      return detailsStr;
+    } catch {
+      return detailsStr;
+    }
+  };
 
   const explainQuery = useQuery({
     queryKey: ["cc-recommendations-explain"],
@@ -190,6 +218,19 @@ function RecommendationsPage() {
             </p>
           </div>
         </div>
+
+        <button
+          disabled={isGenerating}
+          onClick={handleGenerateAIRecommendations}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider shadow-md transition-all border shrink-0 ${
+            isGenerating
+              ? "bg-muted text-muted-foreground border-border cursor-not-allowed"
+              : "bg-primary text-primary-foreground border-primary hover:opacity-90 active:scale-95 shadow-primary/20"
+          }`}
+        >
+          <Sparkles className={`h-4 w-4 ${isGenerating ? "animate-spin" : "animate-pulse text-amber-300"}`} />
+          {isGenerating ? "Generating..." : "Generate AI Recommendations"}
+        </button>
       </div>
 
       {/* Filter and Bulk Actions Console */}
@@ -334,7 +375,7 @@ function RecommendationsPage() {
 
                   {/* Recommendation Details */}
                   <p className="text-xs font-black text-foreground uppercase mt-3 leading-snug">
-                    {rec.details}
+                    {formatDetails(rec.details)}
                   </p>
 
                   {/* Metric Metadata pills */}
@@ -478,7 +519,7 @@ function RecommendationsPage() {
                       Target Action
                     </span>
                     <span className="text-xs font-black text-foreground uppercase tracking-wide block mt-1.5">
-                      {selectedRec.details}
+                      {formatDetails(selectedRec.details)}
                     </span>
                   </div>
 

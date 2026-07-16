@@ -228,3 +228,15 @@ export async function fetchRecommendationsExplanation(): Promise<Recommendations
   const data: ApiResponse<RecommendationsExplanationResponse> = await res.json();
   return data.data;
 }
+
+export async function generateAIRecommendations(): Promise<RecommendationItem[]> {
+  const res = await fetch(`${API_BASE_URL}/dashboard/recommendations/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) throw new Error("Failed to generate AI recommendations");
+  const data: ApiResponse<RecommendationItem[]> = await res.json();
+  return data.data;
+}

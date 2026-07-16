@@ -9,7 +9,7 @@ from app.application.incidents import (
     UpdateIncidentUseCase,
 )
 from app.application.operational_state import OperationalStateService, SituationSummaryAgent, OperationalStateManager
-from app.application.recommendations import RecommendationAgent
+from app.application.recommendations import RecommendationAgent, AIRecommendationGenerator
 from app.application.copilot.service import CopilotService
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
@@ -108,6 +108,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     situation_summary_agent = providers.Singleton(
         SituationSummaryAgent,
+        orchestrator=ai_orchestrator,
+    )
+    recommendation_generator = providers.Singleton(
+        AIRecommendationGenerator,
         orchestrator=ai_orchestrator,
     )
     operational_state_manager = providers.Singleton(

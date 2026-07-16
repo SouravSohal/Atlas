@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from app.application.events import EventPublisher
 from app.application.operational_state.state_manager import OperationalStateManager
 from app.application.operational_state import SituationSummaryAgent, SituationSummaryAgentResponse
-from app.application.recommendations import RecommendationAgent, RecommendationAgentResponse
+from app.application.recommendations import RecommendationAgent, RecommendationAgentResponse, AIRecommendationGenerator
 from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
@@ -524,3 +524,127 @@ async def explain_recommendations(
             alternative_actions=["Divert spectator queues", "Deploy additional gate crew volunteers"],
         )
         return ApiResponse(success=True, data=fallback)
+
+
+@router.post("/recommendations/generate", response_model=ApiResponse[list[RecommendationDashboardItem]])
+@inject
+async def generate_ai_recommendations(
+    state_repo: OperationalStateRepository[OperationalState] = Depends(Provide[ApplicationContainer.operational_state_repository]),
+    incident_repo: IncidentRepository[Incident] = Depends(Provide[ApplicationContainer.incident_repository]),
+    task_repo: TaskRepository[Any] = Depends(Provide[ApplicationContainer.task_repository]),
+    recommendation_repo: RecommendationRepository[Recommendation] = Depends(Provide[ApplicationContainer.recommendation_repository]),
+    event_publisher: EventPublisher = Depends(Provide[ApplicationContainer.event_publisher]),
+    generator: AIRecommendationGenerator = Depends(Provide[ApplicationContainer.recommendation_generator]),
+) -> ApiResponse[list[RecommendationDashboardItem]]:
+    """Generates AI-powered stadium logistics and safety recommendations using Gemini, validating and saving them."""
+    from atlas_core.domain.enums.severity import Severity
+    from atlas_core.domain.value_objects.confidence_score import ConfidenceScore
+    import json
+
+    state_mgr = OperationalStateManager(
+        state_repo=state_repo,
+        incident_repo=incident_repo,
+        task_repo=task_repo,
+        recommendation_repo=recommendation_repo,
+        event_publisher=event_publisher,
+    )
+    snapshot = await state_mgr.get_snapshot()
+
+    operational_state_summary = {
+        "stadium_health": snapshot.stadium_health,
+        "timestamp": snapshot.timestamp.isoformat(),
+        "zones_count": len(snapshot.crowd_conditions),
+    }
+
+    all_incidents = await incident_repo.list()
+    active_incidents = [
+        inc for inc in all_incidents 
+        if any(str(inc.id) == str(uuid_id) for uuid_id in snapshot.active_incidents)
+    ]
+
+    incidents_list = [
+        {
+            "id": str(i.id),
+            "incident_type": i.incident_type.value,
+            "severity": i.severity.value,
+            "description": i.description,
+            "resolved": i.resolved,
+            "created_at": i.created_at.isoformat(),
+        }
+        for i in active_incidents
+    ]
+
+    crowd_conditions_map = {str(k): v for k, v in snapshot.crowd_conditions.items()}
+
+    volunteer_status = {
+        "allocated_count": len(snapshot.volunteer_allocation),
+    }
+
+    # Compute telemetry inputs
+    states = await state_repo.list()
+    avg_density = sum(s.density.value for s in states) / len(states) if states else 0.0
+    avg_queue_wait = sum(s.queue_estimate.waiting_minutes for s in states) / len(states) if states else 0.0
+
+    telemetry = {
+        "average_crowd_density": avg_density,
+        "average_queue_wait_minutes": avg_queue_wait,
+        "zones_density": crowd_conditions_map,
+        "volunteer_status": volunteer_status,
+    }
+
+    try:
+        report = await generator.generate_recommendations(
+            telemetry=telemetry,
+            incidents=incidents_list,
+            operational_state=operational_state_summary,
+        )
+
+        saved_items = []
+        for item in report.recommendations:
+            # Map priority string to Severity Enum
+            p_val = item.priority.lower()
+            if p_val == "critical":
+                priority_enum = Severity.CRITICAL
+            elif p_val == "high":
+                priority_enum = Severity.HIGH
+            elif p_val == "medium":
+                priority_enum = Severity.MEDIUM
+            else:
+                priority_enum = Severity.LOW
+
+            details_dict = {
+                "expected_impact": item.estimated_impact,
+                "eta_minutes": item.estimated_recovery_time_minutes,
+                "trigger_reason": item.operational_reasoning,
+                "explanation": item.explanation,
+            }
+
+            rec = Recommendation(
+                action_type=item.action_type,
+                priority=priority_enum,
+                confidence=ConfidenceScore(value=max(0.0, min(1.0, item.confidence))),
+                details=json.dumps(details_dict),
+            )
+
+            await recommendation_repo.save(rec)
+            
+            saved_items.append(
+                RecommendationDashboardItem(
+                    id=rec.id,
+                    action_type=rec.action_type,
+                    priority=rec.priority.value,
+                    confidence=rec.confidence.value,
+                    details=rec.details,
+                    status=rec.status.value,
+                    approved_by_id=rec.approved_by_id,
+                    approved_at=rec.approved_at,
+                    created_at=rec.created_at,
+                    updated_at=rec.updated_at,
+                )
+            )
+
+        return ApiResponse(success=True, data=saved_items)
+
+    except Exception as e:
+        logger.error("Failed to generate AI recommendations", error=str(e))
+        return ApiResponse(success=False, error={"code": "AI_ERROR", "message": f"Recommendation generation failed: {str(e)}"})
