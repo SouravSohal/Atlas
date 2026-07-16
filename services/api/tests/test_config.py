@@ -42,6 +42,18 @@ def test_api_port_validation() -> None:
     with pytest.raises(ValidationError, match="Port must be between 1 and 65535"):
         ApiSettings(port=0)
 
+def test_api_cors_origins_validation() -> None:
+    # Act & Assert (Should parse comma-separated origins)
+    config = ApiSettings(cors_origins="https://atlas.com, https://ops.atlas.com")
+    assert config.cors_origins == ["https://atlas.com", "https://ops.atlas.com"]
+
+    # Should raise validation error on wildcard '*'
+    with pytest.raises(ValidationError, match="Wildcard '\\*' is not allowed"):
+        ApiSettings(cors_origins="*")
+
+    with pytest.raises(ValidationError, match="Wildcard '\\*' is not allowed"):
+        ApiSettings(cors_origins=["https://atlas.com", "*"])
+
 def test_security_secret_validation() -> None:
     # Act & Assert
     with pytest.raises(ValidationError, match="Secret key cannot be empty"):

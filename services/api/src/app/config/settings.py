@@ -64,10 +64,23 @@ class ApiSettings(BaseModel):
         description="Port to bind the API server to.",
     )
     cors_origins: list[str] = Field(
-        default_factory=lambda: ["*"],
+        default_factory=lambda: ["http://localhost:5173"],
         validation_alias=AliasChoices("API__CORS_ORIGINS", "API_CORS_ORIGINS"),
         description="Allowed CORS origins.",
     )
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        """Parses allowed CORS origins, splitting comma-separated strings and rejecting wildcards."""
+        if isinstance(v, str):
+            v = [item.strip() for item in v.split(",") if item.strip()]
+        if not isinstance(v, list):
+            v = [str(v)]
+        # Reject "*" wildcard to prevent security vulnerabilities
+        if "*" in v or any(item == "*" for item in v):
+            raise ValueError("Wildcard '*' is not allowed in CORS origins. Explicitly configure allowed origins.")
+        return v
 
     @field_validator("port")
     @classmethod
