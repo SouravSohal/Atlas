@@ -17,12 +17,18 @@ import {
   fetchDashboardRecommendations,
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { useGlobalStore } from "../store/useGlobalStore";
 
 export const Route = createFileRoute("/crowd-intelligence")({
   component: CrowdIntelligencePage,
 });
 
 function CrowdIntelligencePage() {
+  const {
+    playbackActive,
+    simulatedOverview,
+    simulatedRecommendations,
+  } = useGlobalStore();
   const [streamedText, setStreamedText] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [thinkingStage, setThinkingStage] = useState(0);
@@ -45,7 +51,7 @@ function CrowdIntelligencePage() {
     queryFn: () => fetchDashboardRecommendations(1, 10),
   });
 
-  const overview = overviewQuery.data;
+  const overview = playbackActive && simulatedOverview ? simulatedOverview : overviewQuery.data;
   const activeIncidentsCount = overview?.active_incidents_count || 0;
   const averageDensity = overview?.average_crowd_density || 0;
 
@@ -113,7 +119,7 @@ function CrowdIntelligencePage() {
     return <LoadingScreen />;
   }
 
-  const recs = recommendationsQuery.data?.items || [];
+  const recs = playbackActive && simulatedRecommendations ? simulatedRecommendations : (recommendationsQuery.data?.items || []);
 
   // Determine risk level dynamically
   let riskLevel = "Low";

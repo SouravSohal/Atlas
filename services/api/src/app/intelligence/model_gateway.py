@@ -14,7 +14,17 @@ class ModelGateway:
     """Gateway to execute raw calls to Gemini API with retry and logging mechanisms."""
 
     def __init__(self, api_key: str | None = None, default_model: str = "gemini-2.5-pro") -> None:
-        self.client = genai.Client(api_key=api_key) if api_key else genai.Client()
+        import os
+        actual_key = None
+        if isinstance(api_key, str) and api_key.strip():
+            actual_key = api_key
+        else:
+            actual_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI__API_KEY")
+
+        if actual_key:
+            self.client = genai.Client(api_key=actual_key)
+        else:
+            self.client = genai.Client()
         self.default_model = default_model
 
     @retry(

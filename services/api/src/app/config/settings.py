@@ -123,7 +123,7 @@ class GeminiSettings(BaseModel):
         description="API Key for Gemini model access.",
     )
     model_name: str = Field(
-        default="gemini-pro",
+        default="gemini-2.5-flash",
         validation_alias=AliasChoices("GEMINI__MODEL_NAME", "GEMINI_MODEL"),
         description="Gemini model identifier to use.",
     )

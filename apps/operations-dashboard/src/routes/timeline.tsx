@@ -18,6 +18,7 @@ import {
 } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useGlobalStore } from "../store/useGlobalStore";
+import { SCENARIO_STEPS } from "../store/scenarioSteps";
 
 export const Route = createFileRoute("/timeline")({
   component: MatchTimelinePage,
@@ -35,94 +36,20 @@ interface TimelineEvent {
   aiNarrative: string;
 }
 
-const HISTORICAL_EVENTS: TimelineEvent[] = [
-  {
-    timeOffset: "-60m",
-    timestamp: "18:00",
-    eventType: "state_change",
-    severity: "low",
-    title: "Gates Opened",
-    description: "Primary gates 1 and 2 activated. Spectator ingress begins.",
-    aiNarrative: "Operations initiated. Inflow rates are standard, gate queues are balanced under 5 minutes."
-  },
-  {
-    timeOffset: "-45m",
-    timestamp: "18:15",
-    eventType: "state_change",
-    severity: "medium",
-    title: "Parking Lot Bottleneck",
-    description: "Main parking area reaches 85% capacity. Queue times spike.",
-    aiNarrative: "First parking density spike observed. Rerouting suggestions dispatched to gate monitors."
-  },
-  {
-    timeOffset: "-30m",
-    timestamp: "18:30",
-    eventType: "incident",
-    severity: "high",
-    title: "Gate 1 Crowd Ingress Surge",
-    description: "Spectator surge at main turnstiles causing wait times of 18 minutes.",
-    correlatedId: "rec-1",
-    aiNarrative: "Gate 1 ingress surge detected. Spectator flow rates exceed capacity threshold."
-  },
-  {
-    timeOffset: "-25m",
-    timestamp: "18:35",
-    eventType: "recommendation",
-    severity: "high",
-    title: "Deploy Volunteer Team Alpha",
-    description: "Reroute 6 volunteers from Sector B to assist with Gate 1 ticket scanning.",
-    correlatedId: "inc-1",
-    aiNarrative: "Optimizing scanner lanes. AI recommendations deployed to volunteer coordinators."
-  },
-  {
-    timeOffset: "0m",
-    timestamp: "19:00",
-    eventType: "state_change",
-    severity: "low",
-    title: "Match Kickoff",
-    description: "Stands are fully seated. Entrance gates return to nominal flows.",
-    aiNarrative: "Stands density reaches 92%. Ingress successfully resolved and stabilized."
-  },
-  {
-    timeOffset: "15m",
-    timestamp: "19:15",
-    eventType: "incident",
-    severity: "critical",
-    title: "Medical Collapse Sector 104",
-    description: "Spectator heat exhaustion reported in eastern stands.",
-    correlatedId: "rec-2",
-    aiNarrative: "Medical dispatch requested. Responder units routed to sector 104 access point."
-  },
-  {
-    timeOffset: "20m",
-    timestamp: "19:20",
-    eventType: "recommendation",
-    severity: "critical",
-    title: "Dispatch Medical Post Alpha Response",
-    description: "Route 2 responders with stretcher kit to Section 104 corridors.",
-    correlatedId: "inc-2",
-    aiNarrative: "Corridor clearances checked. Medical crew dispatched to stands."
-  },
-  {
-    timeOffset: "45m",
-    timestamp: "19:45",
-    eventType: "state_change",
-    severity: "low",
-    title: "Half-Time Interval",
-    description: "High concourse flow towards restrooms and food courts.",
-    aiNarrative: "Food court occupancy spikes to 88%. Cleaning and facility teams placed on high alert."
-  }
-];
-
 function MatchTimelinePage() {
   const { subscribe, unsubscribe } = useWebSocket();
   const {
-    timelinePlaybackActive: playbackActive,
-    setTimelinePlaybackActive: setPlaybackActive,
-    timelinePlaybackStep: playbackStep,
-    setTimelinePlaybackStep: setPlaybackStep,
-    timelinePlaybackSpeed: playbackSpeed,
-    setTimelinePlaybackSpeed: setPlaybackSpeed,
+    playbackActive,
+    playbackStep,
+    playbackSpeed,
+    playbackIsPaused,
+    playbackScenario,
+    setPlaybackStep,
+    setPlaybackSpeed,
+    startSimulation,
+    pauseSimulation,
+    resumeSimulation,
+    resetSimulation,
     timelineFilterType: filterType,
     setTimelineFilterType: setFilterType,
     timelineFilterSeverity: filterSeverity,
@@ -150,40 +77,76 @@ function MatchTimelinePage() {
     refetchInterval: 5000,
   });
 
-  // Playback timer effect
-  useEffect(() => {
-    if (!playbackActive) return;
+  const HISTORICAL_EVENTS = useMemo(() => {
+    const scenarioName = playbackScenario || "Crowd Surge";
+    const steps = SCENARIO_STEPS[scenarioName] || [];
+    const events: TimelineEvent[] = [];
 
-    const delay = 4000 / playbackSpeed;
-    const timer = setInterval(() => {
-      setPlaybackStep((prev) => {
-        if (prev < HISTORICAL_EVENTS.length - 1) {
-          return prev + 1;
-        } else {
-          return 0; // Loop playback
-        }
+    steps.forEach((step, stepIdx) => {
+      const timeOffset = `T-${(steps.length - 1 - stepIdx) * 15}m`;
+      const timestamp = (() => {
+        const hours = 18;
+        const mins = stepIdx * 15;
+        const displayHours = hours + Math.floor(mins / 60);
+        const displayMins = mins % 60;
+        return `${displayHours.toString().padStart(2, '0')}:${displayMins.toString().padStart(2, '0')}`;
+      })();
+
+      events.push({
+        timeOffset,
+        timestamp,
+        eventType: "state_change",
+        severity: step.overview.stadium_health < 0.8 ? "high" : "low",
+        title: step.notification,
+        description: step.summary,
+        aiNarrative: step.summary,
       });
-    }, delay);
 
-    return () => clearInterval(timer);
-  }, [playbackActive, playbackSpeed]);
+      step.incidents.forEach((inc: any) => {
+        events.push({
+          timeOffset,
+          timestamp,
+          eventType: "incident",
+          severity: inc.severity,
+          title: `Incident: ${inc.incident_type.replace(/_/g, " ").toUpperCase()}`,
+          description: inc.description,
+          correlatedId: inc.id,
+          aiNarrative: `AI detected safety threat: ${inc.description}`,
+        });
+      });
+
+      step.recs.forEach((rec: any) => {
+        events.push({
+          timeOffset,
+          timestamp,
+          eventType: "recommendation",
+          severity: rec.priority === "high" || rec.priority === "critical" ? "high" : "medium",
+          title: `Recommendation: ${rec.action_type.toUpperCase()}`,
+          description: rec.details,
+          correlatedId: rec.id,
+          aiNarrative: `AI Recommendation: ${rec.details}`,
+        });
+      });
+    });
+
+    return events;
+  }, [playbackScenario]);
+
+  const currentStepIndex = Math.min(playbackStep, HISTORICAL_EVENTS.length - 1);
 
   const activeEvents = useMemo(() => {
-    // Slice based on current scrubber step
-    const sliced = HISTORICAL_EVENTS.slice(0, playbackStep + 1);
-    
-    // Filter
+    const sliced = HISTORICAL_EVENTS.slice(0, currentStepIndex + 1);
     return sliced.filter((e) => {
       const typeMatch = filterType === "all" || e.eventType === filterType;
       const severityMatch = filterSeverity === "all" || e.severity === filterSeverity;
       return typeMatch && severityMatch;
     });
-  }, [playbackStep, filterType, filterSeverity]);
+  }, [HISTORICAL_EVENTS, currentStepIndex, filterType, filterSeverity]);
 
   const currentNarrative = useMemo(() => {
-    const lastEvent = HISTORICAL_EVENTS[playbackStep];
+    const lastEvent = HISTORICAL_EVENTS[currentStepIndex];
     return lastEvent ? lastEvent.aiNarrative : "No narrative available for this timestamp.";
-  }, [playbackStep]);
+  }, [HISTORICAL_EVENTS, currentStepIndex]);
 
   if (overviewQuery.isLoading || incidentsQuery.isLoading) {
     return <LoadingScreen />;
@@ -210,23 +173,33 @@ function MatchTimelinePage() {
       <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-md p-5 shadow-lg flex flex-col md:flex-row items-center gap-5 justify-between">
         <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={() => setPlaybackActive(!playbackActive)}
+            onClick={() => {
+              if (playbackActive) {
+                if (playbackIsPaused) {
+                  resumeSimulation();
+                } else {
+                  pauseSimulation();
+                }
+              } else {
+                startSimulation(playbackScenario || "Crowd Surge");
+              }
+            }}
             className={`rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all ${
-              playbackActive
+              playbackActive && !playbackIsPaused
                 ? "bg-amber-500 text-black shadow-md shadow-amber-500/10"
                 : "bg-primary text-primary-foreground hover:opacity-90"
             }`}
           >
-            {playbackActive ? <Pause className="h-4 w-4 fill-black" /> : <Play className="h-4 w-4 fill-primary-foreground" />}
-            {playbackActive ? "Pause" : "Play Replay"}
+            {playbackActive && !playbackIsPaused ? <Pause className="h-4 w-4 fill-black" /> : <Play className="h-4 w-4 fill-primary-foreground" />}
+            {playbackActive && !playbackIsPaused ? "Pause" : "Play Replay"}
           </button>
           
           <button
             onClick={() => {
-              setPlaybackActive(false);
-              setPlaybackStep(HISTORICAL_EVENTS.length - 1);
+              resetSimulation();
             }}
             className="rounded-xl border border-border bg-muted/20 hover:bg-muted/40 p-2.5 text-muted-foreground hover:text-foreground transition-colors"
+            title="Reset Simulation"
           >
             <RotateCcw className="h-4 w-4" />
           </button>
@@ -241,10 +214,9 @@ function MatchTimelinePage() {
             type="range"
             min="0"
             max={HISTORICAL_EVENTS.length - 1}
-            value={playbackStep}
+            value={currentStepIndex}
             onChange={(e) => {
               setPlaybackStep(parseInt(e.target.value));
-              setPlaybackActive(false);
             }}
             className="flex-1 h-1.5 rounded-full accent-primary cursor-pointer w-full"
           />
@@ -252,7 +224,7 @@ function MatchTimelinePage() {
             {HISTORICAL_EVENTS[HISTORICAL_EVENTS.length - 1]?.timeOffset}
           </span>
           <span className="text-xs font-bold text-foreground font-mono bg-muted/40 border border-border px-2 py-1 rounded">
-            Step {playbackStep + 1}/{HISTORICAL_EVENTS.length}
+            Step {currentStepIndex + 1}/{HISTORICAL_EVENTS.length}
           </span>
         </div>
 

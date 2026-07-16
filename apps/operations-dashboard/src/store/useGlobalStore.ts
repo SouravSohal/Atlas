@@ -8,6 +8,8 @@ export interface ChatMessage {
   timestamp: string;
   thinkingSteps?: string[];
   citations?: { label: string; text: string }[];
+  modelVersion?: string;
+  executionTimeMs?: number;
 }
 
 export interface IncidentItem {
@@ -39,12 +41,33 @@ export interface RecommendationItem {
   zoneId?: string;
 }
 
+export interface Volunteer {
+  id: string;
+  name: string;
+  team: "Medical" | "Crowd Control" | "Gate Ops" | "Security";
+  zone: string;
+  status: "Available" | "Assigned" | "Off Duty" | "Emergency";
+  skills: string[];
+  currentAssignment: string;
+  battery: number;
+  eta: string;
+  lastUpdate: string;
+  shiftDuration: string;
+  certifications: string[];
+  history: string[];
+  route: string;
+}
+
 interface GlobalState {
   // Authentication & Security Context
   userRole: string;
   sessionExpiry: string;
   setUserRole: (role: string) => void;
   setSessionExpiry: (expiry: string) => void;
+
+  // Volunteers State
+  volunteers: Volunteer[];
+  setVolunteers: (volunteers: Volunteer[] | ((prev: Volunteer[]) => Volunteer[])) => void;
 
   // Active Simulation Controls & State
   playbackActive: boolean;
@@ -221,6 +244,78 @@ export const useGlobalStore = create<GlobalState>((set, get) => ({
   sessionExpiry: "12 Hours",
   setUserRole: (role) => set({ userRole: role }),
   setSessionExpiry: (expiry) => set({ sessionExpiry: expiry }),
+
+  // Volunteers State
+  volunteers: [
+    {
+      id: "vol-1",
+      name: "Volunteer Alpha",
+      team: "Medical",
+      zone: "Medical Post Alpha",
+      status: "Assigned",
+      skills: ["First Aid", "CPR", "Triage"],
+      currentAssignment: "Distress call Section 104",
+      battery: 88,
+      eta: "2 min",
+      lastUpdate: "Just now",
+      shiftDuration: "4h 15m",
+      certifications: ["EMT-Basic", "AED Certified"],
+      history: ["Responded to heat collapse near gate B", "Dispensed water station supplies"],
+      route: "Medical Alpha -> Corridor 104",
+    },
+    {
+      id: "vol-2",
+      name: "Volunteer Beta",
+      team: "Crowd Control",
+      zone: "Gate 1 Ingress",
+      status: "Available",
+      skills: ["De-escalation", "Crowd Routing"],
+      currentAssignment: "Queue flow management",
+      battery: 45,
+      eta: "0 min",
+      lastUpdate: "3 mins ago",
+      shiftDuration: "6h 0m",
+      certifications: ["Event Marshall"],
+      history: ["Balanced Gate 1 lane flows", "Diverted turnstile queue"],
+      route: "Gate 1 plaza patrol",
+    },
+    {
+      id: "vol-3",
+      name: "Volunteer Gamma",
+      team: "Gate Ops",
+      zone: "Gate 2 Exit",
+      status: "Off Duty",
+      skills: ["Ticketing", "Scanner Support"],
+      currentAssignment: "Stood down",
+      battery: 12,
+      eta: "--",
+      lastUpdate: "10 mins ago",
+      shiftDuration: "8h 0m",
+      certifications: ["Scanner Lead"],
+      history: ["Ticket validations Gate 2", "Corridor ticket check"],
+      route: "Rest Area",
+    },
+    {
+      id: "vol-4",
+      name: "Volunteer Delta",
+      team: "Security",
+      zone: "Security Command",
+      status: "Emergency",
+      skills: ["First Responder", "Conflict Resolution"],
+      currentAssignment: "Search for lost child Sec 208",
+      battery: 95,
+      eta: "1 min",
+      lastUpdate: "Just now",
+      shiftDuration: "2h 30m",
+      certifications: ["Crisis Control"],
+      history: ["Patrol Gate B corridor", "Security check main gate"],
+      route: "Command -> Section 208",
+    }
+  ],
+  setVolunteers: (volunteers) =>
+    set((state) => ({
+      volunteers: typeof volunteers === "function" ? volunteers(state.volunteers) : volunteers,
+    })),
 
   // Active Simulation Controls & State
   playbackActive: false,

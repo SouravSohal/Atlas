@@ -65,6 +65,9 @@ function NotificationCenterPage() {
     setNotificationGroupBySeverity: setGroupBySeverity,
     notificationLocalReadState: localReadState,
     setNotificationLocalReadState: setLocalReadState,
+    playbackActive,
+    simulatedIncidents,
+    simulatedRecommendations,
   } = useGlobalStore();
 
   // Query backend data
@@ -108,7 +111,7 @@ function NotificationCenterPage() {
     const list: NotificationItem[] = [];
 
     // Map Incidents
-    const incidents = incidentsQuery.data?.items || [];
+    const incidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || []);
     incidents.forEach((inc) => {
       let category: NotificationCategory = "Operations";
       if (inc.incident_type === "security") category = "Security";
@@ -133,7 +136,7 @@ function NotificationCenterPage() {
     });
 
     // Map AI Recommendations
-    const recs = recommendationsQuery.data?.items || [];
+    const recs = playbackActive && simulatedRecommendations ? simulatedRecommendations : (recommendationsQuery.data?.items || []);
     recs.forEach((rec) => {
       let severity: NotificationSeverity = "info";
       if (rec.priority === "high") severity = "warning";

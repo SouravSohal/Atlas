@@ -57,7 +57,6 @@ class CopilotService:
             language=request.language,
             history=history_str,
             telemetry_context=telemetry_str,
-            context="",
             min_confidence=0.0,
         )
 

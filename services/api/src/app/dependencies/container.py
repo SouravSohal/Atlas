@@ -89,7 +89,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
 
     # AI Intelligence Foundation
     prompt_registry = providers.Singleton(PromptRegistry)
-    model_gateway = providers.Singleton(ModelGateway, api_key=config.provided.gemini.api_key)
+    model_gateway = providers.Singleton(ModelGateway, api_key=config.provided.gemini.api_key, default_model=config.provided.gemini.model_name)
     context_retriever = providers.Singleton(
         ContextRetriever,
         state_repository=operational_state_repository,

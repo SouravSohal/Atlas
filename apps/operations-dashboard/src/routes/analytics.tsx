@@ -13,9 +13,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { fetchDashboardOverview } from "../services/api";
+import { fetchDashboardOverview, fetchDashboardIncidents } from "../services/api";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useGlobalStore } from "../store/useGlobalStore";
+import { SCENARIO_STEPS } from "../store/scenarioSteps";
 
 export const Route = createFileRoute("/analytics")({
   component: AnalyticsPage,
@@ -32,16 +33,30 @@ function AnalyticsPage() {
     setFilterType,
     toastMessage,
     setToastMessage,
+    playbackActive,
+    playbackScenario,
+    playbackStep,
+    simulatedIncidents,
   } = useGlobalStore();
 
   useEffect(() => {
     subscribe("telemetry");
-    return () => unsubscribe("telemetry");
+    subscribe("incidents");
+    return () => {
+      unsubscribe("telemetry");
+      unsubscribe("incidents");
+    };
   }, [subscribe, unsubscribe]);
 
   const overviewQuery = useQuery({
     queryKey: ["cc-overview"],
     queryFn: fetchDashboardOverview,
+    refetchInterval: 5000,
+  });
+
+  const incidentsQuery = useQuery({
+    queryKey: ["cc-incidents-analytics"],
+    queryFn: () => fetchDashboardIncidents(1, 40),
     refetchInterval: 5000,
   });
 
@@ -54,22 +69,62 @@ function AnalyticsPage() {
   };
 
 
-  // Chart seed coordinates calculations
+  const waitTimes = useMemo(() => {
+    if (playbackActive && playbackScenario) {
+      const steps = SCENARIO_STEPS[playbackScenario] || [];
+      return steps.map(step => {
+        const zones = step.zones || [];
+        if (zones.length === 0) return 4;
+        return zones[0].queue_waiting_minutes || 0;
+      });
+    }
+    return [5, 12, 18, 8, 4, 2];
+  }, [playbackActive, playbackScenario]);
+
+  const arrivals = useMemo(() => {
+    if (playbackActive && playbackScenario) {
+      const steps = SCENARIO_STEPS[playbackScenario] || [];
+      return steps.map(step => {
+        return Math.round((step.overview?.average_crowd_density || 0.45) * 100);
+      });
+    }
+    return [10, 45, 85, 30, 10, 5];
+  }, [playbackActive, playbackScenario]);
+
+  const stepSize = useMemo(() => {
+    return 500 / Math.max(1, waitTimes.length - 1);
+  }, [waitTimes]);
+
   const chartPoints = useMemo(() => {
-    // 6 sample points mapping wait times over match timeline
-    const waitTimes = [5, 12, 18, 8, 4, 2];
-    const coordinates = waitTimes.map((time, idx) => `${idx * 100 + 40},${220 - time * 10}`);
+    const coordinates = waitTimes.map((time, idx) => `${idx * stepSize + 40},${220 - time * 6}`);
     return coordinates.join(" ");
-  }, []);
+  }, [waitTimes, stepSize]);
 
   const areaPoints = useMemo(() => {
-    // 6 points mapping arrival outflows
-    const arrivals = [10, 45, 85, 30, 10, 5];
-    const path = arrivals.map((arr, idx) => `${idx * 100 + 40},${220 - arr * 2}`);
+    const path = arrivals.map((arr, idx) => `${idx * stepSize + 40},${220 - arr * 1.8}`);
     return `40,240 ${path.join(" ")} 540,240`;
-  }, []);
+  }, [arrivals, stepSize]);
 
-  if (overviewQuery.isLoading) {
+  const incidents = useMemo(() => {
+    return playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || []);
+  }, [playbackActive, simulatedIncidents, incidentsQuery.data]);
+
+  const { criticalCount, highCount, mediumCount, lowCount, maxCount, critHeight, highHeight, medHeight, lowHeight } = useMemo(() => {
+    const criticalCount = incidents.filter((i: any) => i.severity === "critical" && !i.resolved).length;
+    const highCount = incidents.filter((i: any) => i.severity === "high" && !i.resolved).length;
+    const mediumCount = incidents.filter((i: any) => i.severity === "medium" && !i.resolved).length;
+    const lowCount = incidents.filter((i: any) => i.severity === "low" && !i.resolved).length;
+
+    const maxCount = Math.max(1, criticalCount, highCount, mediumCount, lowCount);
+    const critHeight = criticalCount > 0 ? (criticalCount / maxCount) * 160 : 0;
+    const highHeight = highCount > 0 ? (highCount / maxCount) * 160 : 0;
+    const medHeight = mediumCount > 0 ? (mediumCount / maxCount) * 160 : 0;
+    const lowHeight = lowCount > 0 ? (lowCount / maxCount) * 160 : 0;
+
+    return { criticalCount, highCount, mediumCount, lowCount, maxCount, critHeight, highHeight, medHeight, lowHeight };
+  }, [incidents]);
+
+  if (overviewQuery.isLoading || incidentsQuery.isLoading) {
     return <LoadingScreen />;
   }
 
@@ -214,6 +269,27 @@ function AnalyticsPage() {
                 strokeLinejoin="round"
                 points={chartPoints}
               />
+
+              {playbackActive && (
+                <>
+                  <line
+                    x1={playbackStep * stepSize + 40}
+                    y1="40"
+                    x2={playbackStep * stepSize + 40}
+                    y2="220"
+                    stroke="rgba(16, 185, 129, 0.4)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                  />
+                  <circle
+                    cx={playbackStep * stepSize + 40}
+                    cy={220 - (waitTimes[playbackStep] || 0) * 6}
+                    r="5"
+                    fill="#10b981"
+                    className="animate-pulse"
+                  />
+                </>
+              )}
             </svg>
           </div>
         </div>
@@ -241,6 +317,27 @@ function AnalyticsPage() {
                 strokeWidth="3.5"
                 points={areaPoints}
               />
+
+              {playbackActive && (
+                <>
+                  <line
+                    x1={playbackStep * stepSize + 40}
+                    y1="40"
+                    x2={playbackStep * stepSize + 40}
+                    y2="220"
+                    stroke="rgba(59, 130, 246, 0.4)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                  />
+                  <circle
+                    cx={playbackStep * stepSize + 40}
+                    cy={220 - (arrivals[playbackStep] || 0) * 1.8}
+                    r="5"
+                    fill="#3b82f6"
+                    className="animate-pulse"
+                  />
+                </>
+              )}
             </svg>
           </div>
         </div>
@@ -257,25 +354,29 @@ function AnalyticsPage() {
               <line x1="40" y1="160" x2="540" y2="160" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
               <line x1="40" y1="220" x2="540" y2="220" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
 
-              <text x="30" y="44" textAnchor="end" fill="gray" fontSize="8" fontWeight="bold">12</text>
-              <text x="30" y="104" textAnchor="end" fill="gray" fontSize="8" fontWeight="bold">8</text>
-              <text x="30" y="164" textAnchor="end" fill="gray" fontSize="8" fontWeight="bold">4</text>
+              <text x="30" y="44" textAnchor="end" fill="gray" fontSize="8" fontWeight="bold">{maxCount}</text>
+              <text x="30" y="104" textAnchor="end" fill="gray" fontSize="8" fontWeight="bold">{Math.round(maxCount * 0.67)}</text>
+              <text x="30" y="164" textAnchor="end" fill="gray" fontSize="8" fontWeight="bold">{Math.round(maxCount * 0.33)}</text>
               <text x="30" y="224" textAnchor="end" fill="gray" fontSize="8" fontWeight="bold">0</text>
 
               {/* Bar 1: Critical */}
-              <rect x="80" y="140" width="60" height="80" rx="4" fill="#ef4444" opacity="0.8" />
+              <rect x="80" y={220 - critHeight} width="60" height={critHeight} rx="4" fill="#ef4444" opacity="0.8" />
+              {criticalCount > 0 && <text x="110" y={Math.max(50, 215 - critHeight)} textAnchor="middle" fill="#ef4444" fontSize="9" fontWeight="extrabold">{criticalCount}</text>}
               <text x="110" y="236" textAnchor="middle" fill="gray" fontSize="8" fontWeight="bold">Critical</text>
 
               {/* Bar 2: High */}
-              <rect x="200" y="80" width="60" height="140" rx="4" fill="#f59e0b" opacity="0.8" />
+              <rect x="200" y={220 - highHeight} width="60" height={highHeight} rx="4" fill="#f59e0b" opacity="0.8" />
+              {highCount > 0 && <text x="230" y={Math.max(50, 215 - highHeight)} textAnchor="middle" fill="#f59e0b" fontSize="9" fontWeight="extrabold">{highCount}</text>}
               <text x="230" y="236" textAnchor="middle" fill="gray" fontSize="8" fontWeight="bold">High</text>
 
               {/* Bar 3: Medium */}
-              <rect x="320" y="120" width="60" height="100" rx="4" fill="#3b82f6" opacity="0.8" />
+              <rect x="320" y={220 - medHeight} width="60" height={medHeight} rx="4" fill="#3b82f6" opacity="0.8" />
+              {mediumCount > 0 && <text x="350" y={Math.max(50, 215 - medHeight)} textAnchor="middle" fill="#3b82f6" fontSize="9" fontWeight="extrabold">{mediumCount}</text>}
               <text x="350" y="236" textAnchor="middle" fill="gray" fontSize="8" fontWeight="bold">Medium</text>
 
               {/* Bar 4: Low */}
-              <rect x="440" y="180" width="60" height="40" rx="4" fill="#10b981" opacity="0.8" />
+              <rect x="440" y={220 - lowHeight} width="60" height={lowHeight} rx="4" fill="#10b981" opacity="0.8" />
+              {lowCount > 0 && <text x="470" y={Math.max(50, 215 - lowHeight)} textAnchor="middle" fill="#10b981" fontSize="9" fontWeight="extrabold">{lowCount}</text>}
               <text x="470" y="236" textAnchor="middle" fill="gray" fontSize="8" fontWeight="bold">Low</text>
             </svg>
           </div>

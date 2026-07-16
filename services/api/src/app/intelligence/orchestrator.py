@@ -35,7 +35,7 @@ class AIOrchestrator:
         context_zone_id: Any | None = None,
         schema: None = None,
         tools: list[Any] | None = None,
-        model: str = "gemini-2.5-pro",
+        model: str | None = None,
         constraints: list[str] | None = None,
         allowed_entities: list[str] | None = None,
         min_confidence: float = 0.0,
@@ -51,7 +51,7 @@ class AIOrchestrator:
         context_zone_id: Any | None,
         schema: type[T],
         tools: list[Any] | None = None,
-        model: str = "gemini-2.5-pro",
+        model: str | None = None,
         constraints: list[str] | None = None,
         allowed_entities: list[str] | None = None,
         min_confidence: float = 0.0,
@@ -68,7 +68,7 @@ class AIOrchestrator:
         *,
         schema: type[T],
         tools: list[Any] | None = None,
-        model: str = "gemini-2.5-pro",
+        model: str | None = None,
         constraints: list[str] | None = None,
         allowed_entities: list[str] | None = None,
         min_confidence: float = 0.0,
@@ -83,18 +83,19 @@ class AIOrchestrator:
         context_zone_id: Any | None = None,
         schema: type[BaseModel] | None = None,
         tools: list[Any] | None = None,
-        model: str = "gemini-2.5-pro",
+        model: str | None = None,
         constraints: list[str] | None = None,
         allowed_entities: list[str] | None = None,
         min_confidence: float = 0.0,
         **prompt_vars: Any,
     ) -> Any:
         """Orchestrates the entire AI pipeline: building prompt, retrieving context, calling model, and validation."""
+        target_model = model or self.gateway.default_model
         logger.info(
             "Executing AI Orchestrator pipeline",
             prompt_name=prompt_name,
             version=prompt_version,
-            model=model,
+            model=target_model,
             has_schema=schema is not None,
         )
 
@@ -115,7 +116,7 @@ class AIOrchestrator:
 
         raw_response = await self.gateway.generate_response(
             prompt=final_prompt,
-            model=model,
+            model=target_model,
             response_schema=schema,
             tools=tools,
         )

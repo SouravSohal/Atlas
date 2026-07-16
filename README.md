@@ -98,16 +98,35 @@ scripts/
 
 # Getting Started
 
-Documentation first.
+## 1. Database Configuration
+ATLAS connects to a Google Cloud Firestore instance in development and production:
+- **GCP Project ID**: `atlas-501808`
+- **Firestore Database Name**: `atlas-01`
 
-Read in this order:
+Make sure your local environment is configured by duplicating `.env.example` as `.env` and supplying your local credentials if necessary.
 
-1. PRD.md
-2. SYSTEM_ARCHITECTURE.md
-3. ENGINEERING_GUIDE.md
-4. IMPLEMENTATION_PLAN.md
+## 2. Running the Backend
+You can boot the FastAPI backend server using the configured startup script in the `scripts` folder:
+```bash
+./scripts/run_backend.sh
+```
+Alternatively, execute the command directly from the workspace root:
+```bash
+FIRESTORE_DATABASE=atlas-01 GOOGLE_CLOUD_PROJECT=atlas-501808 PYTHONPATH=services/api/src:packages/atlas-core/src .venv/bin/python -m uvicorn services.api.src.app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-Do not start implementing features before understanding the architecture.
+## 3. Running the Frontend
+Navigate to the frontend dashboard package and run Vite:
+```bash
+cd apps/operations-dashboard
+npm run dev
+```
+
+For a comprehensive guide, read the documentation files in this order:
+1. `PRD.md`
+2. `SYSTEM_ARCHITECTURE.md`
+3. `ENGINEERING_GUIDE.md`
+4. `IMPLEMENTATION_PLAN.md`
 
 ---
 

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "../providers/WebSocketProvider";
 import {
   Brain,
@@ -8,15 +7,17 @@ import {
   CheckCircle,
   Terminal,
 } from "lucide-react";
-import {
-  fetchDashboardOverview,
-  fetchDashboardIncidents,
-  fetchDashboardRecommendations,
-  fetchOperationalState,
-} from "../services/api";
-import { LoadingScreen } from "../components/LoadingScreen";
+import { postCopilotChat } from "../services/api";
 import { useGlobalStore } from "../store/useGlobalStore";
 import type { ChatMessage } from "../store/useGlobalStore";
+
+const CO_THINKING_STAGES = [
+  "Analyzing user request...",
+  "Querying live operational telemetry...",
+  "Formatting prompt constraints...",
+  "Invoking Gemini 2.5 Pro model...",
+  "Structuring response payload..."
+];
 
 export const Route = createFileRoute("/copilot")({
   component: CopilotChatPage,
@@ -47,31 +48,7 @@ function CopilotChatPage() {
   const [thinkingStage, setThinkingStage] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Queries actual backend data to formulate context
-  const overviewQuery = useQuery({
-    queryKey: ["copilot-overview"],
-    queryFn: fetchDashboardOverview,
-  });
 
-  const stateQuery = useQuery({
-    queryKey: ["copilot-state"],
-    queryFn: fetchOperationalState,
-  });
-
-  const incidentsQuery = useQuery({
-    queryKey: ["copilot-incidents"],
-    queryFn: () => fetchDashboardIncidents(1, 10),
-  });
-
-  const recommendationsQuery = useQuery({
-    queryKey: ["copilot-recs"],
-    queryFn: () => fetchDashboardRecommendations(1, 10),
-  });
-
-  const overview = overviewQuery.data;
-  const zones = stateQuery.data || [];
-  const incidents = incidentsQuery.data?.items || [];
-  const recs = recommendationsQuery.data?.items || [];
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -100,48 +77,6 @@ function CopilotChatPage() {
     ]);
   };
 
-  const getAssistantResponse = (userInput: string): { text: string; thinking: string[]; citations?: { label: string; text: string }[] } => {
-    const query = userInput.toLowerCase();
-    const activeIncidents = incidents.filter((i) => !i.resolved);
-    const criticalZones = zones.filter((z) => z.density > 0.4);
-
-    if (query.includes("incident") || query.includes("alert")) {
-      const description = activeIncidents.length > 0 
-        ? `There are currently **${activeIncidents.length} active incidents** in progress. The most critical is: "${activeIncidents[0].description}" (Severity: ${activeIncidents[0].severity}).`
-        : "No active incidents are currently reported across the sectors.";
-      
-      return {
-        text: `### Incident Investigation Report\n${description}\n\nAll emergency dispatchers have been alerted and volunteer teams are patrolling the designated zones.`,
-        thinking: ["Querying incident repository database...", "Filtering unresolved safety logs...", "Checking dispatcher responses..."],
-        citations: activeIncidents.map((i, idx) => ({ label: `[Incident #${idx+1}]`, text: i.description })),
-      };
-    }
-
-    if (query.includes("congestion") || query.includes("crowd") || query.includes("density")) {
-      const zonesSummary = criticalZones.map((z, idx) => `* **Sector ${idx+1}**: Density is at ${Math.round(z.density*100)}% with wait queue: ${z.queue_waiting_minutes}m.`).join("\n");
-      return {
-        text: `### Crowd Density & Ingress Analysis\nStadium capacity is currently flowing at an average density of **${Math.round((overview?.average_crowd_density || 0.4) * 100)}%**.\n\nHere is the sectoral breakdown:\n${zonesSummary || "* All sectors are running below 40% occupancy."}`,
-        thinking: ["Reading crowd flow metrics...", "Evaluating ingress queue times...", "Calculating zone bottlenecks..."],
-        citations: zones.slice(0, 2).map((z, idx) => ({ label: `[Sector #${idx+1}]`, text: `Density: ${Math.round(z.density*100)}%` })),
-      };
-    }
-
-    if (query.includes("recommendation") || query.includes("mitigate") || query.includes("action")) {
-      const recList = recs.map((r, idx) => `${idx+1}. **${r.action_type}** (${Math.round(r.confidence*100)}% confidence): ${r.details}`).join("\n");
-      return {
-        text: `### System Optimization Actions\nThe recommendation engine has generated **${recs.length} active mitigation plans** to balance flow:\n\n${recList || "* All zone parameters nominal. No mitigations required."}`,
-        thinking: ["Running recommendation optimizer rules...", "Checking priority levels...", "Retrieving business policy rules..."],
-        citations: recs.slice(0, 2).map((r, idx) => ({ label: `[Recommendation #${idx+1}]`, text: r.details })),
-      };
-    }
-
-    // Default general response
-    return {
-      text: `Based on current stadium telemetry, the global health rating is **${Math.round((overview?.stadium_health || 0.98)*100)}%**. We have **${overview?.allocated_volunteers_count || 0} volunteers** deployed. The system is operating normally. Let me know if you would like me to analyze incidents, crowd density, or mitigations.`,
-      thinking: ["Parsing natural language intent...", "Retrieving global operational state...", "Synthesizing answer..."],
-    };
-  };
-
   const handleSendMessage = (textToSend: string) => {
     if (!textToSend.trim()) return;
 
@@ -156,26 +91,41 @@ function CopilotChatPage() {
     setIsThinking(true);
     setThinkingStage(0);
 
-    // Retrieve assistant response
-    const responseData = getAssistantResponse(textToSend);
+    const defaultThinking = [
+      "Analyzing user request...",
+      "Querying live operational telemetry...",
+      "Formatting prompt constraints...",
+      "Invoking Gemini 2.5 Pro model...",
+      "Structuring response payload..."
+    ];
 
-    // Simulate thinking steps interval
-    let stage = 0;
-    const thinkingInterval = setInterval(() => {
-      if (stage < responseData.thinking.length - 1) {
-        stage++;
-        setThinkingStage(stage);
-      } else {
-        clearInterval(thinkingInterval);
+    // Cycle through local placeholder thinking steps every 800ms while loading
+    let stageIndex = 0;
+    const placeholderInterval = setInterval(() => {
+      if (stageIndex < defaultThinking.length - 1) {
+        stageIndex++;
+        setThinkingStage(stageIndex);
+      }
+    }, 800);
+
+    const formattedHistory = messages.map(msg => ({
+      role: msg.role,
+      text: msg.text
+    }));
+
+    postCopilotChat(textToSend, formattedHistory)
+      .then((responseData) => {
+        clearInterval(placeholderInterval);
         setIsThinking(false);
 
-        // Stream assistant response
         const assistantMsg: ChatMessage = {
           role: "assistant",
           text: "",
           timestamp: new Date().toLocaleTimeString(),
-          thinkingSteps: responseData.thinking,
-          citations: responseData.citations,
+          thinkingSteps: responseData.thinking || defaultThinking,
+          citations: responseData.citations || [],
+          modelVersion: responseData.model_version || "Gemini 2.5 Pro",
+          executionTimeMs: responseData.execution_time_ms || 0,
         };
 
         setMessages((prev) => [...prev, assistantMsg]);
@@ -191,18 +141,26 @@ function CopilotChatPage() {
               }
               return updated;
             });
-            charIndex += 2; // Stream 2 chars at a time
+            charIndex += 2;
           } else {
             clearInterval(streamInterval);
           }
         }, 10);
-      }
-    }, 600);
+      })
+      .catch((err) => {
+        console.error("Copilot Chat API Error:", err);
+        clearInterval(placeholderInterval);
+        setIsThinking(false);
+        const errorMsg: ChatMessage = {
+          role: "assistant",
+          text: "⚠️ Failed to establish connection with Gemini API. Please check the browser console for details or verify your backend logs.",
+          timestamp: new Date().toLocaleTimeString(),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+      });
   };
 
-  if (overviewQuery.isLoading || stateQuery.isLoading || incidentsQuery.isLoading) {
-    return <LoadingScreen />;
-  }
+
 
   const quickActions = [
     { label: "Summarize Incidents", prompt: "Summarize active incidents" },
@@ -299,7 +257,7 @@ function CopilotChatPage() {
                       <span>Thinking...</span>
                     </div>
                     <div className="pl-5 text-[10px] space-y-1 text-muted-foreground">
-                      {getAssistantResponse(messages[messages.length - 1].text).thinking.slice(0, thinkingStage + 1).map((step, idx) => (
+                      {CO_THINKING_STAGES.slice(0, thinkingStage + 1).map((step: string, idx: number) => (
                         <div key={idx} className="flex items-center gap-1.5">
                           <CheckCircle className="h-3 w-3 text-primary shrink-0" />
                           <span>{step}</span>
