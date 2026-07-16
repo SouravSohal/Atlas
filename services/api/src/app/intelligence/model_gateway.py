@@ -12,8 +12,9 @@ logger = structlog.get_logger()
 
 class ModelGateway:
     """Gateway to execute raw calls to Gemini API with retry and logging mechanisms."""
+    default_model: str = "gemini-2.5-flash"
 
-    def __init__(self, api_key: str | None = None, default_model: str = "gemini-2.5-pro") -> None:
+    def __init__(self, api_key: str | None = None, default_model: str = "gemini-2.5-flash") -> None:
         import os
         actual_key = None
         if isinstance(api_key, str) and api_key.strip():

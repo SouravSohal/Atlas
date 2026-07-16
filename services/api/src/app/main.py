@@ -48,6 +48,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown
     logger.info("Shutting down API backend service")
+    try:
+        await container.firestore_client().close()
+    except Exception as e:
+        logger.warning("Failed to close firestore client during shutdown", error=str(e))
     container.shutdown_resources()
 
 def create_app() -> FastAPI:

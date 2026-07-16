@@ -42,6 +42,8 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     const wsUrl = envConfig.wsUrl;
 
     if (socketRef.current) {
+      socketRef.current.onclose = null;
+      socketRef.current.onerror = null;
       socketRef.current.close();
     }
 
