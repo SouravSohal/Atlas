@@ -1,0 +1,321 @@
+{
+  "stadium_metadata": {
+    "name": "Aurelia Arena",
+    "city": "Aurelia City",
+    "capacity": 65000,
+    "timestamp": "2026-07-09T00:33:00Z"
+  },
+  "nodes": [
+    {
+      "id": "node-0",
+      "name": "Gate 1 Ingress",
+      "category": "Entrance Gate",
+      "capacity": 15000,
+      "health": 98,
+      "density": 45,
+      "queue_waiting_minutes": 5,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "12 Deployed"
+    },
+    {
+      "id": "node-1",
+      "name": "Gate 2 Exit",
+      "category": "Exit Gate",
+      "capacity": 15000,
+      "health": 99,
+      "density": 10,
+      "queue_waiting_minutes": 0,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "Standard"
+    },
+    {
+      "id": "node-2",
+      "name": "Security Command",
+      "category": "Security",
+      "capacity": 150,
+      "health": 100,
+      "density": 12,
+      "queue_waiting_minutes": 0,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "Standard"
+    },
+    {
+      "id": "node-3",
+      "name": "Medical Post Alpha",
+      "category": "Medical",
+      "capacity": 50,
+      "health": 100,
+      "density": 15,
+      "queue_waiting_minutes": 0,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "2 EMTs"
+    },
+    {
+      "id": "node-4",
+      "name": "Central Food Plaza",
+      "category": "Food Court",
+      "capacity": 3000,
+      "health": 95,
+      "density": 65,
+      "queue_waiting_minutes": 8,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "Standard"
+    },
+    {
+      "id": "node-5",
+      "name": "Main Parking Area",
+      "category": "Parking",
+      "capacity": 4500,
+      "health": 100,
+      "density": 70,
+      "queue_waiting_minutes": 0,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "Standard"
+    },
+    {
+      "id": "node-6",
+      "name": "Volunteer Base Alpha",
+      "category": "Volunteer Station",
+      "capacity": 100,
+      "health": 100,
+      "density": 20,
+      "queue_waiting_minutes": 0,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "12 Deployed"
+    },
+    {
+      "id": "node-7",
+      "name": "Metro Shuttle Plaza",
+      "category": "Transit",
+      "capacity": 12000,
+      "health": 99,
+      "density": 15,
+      "queue_waiting_minutes": 0,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "Standard"
+    },
+    {
+      "id": "node-8",
+      "name": "Eastern Restrooms",
+      "category": "Restrooms",
+      "capacity": 500,
+      "health": 98,
+      "density": 22,
+      "queue_waiting_minutes": 0,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "Standard"
+    },
+    {
+      "id": "node-9",
+      "name": "Operations Center Hub",
+      "category": "Operations Center",
+      "capacity": 80,
+      "health": 100,
+      "density": 18,
+      "queue_waiting_minutes": 0,
+      "alerts": 0,
+      "recs": 0,
+      "resources": "Standard"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-g1-vol",
+      "source": "node-0",
+      "target": "node-6",
+      "distance_meters": 150,
+      "avg_walk_seconds": 110,
+      "max_throughput_pax_min": 1500,
+      "congestion_factor": 0.15,
+      "emergency_access": true
+    },
+    {
+      "id": "e-prk-sec",
+      "source": "node-5",
+      "target": "node-2",
+      "distance_meters": 200,
+      "avg_walk_seconds": 140,
+      "max_throughput_pax_min": 1000,
+      "congestion_factor": 0.25,
+      "emergency_access": true
+    },
+    {
+      "id": "e-vol-ops",
+      "source": "node-6",
+      "target": "node-9",
+      "distance_meters": 110,
+      "avg_walk_seconds": 80,
+      "max_throughput_pax_min": 800,
+      "congestion_factor": 0.10,
+      "emergency_access": true
+    },
+    {
+      "id": "e-sec-ops",
+      "source": "node-2",
+      "target": "node-9",
+      "distance_meters": 45,
+      "avg_walk_seconds": 30,
+      "max_throughput_pax_min": 1500,
+      "congestion_factor": 0.05,
+      "emergency_access": true
+    },
+    {
+      "id": "e-med-ops",
+      "source": "node-3",
+      "target": "node-9",
+      "distance_meters": 60,
+      "avg_walk_seconds": 45,
+      "max_throughput_pax_min": 300,
+      "congestion_factor": 0.05,
+      "emergency_access": true
+    },
+    {
+      "id": "e-ops-fod",
+      "source": "node-9",
+      "target": "node-4",
+      "distance_meters": 90,
+      "avg_walk_seconds": 70,
+      "max_throughput_pax_min": 600,
+      "congestion_factor": 0.35,
+      "emergency_access": true
+    },
+    {
+      "id": "e-ops-rst",
+      "source": "node-8",
+      "target": "node-9",
+      "distance_meters": 50,
+      "avg_walk_seconds": 40,
+      "max_throughput_pax_min": 500,
+      "congestion_factor": 0.20,
+      "emergency_access": true
+    },
+    {
+      "id": "e-fod-g2",
+      "source": "node-4",
+      "target": "node-1",
+      "distance_meters": 90,
+      "avg_walk_seconds": 70,
+      "max_throughput_pax_min": 600,
+      "congestion_factor": 0.40,
+      "emergency_access": true
+    },
+    {
+      "id": "e-rst-trn",
+      "source": "node-8",
+      "target": "node-7",
+      "distance_meters": 310,
+      "avg_walk_seconds": 230,
+      "max_throughput_pax_min": 400,
+      "congestion_factor": 0.22,
+      "emergency_access": true
+    },
+    {
+      "id": "e-g2-trn",
+      "source": "node-1",
+      "target": "node-7",
+      "distance_meters": 240,
+      "avg_walk_seconds": 180,
+      "max_throughput_pax_min": 400,
+      "congestion_factor": 0.30,
+      "emergency_access": true
+    }
+  ],
+  "sensors": [
+    {
+      "id": "sn-01",
+      "node_id": "node-0",
+      "type": "Optical Counter",
+      "metric": "Crowd Density",
+      "status": "Online",
+      "value": 1.4
+    },
+    {
+      "id": "sn-02",
+      "node_id": "node-0",
+      "type": "Router Pinger",
+      "metric": "Turnstile Scanner Rate",
+      "status": "Online",
+      "value": 98.4
+    },
+    {
+      "id": "sn-03",
+      "node_id": "node-4",
+      "type": "POS Monitor",
+      "metric": "Queue Length",
+      "status": "Online",
+      "value": 65.0
+    }
+  ],
+  "workforce": {
+    "volunteers": [
+      {
+        "id": "vol-1",
+        "name": "Volunteer Alpha",
+        "team": "Medical",
+        "zone": "Medical Post Alpha",
+        "status": "Assigned",
+        "skills": ["First Aid", "CPR"],
+        "assignment": "Distress call Section 104",
+        "battery": 88
+      },
+      {
+        "id": "vol-2",
+        "name": "Volunteer Beta",
+        "team": "Crowd Control",
+        "zone": "Gate 1 Ingress",
+        "status": "Available",
+        "skills": ["Crowd Routing"],
+        "assignment": "Queue flow management",
+        "battery": 45
+      }
+    ],
+    "security_officers": [
+      {
+        "id": "sec-1",
+        "name": "Officer Ramirez",
+        "team": "Tactical Patrol",
+        "zone": "Security Command",
+        "status": "On Duty",
+        "radio_channel": "Sec-Ch2"
+      }
+    ],
+    "medical_teams": [
+      {
+        "id": "med-1",
+        "name": "EMT Team Bravo",
+        "zone": "Medical Post Beta",
+        "status": "Standing By",
+        "vehicle_id": "AMB-02"
+      }
+    ]
+  },
+  "incidents": [
+    {
+      "id": "inc-01",
+      "type": "medical",
+      "severity": "critical",
+      "description": "Cardiac arrest in stands Sec 104",
+      "zone_id": "node-3",
+      "resolved": false
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "rec-01",
+      "action_type": "reroute",
+      "priority": "critical",
+      "confidence": 0.98,
+      "details": "Dispatch Medical Post Alpha crew to Section 104",
+      "status": "pending"
+    }
+  ]
+}

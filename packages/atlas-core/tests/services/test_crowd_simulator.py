@@ -4,13 +4,14 @@ from uuid import UUID
 
 from atlas_core.domain.services.data_loader import StadiumDataLoader
 from atlas_core.domain.services.crowd_simulator import CrowdSimulationEngine, SpectatorAgent
+from atlas_core.shared import resolve_seed_data_path
 
 def test_agent_crowd_simulator_flow():
     # 1. Setup Stadium via Seed data loader
-    seed_file_path = "/home/kenx1kaneki/.gemini/antigravity-cli/brain/33650c4b-d5ca-4d21-b0b9-7dc8acb01871/stadium_seed_data.json"
-    assert os.path.exists(seed_file_path)
+    seed_file_path = resolve_seed_data_path()
+    assert seed_file_path.exists()
 
-    with open(seed_file_path, "r") as f:
+    with open(seed_file_path, "r", encoding="utf-8") as f:
         json_content = f.read()
 
     stadium = StadiumDataLoader.load_from_json(json_content)

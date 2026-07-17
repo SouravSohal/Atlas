@@ -1,14 +1,15 @@
 import pytest
 import os
 from atlas_core.domain.services.data_loader import StadiumDataLoader
+from atlas_core.shared import resolve_seed_data_path
 
 def test_stadium_data_loader_parsing():
-    # 1. Load the generated seed JSON dataset from the artifacts directory
-    seed_file_path = "/home/kenx1kaneki/.gemini/antigravity-cli/brain/33650c4b-d5ca-4d21-b0b9-7dc8acb01871/stadium_seed_data.json"
+    # 1. Load the generated seed JSON dataset
+    seed_file_path = resolve_seed_data_path()
     
-    assert os.path.exists(seed_file_path), "Stadium seed data JSON file must exist."
+    assert seed_file_path.exists(), "Stadium seed data JSON file must exist."
 
-    with open(seed_file_path, "r") as f:
+    with open(seed_file_path, "r", encoding="utf-8") as f:
         json_content = f.read()
 
     # 2. Run loader
