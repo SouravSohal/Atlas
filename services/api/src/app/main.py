@@ -38,6 +38,45 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     container: ApplicationContainer = app.state.container
     container.init_resources()
 
+    # 1. Validate Stadium Seed Data file availability
+    try:
+        from atlas_core.shared import resolve_seed_data_path
+        seed_path = resolve_seed_data_path()
+        logger.info("Validated stadium seed data file exists", path=str(seed_path))
+    except Exception as e:
+        logger.critical("Startup validation failed: Stadium seed data file is missing or invalid", error=str(e))
+        raise RuntimeError(f"Startup validation failed: Stadium seed data file is missing: {e}") from e
+
+    # 2. Validate Firebase Configuration
+    is_prod = settings.app.environment == Environment.PRODUCTION
+    if not settings.firebase.web_api_key or not settings.firebase.web_api_key.strip():
+        logger.critical("Startup validation failed: FIREBASE_WEB_API_KEY is not configured")
+        raise RuntimeError("Startup validation failed: FIREBASE_WEB_API_KEY is not configured")
+    if settings.firebase.web_api_key.strip().lower() == "mock-firebase-key-replace-in-production":
+        if is_prod:
+            logger.critical("Startup validation failed: FIREBASE_WEB_API_KEY cannot use mock placeholder in Production")
+            raise RuntimeError("Startup validation failed: FIREBASE_WEB_API_KEY cannot use mock placeholder in Production")
+
+    # 3. Validate Gemini Configuration (if enabled/production)
+    if settings.gemini.api_key:
+        if settings.gemini.api_key.strip().lower() == "mock-api-key-replace-in-production":
+            if is_prod:
+                logger.critical("Startup validation failed: GEMINI_API_KEY cannot use mock placeholder in Production")
+                raise RuntimeError("Startup validation failed: GEMINI_API_KEY cannot use mock placeholder in Production")
+
+    # 4. Database Connection/Initialization Check
+    import sys
+    if "pytest" not in sys.modules:
+        try:
+            logger.info("Performing startup database initialization and connectivity check...")
+            db_client = container.firestore_client().client
+            # Retrieve a dummy document to verify connection and credentials are valid
+            await db_client.collection("system_check").document("ping").get()
+            logger.info("Database connectivity check passed successfully")
+        except Exception as e:
+            logger.critical("Startup validation failed: Could not establish connection to Firestore database", error=str(e))
+            raise RuntimeError(f"Startup validation failed: Firestore database connection error: {e}") from e
+
     # Seed Demo User if demo mode is enabled or app is in development env
     if settings.demo.mode or settings.app.environment == Environment.DEVELOPMENT:
         try:

@@ -153,8 +153,8 @@ class FirebaseSettings(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    web_api_key: str | None = Field(
-        default=None,
+    web_api_key: str = Field(
+        default="mock-firebase-key-replace-in-production",
         validation_alias=AliasChoices("FIREBASE__WEB_API_KEY", "FIREBASE_WEB_API_KEY"),
         description="Firebase Web API Key.",
     )
@@ -375,6 +375,14 @@ class Settings(BaseSettings):
                 data["gemini"] = {}
             if isinstance(data["gemini"], dict) and "api_key" not in data["gemini"]:
                 data["gemini"]["api_key"] = gemini_key
+
+        # 4. Map FIREBASE_WEB_API_KEY to firebase.web_api_key
+        firebase_key = os.environ.get("FIREBASE_WEB_API_KEY") or os.environ.get("FIREBASE__WEB_API_KEY")
+        if firebase_key:
+            if "firebase" not in data:
+                data["firebase"] = {}
+            if isinstance(data["firebase"], dict) and "web_api_key" not in data["firebase"]:
+                data["firebase"]["web_api_key"] = firebase_key
 
         return data
 

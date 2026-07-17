@@ -40,9 +40,10 @@ ATLAS follows:
 
 See:
 
-- docs/SYSTEM_ARCHITECTURE.md
-- docs/ENGINEERING_GUIDE.md
-- docs/IMPLEMENTATION_PLAN.md
+- [docs/SYSTEM_ARCHITECTURE.md](file:///home/kenx1kaneki/Desktop/Codesstuff/Atlas/docs/SYSTEM_ARCHITECTURE.md)
+- [docs/ENGINEERING_GUIDE.md](file:///home/kenx1kaneki/Desktop/Codesstuff/Atlas/docs/ENGINEERING_GUIDE.md)
+- [docs/IMPLEMENTATION_PLAN.md](file:///home/kenx1kaneki/Desktop/Codesstuff/Atlas/docs/IMPLEMENTATION_PLAN.md)
+- [docs/DEPLOYMENT.md](file:///home/kenx1kaneki/Desktop/Codesstuff/Atlas/docs/DEPLOYMENT.md)
 
 ---
 

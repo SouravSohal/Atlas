@@ -4,6 +4,7 @@ import os
 os.environ.setdefault("JWT_SECRET", "dev-only-local-secret-key-for-atlas-stadium-auth-system-do-not-use-in-production")
 os.environ.setdefault("DEMO_EMAIL", "demo@atlas.com")
 os.environ.setdefault("DEMO_PASSWORD", "dev-only-secure-demo-password-9876-unsecure-for-prod")
+os.environ.setdefault("FIREBASE_WEB_API_KEY", "mock-firebase-web-api-key-for-testing")
 
 import pytest
 from fastapi.testclient import TestClient

@@ -1,0 +1,41 @@
+# Exclude virtual environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Exclude git metadata
+.git/
+.github/
+.gitignore
+.editorconfig
+.pre-commit-config.yaml
+
+# Exclude IDE folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Exclude development configurations and logs
+.env
+.env.example
+*.log
+scratch/
+
+# Exclude frontend applications (only building backend services/api)
+apps/
+
+# Exclude documentation and local tools
+docs/
+scripts/
+users/
+infrastructure/
