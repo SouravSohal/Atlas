@@ -12,6 +12,7 @@ from app.dependencies.auth import get_current_user
 from app.config import Settings
 from app.presentation.responses.standard import ApiResponse
 from app.infrastructure.security.rate_limiter import RateLimiterDependency
+from app.infrastructure.auth.firebase import FirebaseAuthProvider
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -41,6 +42,7 @@ class LoginResponse(BaseModel):
 async def login(
     request: LoginRequest,
     settings: Settings = Depends(Provide[ApplicationContainer.config]),
+    auth_provider: FirebaseAuthProvider = Depends(Provide[ApplicationContainer.auth_provider]),
 ) -> ApiResponse[LoginResponse]:
     """Authenticates user via Firebase Authentication REST API statelessly."""
     email_clean = request.email.strip().lower()
@@ -74,17 +76,21 @@ async def login(
     refresh_token = auth_data["refreshToken"]
     display_name = auth_data.get("displayName") or email_clean.split("@")[0]
 
-    # Assign role statelessly based on settings or default
+    # Assign role statelessly based on settings or token claims (lowest privilege by default)
     demo_email = settings.demo.email.strip().lower() if settings.demo.email else ""
     if email_clean == demo_email:
         role_str = settings.demo.role.lower().replace(" ", "_")
+        try:
+            role = UserRole(role_str)
+        except ValueError:
+            role = UserRole.FAN
     else:
-        role_str = "administrator"
-
-    try:
-        role = UserRole(role_str)
-    except ValueError:
-        role = UserRole.ADMINISTRATOR
+        try:
+            decoded_token = auth_provider.verify_token(id_token)
+            user_entity = auth_provider.extract_user(decoded_token)
+            role = user_entity.role
+        except Exception:
+            role = UserRole.FAN
 
     user_resp = UserResponse(
         id=uid,
@@ -107,6 +113,7 @@ async def login(
 async def refresh(
     request: RefreshRequest,
     settings: Settings = Depends(Provide[ApplicationContainer.config]),
+    auth_provider: FirebaseAuthProvider = Depends(Provide[ApplicationContainer.auth_provider]),
 ) -> ApiResponse[LoginResponse]:
     """Exchanges a Firebase refresh token statelessly."""
     api_key = settings.firebase.web_api_key
@@ -137,17 +144,21 @@ async def refresh(
     uid = token_data["user_id"]
     email = token_data.get("email", "")
 
-    # Assign role statelessly
+    # Assign role statelessly based on settings or token claims (lowest privilege by default)
     demo_email = settings.demo.email.strip().lower() if settings.demo.email else ""
     if email.strip().lower() == demo_email:
         role_str = settings.demo.role.lower().replace(" ", "_")
+        try:
+            role = UserRole(role_str)
+        except ValueError:
+            role = UserRole.FAN
     else:
-        role_str = "administrator"
-
-    try:
-        role = UserRole(role_str)
-    except ValueError:
-        role = UserRole.ADMINISTRATOR
+        try:
+            decoded_token = auth_provider.verify_token(new_id_token)
+            user_entity = auth_provider.extract_user(decoded_token)
+            role = user_entity.role
+        except Exception:
+            role = UserRole.FAN
     
     display_name = email.split("@")[0] or "Firebase User"
 

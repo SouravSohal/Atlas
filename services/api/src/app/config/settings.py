@@ -1,6 +1,10 @@
 from functools import lru_cache
 import os
 from typing import Any
+from dotenv import load_dotenv, find_dotenv
+
+# Load environment variables from .env file into os.environ at startup
+load_dotenv(find_dotenv())
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
