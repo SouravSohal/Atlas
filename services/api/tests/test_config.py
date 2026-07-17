@@ -120,3 +120,14 @@ def test_environment_mapping_from_env_var(monkeypatch: pytest.MonkeyPatch) -> No
     assert settings.app.environment == Environment.PRODUCTION
 
 
+def test_api_cors_origins_mapping_from_env_var(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Arrange
+    monkeypatch.setenv("API_CORS_ORIGINS", "https://frontend.com,https://api.com")
+
+    # Act
+    settings = Settings()
+
+    # Assert
+    assert settings.api.cors_origins == ["https://frontend.com", "https://api.com"]
+
+

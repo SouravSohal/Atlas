@@ -89,7 +89,7 @@ function LoginPage() {
 
     try {
       // 1. Authenticate with Firebase Web SDK
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password.trim());
       const idToken = await userCredential.user.getIdToken();
 
       const isDemo = email.trim().toLowerCase() === envConfig.demoEmail.trim().toLowerCase();
@@ -129,8 +129,8 @@ function LoginPage() {
     setIsDemoLoading(true);
 
     try {
-      const demoEmail = envConfig.demoEmail;
-      const demoPassword = envConfig.demoPassword;
+      const demoEmail = envConfig.demoEmail.trim();
+      const demoPassword = envConfig.demoPassword.trim();
 
       // 1. Authenticate demo user with Firebase Web SDK using environment variables
       const userCredential = await signInWithEmailAndPassword(auth, demoEmail, demoPassword);

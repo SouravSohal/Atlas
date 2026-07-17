@@ -420,6 +420,18 @@ class Settings(BaseSettings):
                     is_debug = bool(app_debug)
                 data["app"]["debug"] = is_debug
 
+        # 9. Map API_CORS_ORIGINS / API__CORS_ORIGINS to api.cors_origins
+        cors_origins = os.environ.get("API_CORS_ORIGINS") or os.environ.get("API__CORS_ORIGINS")
+        if cors_origins:
+            if "api" not in data:
+                data["api"] = {}
+            if isinstance(data["api"], dict) and "cors_origins" not in data["api"]:
+                if isinstance(cors_origins, str):
+                    origins_list = [item.strip() for item in cors_origins.split(",") if item.strip()]
+                else:
+                    origins_list = cors_origins
+                data["api"]["cors_origins"] = origins_list
+
         return data
 
     @model_validator(mode="after")

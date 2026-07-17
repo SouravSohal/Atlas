@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { envConfig } from "../config/env";
+import { auth } from "../services/firebase";
+import { onIdTokenChanged } from "firebase/auth";
 
 type WebSocketContextState = {
   connected: boolean;
@@ -94,8 +96,28 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   useEffect(() => {
-    connect();
+    // Synchronize WebSocket connection with Firebase authentication session
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      if (user) {
+        // Force retrieval of a fresh ID token and trigger reconnect
+        try {
+          const token = await user.getIdToken(true);
+          localStorage.setItem("atlas_access_token", token);
+          connect();
+        } catch (err) {
+          console.error("Failed to refresh ID token for WebSocket:", err);
+        }
+      } else {
+        // User logged out: tear down connection
+        localStorage.removeItem("atlas_access_token");
+        if (socketRef.current) {
+          socketRef.current.close();
+        }
+      }
+    });
+
     return () => {
+      unsubscribe();
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (socketRef.current) socketRef.current.close();
     };
