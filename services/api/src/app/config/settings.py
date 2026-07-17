@@ -384,6 +384,22 @@ class Settings(BaseSettings):
             if isinstance(data["firebase"], dict) and "web_api_key" not in data["firebase"]:
                 data["firebase"]["web_api_key"] = firebase_key
 
+        # 5. Map GOOGLE_CLOUD_PROJECT / GCP__PROJECT_ID to gcp.project_id
+        gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP__PROJECT_ID")
+        if gcp_project:
+            if "gcp" not in data:
+                data["gcp"] = {}
+            if isinstance(data["gcp"], dict) and "project_id" not in data["gcp"]:
+                data["gcp"]["project_id"] = gcp_project
+
+        # 6. Map FIRESTORE_DATABASE / FIRESTORE__DATABASE to firestore.database
+        firestore_db = os.environ.get("FIRESTORE_DATABASE") or os.environ.get("FIRESTORE__DATABASE")
+        if firestore_db:
+            if "firestore" not in data:
+                data["firestore"] = {}
+            if isinstance(data["firestore"], dict) and "database" not in data["firestore"]:
+                data["firestore"]["database"] = firestore_db
+
         return data
 
     @model_validator(mode="after")

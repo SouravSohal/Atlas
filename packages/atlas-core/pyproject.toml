@@ -3,7 +3,7 @@ requires = ["hatchling>=1.26.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "atlas-core"
+name = "atlas-stadium-core"
 version = "0.1.0"
 description = "Core package for the ATLAS system containing domain entities, events, value objects, and repository contracts."
 readme = "README.md"

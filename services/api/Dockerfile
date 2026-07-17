@@ -14,10 +14,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY packages/atlas-core /build/packages/atlas-core
 COPY services/api /build/services/api
 
-# Install and compile wheels/dependencies to a local folder
+# Build wheels for the core library and API service
 RUN python -m pip install --upgrade pip && \
-    python -m pip install --no-cache-dir --prefix=/install /build/packages/atlas-core && \
-    python -m pip install --no-cache-dir --prefix=/install /build/services/api
+    python -m pip install --no-cache-dir build && \
+    python -m build --wheel --outdir /build/wheels /build/packages/atlas-core && \
+    python -m build --wheel --outdir /build/wheels /build/services/api
+
+# Install wheels locally using --find-links to resolve local dependencies from /build/wheels
+RUN python -m pip install --no-cache-dir --prefix=/install --find-links=/build/wheels /build/wheels/atlas_api-0.1.0-py3-none-any.whl
 
 # ==============================================================================
 # Stage 2: Final runtime stage

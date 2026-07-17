@@ -60,3 +60,4 @@ firebase-key.json
 .env.production
 
 .env.development
+.env.docker

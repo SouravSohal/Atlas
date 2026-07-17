@@ -8,36 +8,61 @@ This document describes the containerization structure, Docker build operations,
 
 The ATLAS backend uses a multi-stage Docker build to compile and package dependencies securely.
 
-- **Stage 1 (Builder)**: Utilizes a Python base image, installs build tools (`build-essential`), copies the monorepo core package `packages/atlas-core` and the API service `services/api`, and compiles the dependencies with their respective wheel formats to a temporary `/install` directory.
+- **Stage 1 (Builder)**: Utilizes a Python base image, installs build tools (`build-essential`), copies the monorepo core package `packages/atlas-core` and the API service `services/api`, builds local `.whl` wheels for both into `/build/wheels`, and installs them.
 - **Stage 2 (Runner)**: Uses a clean, production-grade `python:3.12-slim` image, copies the compiled binaries from `/install` into `/usr/local` (leaving behind any dev tooling, compiler libraries, and caches), exposes the runtime port, configures non-root system users (`appuser` with UID/GID 10001), and boots using Uvicorn.
 
 ---
 
-## 2. Docker Instructions
+## 2. Local Docker Development & Commands
+
+To manage the API gateway locally via Docker, follow these instructions using the environment configuration file `.env.docker` at the repository root.
 
 ### Build the Image
-To build the Docker image, run the build command from the monorepo root directory (to ensure the local package dependency `atlas-core` is present in the build context):
-
+Build the Docker image from the monorepo root directory:
 ```bash
-docker build -t gcr.io/your-project-id/atlas-api:latest -f services/api/Dockerfile .
+docker build -t atlas-api:latest -f services/api/Dockerfile .
 ```
 
-### Run Locally via Docker
-To spin up the container locally for verification, supply your credentials and secrets via environment variables:
-
+### Run the Container
+Run the container locally by loading environment variables from `.env.docker` and mounting your Google Cloud service account JSON credentials to `/app/credentials.json`:
 ```bash
 docker run -d \
-  -p 8000:8000 \
-  -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
-  -e GOOGLE_CLOUD_PROJECT=atlas-501808 \
-  -e FIRESTORE_DATABASE=atlas-01 \
-  -e JWT_SECRET=your-strong-cryptographically-secure-key \
-  -e DEMO_EMAIL=demo@atlas.com \
-  -e DEMO_PASSWORD=your-secure-demo-password \
-  -e FIREBASE_WEB_API_KEY=your-firebase-web-api-key \
-  -v /absolute/path/to/your/service-account.json:/app/credentials.json \
-  gcr.io/your-project-id/atlas-api:latest
+  --name atlas-api \
+  -p 8080:8000 \
+  --env-file .env.docker \
+  -v /absolute/path/to/your/gcp-service-account.json:/app/credentials.json \
+  atlas-api:latest
 ```
+
+### Docker Management Commands
+
+- **View Logs**:
+  ```bash
+  docker logs -f atlas-api
+  ```
+- **Stop the Container**:
+  ```bash
+  docker stop atlas-api
+  ```
+- **Remove the Container**:
+  ```bash
+  docker rm atlas-api
+  ```
+- **Rebuild the Container (Clean cache & rebuild)**:
+  ```bash
+  docker build --no-cache -t atlas-api:latest -f services/api/Dockerfile .
+  ```
+
+### Verify Endpoints
+
+- **Health Endpoint**:
+  ```bash
+  curl -f http://localhost:8080/health
+  ```
+- **Readiness Endpoint**:
+  ```bash
+  curl -f http://localhost:8080/ready
+  ```
 
 ---
 
@@ -45,15 +70,21 @@ docker run -d \
 
 We deploy the container image directly to Google Cloud Run for serverless, autoscaling execution.
 
+### Cloud Run Authentication Architecture
+Unlike local Docker executions, **Google Cloud Run does NOT require the `GOOGLE_APPLICATION_CREDENTIALS` environment variable or a mounted Service Account key JSON file.**
+Instead:
+1. Assign a dedicated **Runtime Service Account** to the Cloud Run service.
+2. Grant that Service Account appropriate IAM permissions (e.g. `roles/datastore.user` for Firestore access, `roles/secretmanager.secretAccessor` for Secret Manager).
+3. Cloud Run automatically uses the GCP **Metadata Server** to fetch and authenticate service account tokens at runtime, completely eliminating key file management.
+
 ### Step 1: Push the Image to Artifact Registry
 Configure credentials and push the built image to your Google Artifact Registry repository:
-
 ```bash
 # Authenticate gcloud CLI
 gcloud auth configure-docker us-central1-docker.pkg.dev
 
 # Tag the image for Artifact Registry
-docker tag gcr.io/your-project-id/atlas-api:latest us-central1-docker.pkg.dev/your-project-id/atlas-repo/atlas-api:latest
+docker tag atlas-api:latest us-central1-docker.pkg.dev/your-project-id/atlas-repo/atlas-api:latest
 
 # Push the image
 docker push us-central1-docker.pkg.dev/your-project-id/atlas-repo/atlas-api:latest
@@ -61,7 +92,6 @@ docker push us-central1-docker.pkg.dev/your-project-id/atlas-repo/atlas-api:late
 
 ### Step 2: Deploy to Google Cloud Run
 Deploy the container with CPU/memory configurations, IAM service account, and environment configuration:
-
 ```bash
 gcloud run deploy atlas-api \
   --image=us-central1-docker.pkg.dev/your-project-id/atlas-repo/atlas-api:latest \
@@ -72,7 +102,7 @@ gcloud run deploy atlas-api \
   --port=8000 \
   --min-instances=1 \
   --max-instances=10 \
-  --set-env-vars="ENVIRONMENT=production,GOOGLE_CLOUD_PROJECT=atlas-501808,FIRESTORE_DATABASE=atlas-01" \
+  --set-env-vars="ENVIRONMENT=production,GOOGLE_CLOUD_PROJECT=your-project-id,FIRESTORE_DATABASE=your-database-name" \
   --set-secrets="JWT_SECRET=JWT_SECRET:latest,DEMO_EMAIL=DEMO_EMAIL:latest,DEMO_PASSWORD=DEMO_PASSWORD:latest,FIREBASE_WEB_API_KEY=FIREBASE_WEB_API_KEY:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest"
 ```
 
@@ -93,3 +123,25 @@ Use Google Secret Manager to mount sensitive values rather than injecting them i
 | `DEMO_PASSWORD` | Secret Manager | Yes | Strong unique password for the demo admin account. |
 | `FIREBASE_WEB_API_KEY` | Secret Manager | Yes | Firebase Web API key. Mock placeholder allowed in dev but strictly rejected at startup in Production. |
 | `GEMINI_API_KEY` | Secret Manager | Yes (if using AI) | Google Gemini model access key. Mock placeholder allowed in dev but strictly rejected at startup in Production. |
+
+---
+
+## 5. Troubleshooting Startup Failures
+
+If the container fails to start, verify logs by running `docker logs atlas-api` or checking Cloud Logging in GCP. Common errors include:
+
+- **Missing JWT Secret (`ValidationError` / `Secret key cannot be empty`)**:
+  * **Cause**: `JWT_SECRET` is not set in `.env.docker` or GCP configuration.
+  * **Fix**: Ensure `JWT_SECRET` is populated with a string of at least 32 characters.
+- **Missing Gemini API Key / Firebase Key in Production**:
+  * **Cause**: Running with `ENVIRONMENT=production` while `GEMINI_API_KEY` or `FIREBASE_WEB_API_KEY` is empty, missing, or matches mock/development placeholders.
+  * **Fix**: Configure valid, non-placeholder keys inside GCP Secret Manager or your production environment settings.
+- **Firestore Authentication Failures**:
+  * **Cause**: Either `GOOGLE_APPLICATION_CREDENTIALS` points to an invalid path locally, or the Cloud Run Runtime Service Account is missing the `roles/datastore.user` IAM role.
+  * **Fix**: Locally, confirm your service account key file is correctly mounted. In GCP, verify IAM bindings.
+- **Missing Seed Data (`RuntimeError: Startup validation failed: Stadium seed data file is missing`)**:
+  * **Cause**: The stadium seed data JSON file is missing or `DEMO__SEED_DATA_PATH` is incorrect.
+  * **Fix**: Verify `stadium_seed_data.json` is packaged within `atlas-stadium-core` or mount/configure `DEMO__SEED_DATA_PATH` explicitly.
+- **Invalid Environment Variables (`ValueError: Invalid environment value`)**:
+  * **Cause**: `ENVIRONMENT` is set to an unsupported value.
+  * **Fix**: Set `ENVIRONMENT` to either `development` or `production` strictly.
