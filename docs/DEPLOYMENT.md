@@ -118,11 +118,28 @@ Use Google Secret Manager to mount sensitive values rather than injecting them i
 | `ENVIRONMENT` | String (`production` / `staging`) | Yes | Operational environment target. |
 | `GOOGLE_CLOUD_PROJECT` | GCP Managed / Environment | Yes | GCP Project ID (e.g. `atlas-501808`). |
 | `FIRESTORE_DATABASE` | Environment | Yes | Firestore Database instance name (e.g. `atlas-01`). |
+| `API_CORS_ORIGINS` | Environment | No | Comma-separated list of allowed origins (e.g. `https://atlas-frontend-1017580106397.asia-south2.run.app`). |
 | `JWT_SECRET` | Secret Manager | Yes | Strong cryptographically secure JWT signing key. |
 | `DEMO_EMAIL` | Secret Manager | Yes | Registered demo admin email. |
 | `DEMO_PASSWORD` | Secret Manager | Yes | Strong unique password for the demo admin account. |
 | `FIREBASE_WEB_API_KEY` | Secret Manager | Yes | Firebase Web API key. Mock placeholder allowed in dev but strictly rejected at startup in Production. |
 | `GEMINI_API_KEY` | Secret Manager | Yes (if using AI) | Google Gemini model access key. Mock placeholder allowed in dev but strictly rejected at startup in Production. |
+
+### 4.1. Frontend Build-Time variables (Vite Build Arguments)
+
+These variables must be passed during the frontend container build stage via Docker `--build-arg`:
+
+| Build Argument / Env Var | Required | Description |
+| :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | Yes | Target backend API gateway base URL. |
+| `VITE_DEMO_EMAIL` | Yes | Seeded demo user email address. |
+| `VITE_DEMO_PASSWORD` | Yes | Seeded demo user password. |
+| `VITE_FIREBASE_API_KEY` | Yes | Firebase Web Client API key. |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Yes | Firebase Auth domain (e.g. `atlas-501808.firebaseapp.com`). |
+| `VITE_FIREBASE_PROJECT_ID` | Yes | Firebase Project ID (e.g. `atlas-501808`). |
+| `VITE_FIREBASE_STORAGE_BUCKET`| Yes | Firebase Storage bucket. |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID`| Yes | Firebase Messaging Sender ID. |
+| `VITE_FIREBASE_APP_ID` | Yes | Firebase App Client ID. |
 
 ---
 

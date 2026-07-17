@@ -71,6 +71,7 @@ In production, secret variables must **never** be injected via plain text.
 | `ENVIRONMENT` | Meta | No | Yes | Cloud Run Env Var |
 | `GOOGLE_CLOUD_PROJECT` | Config | No | Yes | Cloud Run Env Var |
 | `FIRESTORE_DATABASE` | Config | No | Yes | Cloud Run Env Var |
+| `API_CORS_ORIGINS` | Config | No | No | Cloud Run Env Var |
 | `JWT_SECRET` | Secret | Yes | Yes | Secret Manager (`ATLAS_JWT_SECRET`) |
 | `FIREBASE_WEB_API_KEY` | Secret | Yes | Yes | Secret Manager (`ATLAS_FIREBASE_API_KEY`) |
 | `GEMINI_API_KEY` | Secret | Yes | Yes (if using AI) | Secret Manager (`ATLAS_GEMINI_API_KEY`) |
