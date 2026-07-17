@@ -7,6 +7,7 @@ from app.config.settings import (
     ApplicationSettings,
     LoggingSettings,
     SecuritySettings,
+    DemoSettings,
 )
 
 
@@ -78,3 +79,28 @@ def test_logging_configuration() -> None:
 
     # Act & Assert (Should configure successfully without raising exceptions)
     configure_logging(settings)
+
+
+def test_settings_secret_key_placeholder_validation() -> None:
+    # Verify that placeholder values for SECURITY__SECRET_KEY / JWT_SECRET raise ValidationError
+    with pytest.raises(ValidationError, match="Security secret key.*cannot use insecure placeholder value"):
+        Settings(security=SecuritySettings(secret_key="change-me"))
+
+
+def test_settings_demo_password_missing_in_production() -> None:
+    # Verify that missing demo credentials in Production environment fail validation
+    with pytest.raises(ValidationError, match="Production configuration error: DEMO_PASSWORD"):
+        Settings(
+            app=ApplicationSettings(environment=Environment.PRODUCTION),
+            demo=DemoSettings(mode=False, email="demo@atlas.com", password="")
+        )
+
+
+def test_settings_demo_password_placeholder_validation() -> None:
+    # Verify that placeholder/insecure default values for DEMO_PASSWORD fail validation
+    with pytest.raises(ValidationError, match="Demo password cannot use insecure placeholder or default value"):
+        Settings(
+            app=ApplicationSettings(environment=Environment.DEVELOPMENT),
+            demo=DemoSettings(mode=True, email="demo@atlas.com", password="demo-secure-pass-1234")
+        )
+

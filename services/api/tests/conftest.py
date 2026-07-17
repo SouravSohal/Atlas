@@ -1,3 +1,10 @@
+import os
+
+# Inject secure local defaults to pass startup validation constraints in test runs
+os.environ.setdefault("JWT_SECRET", "dev-only-local-secret-key-for-atlas-stadium-auth-system-do-not-use-in-production")
+os.environ.setdefault("DEMO_EMAIL", "demo@atlas.com")
+os.environ.setdefault("DEMO_PASSWORD", "dev-only-secure-demo-password-9876-unsecure-for-prod")
+
 import pytest
 from fastapi.testclient import TestClient
 

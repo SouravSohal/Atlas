@@ -46,8 +46,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             from atlas_core.domain.enums.user_role import UserRole
             from firebase_admin import auth
 
-            demo_email = (settings.demo.email or "demo@atlas.com").strip().lower()
-            demo_password = settings.demo.password or "demo-secure-pass-1234"
+            demo_email = settings.demo.email.strip().lower()
+            demo_password = settings.demo.password
             role_str = settings.demo.role.lower().replace(" ", "_")
             try:
                 demo_role = UserRole(role_str)

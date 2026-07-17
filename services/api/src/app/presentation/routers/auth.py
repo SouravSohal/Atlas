@@ -75,7 +75,7 @@ async def login(
     display_name = auth_data.get("displayName") or email_clean.split("@")[0]
 
     # Assign role statelessly based on settings or default
-    demo_email = (settings.demo.email or "demo@atlas.com").strip().lower()
+    demo_email = settings.demo.email.strip().lower() if settings.demo.email else ""
     if email_clean == demo_email:
         role_str = settings.demo.role.lower().replace(" ", "_")
     else:
@@ -138,7 +138,7 @@ async def refresh(
     email = token_data.get("email", "")
 
     # Assign role statelessly
-    demo_email = (settings.demo.email or "demo@atlas.com").strip().lower()
+    demo_email = settings.demo.email.strip().lower() if settings.demo.email else ""
     if email.strip().lower() == demo_email:
         role_str = settings.demo.role.lower().replace(" ", "_")
     else:

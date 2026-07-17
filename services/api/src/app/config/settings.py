@@ -1,6 +1,8 @@
 from functools import lru_cache
+import os
+from typing import Any
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.config.constants import (
@@ -165,7 +167,7 @@ class SecuritySettings(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     secret_key: str = Field(
-        default="change-me-in-production-use-strong-secret",
+        default="",
         validation_alias=AliasChoices("SECURITY__SECRET_KEY", "JWT_SECRET"),
         description="Secret key for signing tokens.",
     )
@@ -179,7 +181,7 @@ class SecuritySettings(BaseModel):
     @classmethod
     def secret_key_not_empty(cls, v: str) -> str:
         """Validates that secret key is not empty."""
-        if not v.strip():
+        if not v or not v.strip():
             raise ValueError("Secret key cannot be empty")
         return v
 
@@ -229,12 +231,12 @@ class DemoSettings(BaseModel):
         description="Whether demo mode is enabled."
     )
     email: str = Field(
-        default="demo@atlas.com",
+        default="",
         validation_alias=AliasChoices("DEMO_EMAIL"),
         description="Demo account email."
     )
     password: str = Field(
-        default="demo-secure-pass-1234",
+        default="",
         validation_alias=AliasChoices("DEMO_PASSWORD"),
         description="Demo account password."
     )
@@ -331,6 +333,100 @@ class Settings(BaseSettings):
     demo: DemoSettings = Field(default_factory=DemoSettings)
     rate_limits: RateLimitSettings = Field(default_factory=RateLimitSettings)
     cache: CacheSettings = Field(default_factory=CacheSettings)
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_flat_env_vars(cls, data: Any) -> Any:
+        """Bridges flat environment variables into their nested configuration fields."""
+        if not isinstance(data, dict):
+            data = {}
+
+        # 1. Map JWT_SECRET / SECURITY__SECRET_KEY to security.secret_key
+        jwt_secret = os.environ.get("JWT_SECRET") or os.environ.get("SECURITY__SECRET_KEY")
+        if jwt_secret:
+            if "security" not in data:
+                data["security"] = {}
+            if isinstance(data["security"], dict) and "secret_key" not in data["security"]:
+                data["security"]["secret_key"] = jwt_secret
+
+        # 2. Map DEMO_EMAIL & DEMO_PASSWORD to demo config
+        demo_email = os.environ.get("DEMO_EMAIL")
+        if demo_email:
+            if "demo" not in data:
+                data["demo"] = {}
+            if isinstance(data["demo"], dict) and "email" not in data["demo"]:
+                data["demo"]["email"] = demo_email
+
+        demo_password = os.environ.get("DEMO_PASSWORD")
+        if demo_password:
+            if "demo" not in data:
+                data["demo"] = {}
+            if isinstance(data["demo"], dict) and "password" not in data["demo"]:
+                data["demo"]["password"] = demo_password
+
+        # 3. Map GEMINI_API_KEY to gemini.api_key
+        gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GEMINI__API_KEY")
+        if gemini_key:
+            if "gemini" not in data:
+                data["gemini"] = {}
+            if isinstance(data["gemini"], dict) and "api_key" not in data["gemini"]:
+                data["gemini"]["api_key"] = gemini_key
+
+        return data
+
+    @model_validator(mode="after")
+    def validate_secrets_and_credentials(self) -> 'Settings':
+        """Enforces security checks on critical keys and demo credentials at startup."""
+        placeholders = {
+            "change-me",
+            "change-me-in-production-use-strong-secret",
+            "change-me-in-production-use-strong-secret-phrase-here",
+            "password",
+            "secret",
+            "test",
+            "demo",
+            "mock-api-key-replace-in-production",
+        }
+
+        # 1. Validate security.secret_key (JWT Secret)
+        sec_key = self.security.secret_key
+        if not sec_key or not sec_key.strip():
+            raise ValueError(
+                "Security secret key (SECURITY__SECRET_KEY / JWT_SECRET) is missing or empty. "
+                "Please configure a strong secret key in your environment variables."
+            )
+        
+        sec_key_clean = sec_key.strip().lower()
+        if sec_key_clean in placeholders or any(p == sec_key_clean for p in placeholders):
+            raise ValueError(
+                f"Security secret key (SECURITY__SECRET_KEY / JWT_SECRET) cannot use insecure placeholder value: '{sec_key}'"
+            )
+
+        # 2. Validate Demo Credentials
+        is_prod = self.app.environment == Environment.PRODUCTION
+        is_dev = self.app.environment == Environment.DEVELOPMENT
+        is_demo = self.demo.mode
+
+        if is_prod:
+            if not self.demo.password or not self.demo.password.strip():
+                raise ValueError("Production configuration error: DEMO_PASSWORD must be explicitly configured in Production.")
+            if not self.demo.email or not self.demo.email.strip():
+                raise ValueError("Production configuration error: DEMO_EMAIL must be explicitly configured in Production.")
+        
+        if is_demo or is_dev:
+            if not self.demo.password or not self.demo.password.strip():
+                raise ValueError("Demo/Development configuration error: DEMO_PASSWORD must be explicitly configured in Development or Demo mode.")
+            if not self.demo.email or not self.demo.email.strip():
+                raise ValueError("Demo/Development configuration error: DEMO_EMAIL must be explicitly configured in Development or Demo mode.")
+
+        if self.demo.password:
+            demo_pass_clean = self.demo.password.strip().lower()
+            if demo_pass_clean in placeholders or demo_pass_clean == "demo-secure-pass-1234":
+                raise ValueError(
+                    f"Demo password cannot use insecure placeholder or default value: '{self.demo.password}'"
+                )
+
+        return self
 
 
 @lru_cache

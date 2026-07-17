@@ -51,7 +51,7 @@ class FirebaseAuthProvider:
         user_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, f"firebase:{uid}")
 
         # Extract role: override for demo account, otherwise default to fan
-        demo_email = (self.settings.demo.email or "demo@atlas.com").strip().lower()
+        demo_email = self.settings.demo.email.strip().lower() if self.settings.demo.email else ""
         if email.strip().lower() == demo_email:
             role_str = self.settings.demo.role.lower().replace(" ", "_")
         else:
