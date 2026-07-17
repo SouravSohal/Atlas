@@ -1,3 +1,10 @@
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+// Derive the WebSocket URL dynamically from the API base URL to ensure environment parity
+const deriveWsUrl = (apiBase: string): string => {
+  return apiBase.replace(/^http/, "ws") + "/ws";
+};
+
 export interface AppConfig {
   apiUrl: string;
   wsUrl: string;
@@ -17,8 +24,8 @@ export interface AppConfig {
 }
 
 export const envConfig: AppConfig = {
-  apiUrl: import.meta.env.VITE_API_URL || "http://localhost:8000",
-  wsUrl: import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws",
+  apiUrl: apiBaseUrl,
+  wsUrl: import.meta.env.VITE_WS_URL || deriveWsUrl(apiBaseUrl),
   environment: import.meta.env.VITE_ENVIRONMENT || "development",
   geminiModel: import.meta.env.VITE_GEMINI_MODEL || "gemini-2.5-flash",
   appVersion: import.meta.env.VITE_APP_VERSION || "v0.9.4-rc2",

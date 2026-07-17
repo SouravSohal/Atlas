@@ -1,16 +1,21 @@
-# Exclude virtual environments and caches
-.venv/
-venv/
-env/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
+# Exclude virtual environments and caches recursively
+**/.venv/
+**/venv/
+**/env/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.coverage
+**/htmlcov/
+
+# Exclude node modules and build outputs recursively
+**/node_modules/
+**/dist/
+**/dist-ssr/
 
 # Exclude git metadata
 .git/
@@ -30,9 +35,6 @@ htmlcov/
 .env.example
 *.log
 scratch/
-
-# Exclude frontend applications (only building backend services/api)
-apps/
 
 # Exclude documentation and local tools
 docs/

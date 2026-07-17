@@ -400,6 +400,26 @@ class Settings(BaseSettings):
             if isinstance(data["firestore"], dict) and "database" not in data["firestore"]:
                 data["firestore"]["database"] = firestore_db
 
+        # 7. Map ENVIRONMENT / APP_ENV / APP__ENVIRONMENT to app.environment
+        app_env = os.environ.get("ENVIRONMENT") or os.environ.get("APP_ENV") or os.environ.get("APP__ENVIRONMENT")
+        if app_env:
+            if "app" not in data:
+                data["app"] = {}
+            if isinstance(data["app"], dict) and "environment" not in data["app"]:
+                data["app"]["environment"] = app_env
+
+        # 8. Map APP_DEBUG / APP__DEBUG to app.debug
+        app_debug = os.environ.get("APP_DEBUG") or os.environ.get("APP__DEBUG")
+        if app_debug is not None:
+            if "app" not in data:
+                data["app"] = {}
+            if isinstance(data["app"], dict) and "debug" not in data["app"]:
+                if isinstance(app_debug, str):
+                    is_debug = app_debug.strip().lower() in ("true", "1", "yes")
+                else:
+                    is_debug = bool(app_debug)
+                data["app"]["debug"] = is_debug
+
         return data
 
     @model_validator(mode="after")

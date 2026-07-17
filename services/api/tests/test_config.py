@@ -104,3 +104,19 @@ def test_settings_demo_password_placeholder_validation() -> None:
             demo=DemoSettings(mode=True, email="demo@atlas.com", password="demo-secure-pass-1234")
         )
 
+
+def test_environment_mapping_from_env_var(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Arrange
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("JWT_SECRET", "super-secret-key-that-is-very-long-and-secure")
+    monkeypatch.setenv("DEMO_EMAIL", "production-demo@atlas.com")
+    monkeypatch.setenv("DEMO_PASSWORD", "production-secure-demo-password-9876")
+    monkeypatch.setenv("FIREBASE_WEB_API_KEY", "real-firebase-api-key")
+
+    # Act
+    settings = Settings()
+
+    # Assert
+    assert settings.app.environment == Environment.PRODUCTION
+
+
