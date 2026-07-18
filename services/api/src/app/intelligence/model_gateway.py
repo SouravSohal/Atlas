@@ -41,7 +41,7 @@ class ModelGateway:
         response_schema: type | None = None,
         tools: list[Any] | None = None,
     ) -> str:
-        """Calls Gemini API using google-genai client with retries and structured logging."""
+        """Calls Gemini API using google-genai client with retries, fallback models, and logging."""
         target_model = model or self.default_model
         logger.info(
             "Sending request to Gemini API",
@@ -63,18 +63,33 @@ class ModelGateway:
 
         config = types.GenerateContentConfig(**config_args)
 
-        try:
-            response = await self.client.aio.models.generate_content(
-                model=target_model,
-                contents=prompt,
-                config=config,
-            )
-        except Exception as e:
-            logger.error("Gemini API invocation failed", error=str(e))
-            raise ModelGatewayException(f"Gemini API invocation failed: {e}") from e
+        # Build fallback model chain to prevent 429 quota exhaustion from failing operations
+        models_to_try = [target_model]
+        fallbacks = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"]
+        for fb in fallbacks:
+            if fb != target_model:
+                models_to_try.append(fb)
 
-        text = response.text
-        if text is None:
-            raise ModelGatewayException("Gemini API returned an empty response text.")
+        last_error = None
+        for current_model in models_to_try:
+            try:
+                response = await self.client.aio.models.generate_content(
+                    model=current_model,
+                    contents=prompt,
+                    config=config,
+                )
+                text = response.text
+                if text is not None:
+                    return text
+                logger.warning("Gemini API returned an empty response text, attempting next model in chain.", model=current_model)
+            except Exception as e:
+                last_error = e
+                logger.warning(
+                    "Gemini API invocation failed, attempting model fallback",
+                    attempted_model=current_model,
+                    error=str(e)
+                )
 
-        return text
+        error_msg = f"All Gemini API models failed in fallback chain. Last error: {last_error}"
+        logger.error(error_msg)
+        raise ModelGatewayException(error_msg) from last_error
