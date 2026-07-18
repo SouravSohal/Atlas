@@ -95,3 +95,41 @@ For a comprehensive guide, read the documentation files in this order:
 2. [ENGINEERING_GUIDE.md](file:///home/kenx1kaneki/Desktop/Codesstuff/Atlas/docs/ENGINEERING_GUIDE.md)
 3. [IMPLEMENTATION_PLAN.md](file:///home/kenx1kaneki/Desktop/Codesstuff/Atlas/docs/IMPLEMENTATION_PLAN.md)
 4. [DEPLOYMENT.md](file:///home/kenx1kaneki/Desktop/Codesstuff/Atlas/docs/DEPLOYMENT.md)
+
+---
+
+## 7. Production Deployment Workflow
+
+ATLAS features an automated, idempotent production deployment workflow targeting Google Cloud Run and Artifact Registry.
+
+### Deployment Scripts Quickstart
+
+*   **Deploy Entire Stack:**
+    ```bash
+    ./deploy_all.sh
+    ```
+    This script coordinates the backend and frontend deployments, then verifies the service revisions and health endpoints.
+
+*   **Deploy Backend Only:**
+    ```bash
+    ./deploy_backend.sh
+    ```
+    Builds the FastAPI backend image, registers `atlas-repo` repository in Artifact Registry, configures Firestore/IAM credentials, and deploys to Cloud Run.
+
+*   **Deploy Frontend Only:**
+    ```bash
+    ./deploy_frontend.sh
+    ```
+    Retrieves the active backend URL, extracts Firebase configuration, compiles the React assets, and deploys the Nginx web server to Cloud Run.
+
+*   **Verify Deployment Health:**
+    ```bash
+    ./verify_deployment.sh
+    ```
+    Checks Cloud Run revision statuses and pings health URLs for both services.
+
+*   **Rollback Traffic:**
+    ```bash
+    ./rollback.sh [atlas-api|atlas-frontend]
+    ```
+    Promotes the previous successful revision of the chosen service to receive 100% traffic, guaranteeing safe rollbacks.
