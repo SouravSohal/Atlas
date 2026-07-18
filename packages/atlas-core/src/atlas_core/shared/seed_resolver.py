@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+
 def resolve_seed_data_path() -> Path:
     """Resolves the path to the stadium_seed_data.json file.
     

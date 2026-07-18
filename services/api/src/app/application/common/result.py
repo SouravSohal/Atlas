@@ -1,3 +1,5 @@
+from typing import cast
+
 class Result[T]:
     """A generic wrapper representing the result of an application or domain operation."""
 
@@ -28,7 +30,7 @@ class Result[T]:
     def value(self) -> T:
         if not self._success:
             raise ValueError("Cannot access value of a failed result.")
-        return self._value  # type: ignore[return-value]
+        return cast(T, self._value)
 
     @property
     def error(self) -> str:

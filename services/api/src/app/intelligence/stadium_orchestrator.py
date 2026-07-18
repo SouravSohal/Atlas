@@ -1,7 +1,8 @@
 import json
+from typing import Any
+
 import structlog
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
 
 from app.intelligence.model_gateway import ModelGateway
 
@@ -10,9 +11,9 @@ logger = structlog.get_logger()
 class StadiumAIResponse(BaseModel):
     """Structured executive AI response for the stadium operations team. Excludes chain-of-thought steps."""
     executive_summary: str = Field(description="High-level operational overview of Aurelia Arena.")
-    predictions: List[str] = Field(description="AI predictive statements regarding crowd density, queue waits, and risk cascades.")
+    predictions: list[str] = Field(description="AI predictive statements regarding crowd density, queue waits, and risk cascades.")
     explanation: str = Field(description="Natural language breakdown explaining why current recommendations were generated.")
-    risk_assessment: List[str] = Field(description="Prioritized threat vectors and potential cascading propagation risks.")
+    risk_assessment: list[str] = Field(description="Prioritized threat vectors and potential cascading propagation risks.")
     decision_justification: str = Field(description="Cognitive justification for the approved safety and routing actions.")
 
 class StadiumAIOrchestrator:
@@ -23,12 +24,12 @@ class StadiumAIOrchestrator:
 
     async def generate_briefing(
         self,
-        stadium_state: Dict[str, Any],
-        active_incidents: List[Dict[str, Any]],
-        telemetry: Dict[str, Any],
-        recommendations: List[Dict[str, Any]],
-        timeline: List[str],
-        graph_summary: Dict[str, Any]
+        stadium_state: dict[str, Any],
+        active_incidents: list[dict[str, Any]],
+        telemetry: dict[str, Any],
+        recommendations: list[dict[str, Any]],
+        timeline: list[str],
+        graph_summary: dict[str, Any]
     ) -> StadiumAIResponse:
         """Assembles variables into the prompt context and queries Gemini for a structured response schema."""
         logger.info(

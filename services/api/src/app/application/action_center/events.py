@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field
+from typing import Any
 from uuid import UUID
+
 from atlas_core.domain.events.base import DomainEvent
+
 
 @dataclass(frozen=True, kw_only=True)
 class DecisionApproved(DomainEvent):
@@ -27,7 +30,7 @@ class DecisionSimulated(DomainEvent):
     """Raised when an operator runs a simulation on a decision."""
     decision_id: UUID
     operator_id: str
-    parameters: dict = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
 
 @dataclass(frozen=True, kw_only=True)
 class DecisionDelegated(DomainEvent):

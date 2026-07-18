@@ -1,11 +1,13 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
 from app.application.operational_state.state_manager import OperationalStateManager
 from app.application.recommendations.engine import RecommendationEngine
+from app.application.scenario_simulator.analyzer import ImpactAnalyzer
+from app.application.scenario_simulator.executor import ScenarioExecutor
+from app.application.scenario_simulator.history import SimulationHistory
 from app.application.scenario_simulator.models import Scenario, SimulationRecord
 from app.application.scenario_simulator.validator import ScenarioValidator
-from app.application.scenario_simulator.executor import ScenarioExecutor
-from app.application.scenario_simulator.analyzer import ImpactAnalyzer
-from app.application.scenario_simulator.history import SimulationHistory
+
 
 class SimulationService:
     """Orchestrates scenario creation, state cloning, rule execution, AI analysis, and history mapping."""
@@ -49,7 +51,7 @@ class SimulationService:
         
         # Add generated recommendation details to direct effects
         direct_effects["simulated_recommendations"] = [
-            {"action_type": rec.action_type.value, "priority": rec.priority.value, "details": rec.details}
+            {"action_type": rec.action_type, "priority": rec.priority.value, "details": rec.details}
             for rec in simulated_recs
         ]
 

@@ -1,18 +1,18 @@
-import re
-import time
 import asyncio
 import hashlib
-from typing import Any, Dict, List, Tuple
+import re
+import time
+
 import structlog
-from fastapi import Request, HTTPException, status, Depends
 from dependency_injector.wiring import Provide, inject
+from fastapi import Depends, HTTPException, Request, status
 
 from app.config import Settings
 from app.dependencies.container import ApplicationContainer
 
 logger = structlog.get_logger()
 
-def parse_rate(rate_str: str) -> Tuple[int, int]:
+def parse_rate(rate_str: str) -> tuple[int, int]:
     """Parses a rate limit string like '5/minute' into (requests_count, duration_in_seconds)."""
     match = re.match(r"^(\d+)\s*/\s*(second|minute|hour|day)$", rate_str.strip().lower())
     if not match:
@@ -21,21 +21,21 @@ def parse_rate(rate_str: str) -> Tuple[int, int]:
     unit = match.group(2)
     if unit == "second":
         return count, 1
-    elif unit == "minute":
+    if unit == "minute":
         return count, 60
-    elif unit == "hour":
+    if unit == "hour":
         return count, 3600
-    elif unit == "day":
+    if unit == "day":
         return count, 86400
     return count, 60
 
 class InMemorySlidingWindowLimiter:
     """A thread-safe in-memory sliding window rate limiter."""
     def __init__(self) -> None:
-        self._windows: Dict[str, List[float]] = {}
+        self._windows: dict[str, list[float]] = {}
         self._lock = asyncio.Lock()
 
-    async def is_rate_limited(self, key: str, max_requests: int, window_seconds: int) -> Tuple[bool, int]:
+    async def is_rate_limited(self, key: str, max_requests: int, window_seconds: int) -> tuple[bool, int]:
         """Checks if a request is rate limited for the given key.
 
         Returns (is_limited, retry_after_seconds).

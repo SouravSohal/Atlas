@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from app.intelligence import AIOrchestrator
-from app.intelligence.timeline.models import TimelineNarratorResponse
 from app.intelligence.timeline.event_aggregator import EventAggregator
-from app.intelligence.timeline.timeline_formatter import TimelineFormatter
-from app.intelligence.timeline.summary_generator import SummaryGenerator
+from app.intelligence.timeline.models import TimelineNarratorResponse
 from app.intelligence.timeline.story_builder import TimelineNarratorPrompt
+from app.intelligence.timeline.summary_generator import SummaryGenerator
+from app.intelligence.timeline.timeline_formatter import TimelineFormatter
+
 
 class TimelineNarrator:
     """ATLAS AI Timeline Narrator facade responsible for converting logs into human-readable narratives."""
@@ -29,15 +30,15 @@ class TimelineNarrator:
 
     async def narrate(
         self,
-        domain_events: List[Any],
-        operational_states: List[Any],
-        incidents: List[Any],
-        recommendations: List[Any],
+        domain_events: list[Any],
+        operational_states: list[Any],
+        incidents: list[Any],
+        recommendations: list[Any],
         language: str = "English",
         style: str = "detailed narrative",
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        incident_centric_id: Optional[str] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        incident_centric_id: str | None = None,
     ) -> TimelineNarratorResponse:
         """Processes and formats raw telemetry to execute cognitive timeline narration."""
         # 1. Aggregate

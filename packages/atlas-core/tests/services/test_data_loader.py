@@ -1,7 +1,6 @@
-import pytest
-import os
 from atlas_core.domain.services.data_loader import StadiumDataLoader
 from atlas_core.shared import resolve_seed_data_path
+
 
 def test_stadium_data_loader_parsing():
     # 1. Load the generated seed JSON dataset
@@ -9,7 +8,7 @@ def test_stadium_data_loader_parsing():
     
     assert seed_file_path.exists(), "Stadium seed data JSON file must exist."
 
-    with open(seed_file_path, "r", encoding="utf-8") as f:
+    with open(seed_file_path, encoding="utf-8") as f:
         json_content = f.read()
 
     # 2. Run loader

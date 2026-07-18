@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+
 from atlas_core.domain.entities.base import BaseEntity
 from atlas_core.domain.entities.operational_state import OperationalState
+
 
 @dataclass(kw_only=True)
 class StadiumNode(BaseEntity):

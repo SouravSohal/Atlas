@@ -1,5 +1,6 @@
 from app.intelligence.prompts.base import BasePrompt, PromptMetadata, PromptVersion
 
+
 class TimelineNarratorPrompt(BasePrompt):
     """Structured prompt template for the Timeline Narrator Agent."""
 

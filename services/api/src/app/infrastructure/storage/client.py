@@ -1,5 +1,5 @@
 import structlog
-from google.cloud import storage  # type: ignore[attr-defined]
+import google.cloud.storage as storage
 
 logger = structlog.get_logger()
 

@@ -1,9 +1,10 @@
-from typing import Any, List
+from typing import Any
+
 
 class TimelineFormatter:
     """Formats aggregated and sorted events into clear, structured textual outputs."""
 
-    def format(self, events: List[dict[str, Any]]) -> str:
+    def format(self, events: list[dict[str, Any]]) -> str:
         """Converts raw list items into timestamped string records."""
         if not events:
             return "No operational events logged during this timeframe."

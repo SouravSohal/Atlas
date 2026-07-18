@@ -1,5 +1,6 @@
 from app.intelligence.prompts.base import BasePrompt, PromptMetadata, PromptVersion
 
+
 class DecisionEnginePrompt(BasePrompt):
     """Structured prompt template for the AI Decision Engine."""
 

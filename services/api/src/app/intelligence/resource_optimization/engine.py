@@ -1,14 +1,15 @@
 import json
-from typing import Any, List
+from typing import Any
 
 from app.intelligence import AIOrchestrator
-from app.intelligence.resource_optimization.models import ResourceOptimizationResult, AllocationPlan
-from app.intelligence.resource_optimization.volunteer import VolunteerAllocator
-from app.intelligence.resource_optimization.security import SecurityAllocator
-from app.intelligence.resource_optimization.medical import MedicalAllocator
 from app.intelligence.resource_optimization.gate import GateOptimizer
-from app.intelligence.resource_optimization.queue import QueueBalancer
+from app.intelligence.resource_optimization.medical import MedicalAllocator
+from app.intelligence.resource_optimization.models import AllocationPlan, ResourceOptimizationResult
 from app.intelligence.resource_optimization.prompts import ResourceOptimizationPrompt
+from app.intelligence.resource_optimization.queue import QueueBalancer
+from app.intelligence.resource_optimization.security import SecurityAllocator
+from app.intelligence.resource_optimization.volunteer import VolunteerAllocator
+
 
 class ResourceOptimizationEngine:
     """Facade orchestrating rules-based resource allocations and cognitive AI justifications."""
@@ -34,9 +35,9 @@ class ResourceOptimizationEngine:
     async def optimize(
         self,
         overview: Any,
-        states: List[Any],
-        incidents: List[Any],
-        recommendations: List[Any]
+        states: list[Any],
+        incidents: list[Any],
+        recommendations: list[Any]
     ) -> ResourceOptimizationResult:
         """Calculates allocation metrics deterministically and justifies strategies using the AI Orchestrator."""
         # Convert state domain objects into simple dictionaries for rule allocations

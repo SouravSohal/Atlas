@@ -1,19 +1,21 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
+import pytest
+
 from app.intelligence import AIOrchestrator, PromptRegistry
 from app.intelligence.decision_engine import (
+    ConfidenceCalculator,
     DecisionContext,
-    DecisionItem,
+    DecisionEngine,
     DecisionEngineResult,
     DecisionEvaluator,
+    DecisionHistory,
+    DecisionItem,
     DecisionPrioritizer,
     RiskScorer,
-    ConfidenceCalculator,
-    DecisionHistory,
-    DecisionEngine,
 )
+
 
 @pytest.fixture
 def mock_orchestrator() -> MagicMock:

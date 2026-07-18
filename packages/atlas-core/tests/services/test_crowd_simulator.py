@@ -1,17 +1,15 @@
-import pytest
-import os
-from uuid import UUID
 
+from atlas_core.domain.services.crowd_simulator import CrowdSimulationEngine
 from atlas_core.domain.services.data_loader import StadiumDataLoader
-from atlas_core.domain.services.crowd_simulator import CrowdSimulationEngine, SpectatorAgent
 from atlas_core.shared import resolve_seed_data_path
+
 
 def test_agent_crowd_simulator_flow():
     # 1. Setup Stadium via Seed data loader
     seed_file_path = resolve_seed_data_path()
     assert seed_file_path.exists()
 
-    with open(seed_file_path, "r", encoding="utf-8") as f:
+    with open(seed_file_path, encoding="utf-8") as f:
         json_content = f.read()
 
     stadium = StadiumDataLoader.load_from_json(json_content)

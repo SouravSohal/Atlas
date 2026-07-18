@@ -3,9 +3,8 @@ from fastapi import APIRouter, Depends
 
 from app.config import Settings
 from app.dependencies import ApplicationContainer
-from app.presentation.responses import ApiResponse
-
 from app.dependencies.auth import get_current_user
+from app.presentation.responses import ApiResponse
 
 router = APIRouter(tags=["System"], dependencies=[Depends(get_current_user)])
 

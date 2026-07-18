@@ -1,18 +1,19 @@
-from datetime import datetime, UTC
-from typing import Any, List
+from datetime import UTC, datetime
+from typing import Any
+
 
 class EventAggregator:
     """Aggregates and chronologically sorts domain events, incidents, recommendations, and operational state modifications."""
 
     def aggregate(
         self,
-        domain_events: List[Any],
-        operational_states: List[Any],
-        incidents: List[Any],
-        recommendations: List[Any],
-    ) -> List[dict[str, Any]]:
+        domain_events: list[Any],
+        operational_states: list[Any],
+        incidents: list[Any],
+        recommendations: list[Any],
+    ) -> list[dict[str, Any]]:
         """Compiles raw domain lists into a unified, timestamp-sorted list of event dictionaries."""
-        aggregated: List[dict[str, Any]] = []
+        aggregated: list[dict[str, Any]] = []
 
         # 1. Parse Domain Events
         for ev in domain_events:
@@ -81,13 +82,15 @@ class EventAggregator:
             })
 
         # Helper to normalize timestamp for sorting
-        def parse_ts(item):
+        def parse_ts(item: dict[str, Any]) -> datetime:
             ts = item["timestamp"]
             if isinstance(ts, str):
                 try:
                     return datetime.fromisoformat(ts.replace("Z", "+00:00"))
                 except ValueError:
                     return datetime.now(UTC)
-            return ts
+            if isinstance(ts, datetime):
+                return ts
+            return datetime.now(UTC)
 
         return sorted(aggregated, key=parse_ts)

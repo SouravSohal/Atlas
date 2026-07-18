@@ -12,11 +12,10 @@ from app.application.incidents import (
     UpdateIncidentRequest,
     UpdateIncidentUseCase,
 )
+from app.dependencies.auth import require_staff
 from app.dependencies.container import ApplicationContainer
 from app.infrastructure.cache.manager import cache_manager
 from app.presentation.responses import ApiResponse
-
-from app.dependencies.auth import require_staff
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"], dependencies=[Depends(require_staff)])
 

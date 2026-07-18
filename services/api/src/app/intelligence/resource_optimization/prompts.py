@@ -1,5 +1,6 @@
 from app.intelligence.prompts.base import BasePrompt, PromptMetadata, PromptVersion
 
+
 class ResourceOptimizationPrompt(BasePrompt):
     """Structured prompt template for the Resource Optimization Engine."""
 

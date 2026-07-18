@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from atlas_core.domain.enums.user_role import UserRole
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
@@ -7,6 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from app.config import Settings
 from app.dependencies.auth import get_current_user
 from app.infrastructure.auth.firebase import FirebaseAuthProvider
+
 
 @pytest.fixture
 def mock_settings() -> Settings:
@@ -110,8 +112,10 @@ async def test_get_current_user_dependency_unauthorized(auth_provider: FirebaseA
     assert "Token invalid" in exc_info.value.detail
 
 
-from app.dependencies.auth import require_admin, require_staff, require_commander_or_above
 from atlas_core.domain.entities.user import User
+
+from app.dependencies.auth import require_admin, require_staff
+
 
 @pytest.mark.asyncio
 async def test_require_admin_success() -> None:

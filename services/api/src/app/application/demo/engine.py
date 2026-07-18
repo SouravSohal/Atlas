@@ -1,17 +1,17 @@
-from typing import List, Optional
 
+from typing import Any
 from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.recommendation import Recommendation
 from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
 from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
+
+from app.application.demo.factory import ScenarioFactory
+from app.application.demo.registry import ScenarioRegistry
+from app.application.demo.runner import ScenarioRunner
+from app.application.demo.scheduler import ScenarioScheduler
 from app.application.events import EventPublisher
 from app.application.incidents.use_cases import CreateIncidentUseCase
 
-from app.application.demo.definition import ScenarioDefinition, ScenarioState
-from app.application.demo.registry import ScenarioRegistry
-from app.application.demo.factory import ScenarioFactory
-from app.application.demo.runner import ScenarioRunner
-from app.application.demo.scheduler import ScenarioScheduler
 
 class DemoScenarioEngine:
     """Facade orchestrating registered scenarios, scheduling execution, and replaying events."""
@@ -61,7 +61,7 @@ class DemoScenarioEngine:
         """Configures playback speed multiplier."""
         await self.scheduler.set_speed(speed)
 
-    def get_status(self) -> dict:
+    def get_status(self) -> dict[str, Any]:
         """Returns details on running scenario state and step progresses."""
         curr = self.scheduler.current_scenario
         return {

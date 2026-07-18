@@ -1,6 +1,8 @@
 from abc import abstractmethod
+
 from atlas_core.domain.entities.user import User
 from atlas_core.domain.repositories.base import Repository
+
 
 class UserRepository(Repository[User]):
     """Async repository interface for User entities."""

@@ -1,9 +1,10 @@
-from typing import Dict, List, Any
+from typing import Any
+
 
 class MedicalAllocator:
     """Computes medical responder allocations based on medical incidents and sector density."""
 
-    def allocate(self, zones: List[Dict[str, Any]], incidents: List[Dict[str, Any]]) -> Dict[str, int]:
+    def allocate(self, zones: list[dict[str, Any]], incidents: list[dict[str, Any]]) -> dict[str, int]:
         """Maps zone IDs to recommended medical teams count."""
         allocations = {}
         for zone in zones:

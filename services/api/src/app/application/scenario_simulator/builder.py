@@ -1,15 +1,17 @@
+from typing import Any
 from uuid import UUID
-from typing import Any, Optional
+
 from app.application.scenario_simulator.models import Scenario
+
 
 class ScenarioBuilder:
     """Builder pattern for creating Scenario configurations fluently."""
 
     def __init__(self) -> None:
-        self._scenario_type: Optional[str] = None
-        self._zone_id: Optional[UUID] = None
+        self._scenario_type: str | None = None
+        self._zone_id: UUID | None = None
         self._severity: str = "medium"
-        self._description: Optional[str] = None
+        self._description: str | None = None
         self._params: dict[str, Any] = {}
 
     def with_type(self, scenario_type: str) -> "ScenarioBuilder":

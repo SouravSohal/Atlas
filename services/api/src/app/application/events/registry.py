@@ -65,6 +65,6 @@ class EventRegistry:
 def register_handler[T: DomainEvent](event_type: type[T]) -> Callable[[type[EventHandler[T]]], type[EventHandler[T]]]:
     """Decorator to mark an EventHandler class with its target DomainEvent type."""
     def decorator(cls: type[EventHandler[T]]) -> type[EventHandler[T]]:
-        cls.__event_type__ = event_type  # type: ignore[attr-defined]
+        setattr(cls, "__event_type__", event_type)
         return cls
     return decorator

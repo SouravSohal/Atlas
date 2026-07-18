@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
+
 from atlas_core.domain.entities.base import BaseEntity
 from atlas_core.domain.entities.stadium_node import StadiumNode
-from atlas_core.domain.value_objects.stadium_edge import StadiumEdge
 from atlas_core.domain.value_objects.simulation_tick import SimulationTick
+from atlas_core.domain.value_objects.stadium_edge import StadiumEdge
+
 
 @dataclass(kw_only=True)
 class Stadium(BaseEntity):

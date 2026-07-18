@@ -1,9 +1,10 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from dependency_injector.wiring import Provide, inject
-
+from typing import Callable, Awaitable
 from atlas_core.domain.entities.user import User
 from atlas_core.domain.enums.user_role import UserRole
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from app.dependencies.container import ApplicationContainer
 from app.infrastructure.auth.firebase import FirebaseAuthProvider
 
@@ -32,7 +33,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         ) from err
 
-def check_role(required_roles: list[UserRole]):
+def check_role(required_roles: list[UserRole]) -> Callable[[User], Awaitable[User]]:
     """Returns a dependency that validates the current user's role."""
     async def _check(user: User = Depends(get_current_user)) -> User:
         if user.role not in required_roles:

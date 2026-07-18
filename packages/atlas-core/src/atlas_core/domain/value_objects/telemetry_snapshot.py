@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
+
 from atlas_core.domain.value_objects.base import ValueObject
+
 
 @dataclass(frozen=True)
 class TelemetrySnapshot(ValueObject):

@@ -38,7 +38,8 @@ class FirestoreClient:
 
     async def close(self) -> None:
         """Closes the Firestore client connection."""
-        await self.client.close()  # type: ignore[no-untyped-call]
+        close_method = getattr(self.client, "close")
+        await close_method()
         logger.info("Closed Firestore AsyncClient connection")
 
     def session(self) -> "FirestoreSession":

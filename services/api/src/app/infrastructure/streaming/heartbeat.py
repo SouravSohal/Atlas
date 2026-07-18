@@ -1,7 +1,8 @@
 import asyncio
 import json
+
 import structlog
-from typing import Optional
+
 from app.infrastructure.streaming.manager import WebSocketManager
 
 logger = structlog.get_logger()
@@ -12,7 +13,7 @@ class HeartbeatService:
     def __init__(self, websocket_manager: WebSocketManager, interval_seconds: float = 30.0) -> None:
         self.manager = websocket_manager
         self.interval = interval_seconds
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task[None] | None = None
         self._running = False
 
     async def start(self) -> None:

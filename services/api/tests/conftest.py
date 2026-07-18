@@ -19,9 +19,12 @@ def container() -> ApplicationContainer:
     return ApplicationContainer()
 
 import uuid
-from app.dependencies.auth import get_current_user, require_staff, require_commander_or_above
+
 from atlas_core.domain.entities.user import User
 from atlas_core.domain.enums.user_role import UserRole
+
+from app.dependencies.auth import get_current_user, require_commander_or_above, require_staff
+
 
 @pytest.fixture
 def client() -> TestClient:

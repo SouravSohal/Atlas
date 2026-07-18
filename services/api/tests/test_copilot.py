@@ -1,12 +1,10 @@
-import pytest
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
-from datetime import datetime, UTC
+
+import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies.container import ApplicationContainer
-from app.application.operational_state.snapshot import OperationalSnapshot
-from app.application.operational_state.state_manager import OperationalStateManager
 from app.application.copilot import (
     ChatMessageDTO,
     CopilotChatRequest,
@@ -14,8 +12,11 @@ from app.application.copilot import (
     CopilotPrompt,
     CopilotService,
 )
+from app.application.operational_state.snapshot import OperationalSnapshot
+from app.application.operational_state.state_manager import OperationalStateManager
 from app.intelligence import AIOrchestrator, PromptRegistry
 from app.main import app
+
 
 @pytest.fixture
 def mock_orchestrator() -> MagicMock:
@@ -91,10 +92,12 @@ def test_copilot_chat_endpoint() -> None:
     client = TestClient(app)
     
     # Override auth dependencies locally for this test's client
-    from app.dependencies.auth import get_current_user, require_staff, require_commander_or_above
+    import uuid
+
     from atlas_core.domain.entities.user import User
     from atlas_core.domain.enums.user_role import UserRole
-    import uuid
+
+    from app.dependencies.auth import get_current_user, require_commander_or_above, require_staff
     
     mock_user = User(
         id=uuid.uuid4(),

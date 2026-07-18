@@ -1,4 +1,5 @@
 from app.config.settings import ApplicationSettings
+
 try:
     print("Testing ApplicationSettings manually...")
     a = ApplicationSettings(name="  ")

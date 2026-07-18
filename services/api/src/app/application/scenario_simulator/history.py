@@ -1,6 +1,7 @@
 from uuid import UUID
-from typing import Optional, List
+
 from app.application.scenario_simulator.models import SimulationRecord
+
 
 class SimulationHistory:
     """Manages the history of simulated scenario executions in-memory."""
@@ -12,11 +13,11 @@ class SimulationHistory:
         """Adds a simulation record to the log history."""
         self._history[record.id] = record
 
-    def list(self) -> List[SimulationRecord]:
+    def list(self) -> list[SimulationRecord]:
         """Lists all simulation records sorted by timestamp descending."""
         return sorted(self._history.values(), key=lambda r: r.timestamp, reverse=True)
 
-    def get(self, id: UUID) -> Optional[SimulationRecord]:
+    def get(self, id: UUID) -> SimulationRecord | None:
         """Retrieves a simulation record by its ID."""
         return self._history.get(id)
 

@@ -16,7 +16,8 @@ class FirestoreUnitOfWork:
 
     async def __aenter__(self) -> Self:
         self.transaction = self._transaction
-        await self._transaction.__aenter__()  # type: ignore[no-untyped-call]
+        aenter = getattr(self._transaction, "__aenter__")
+        await aenter()
         return self
 
     async def __aexit__(
@@ -25,6 +26,7 @@ class FirestoreUnitOfWork:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool:
-        result = await self._transaction.__aexit__(exc_type, exc_val, exc_tb)  # type: ignore[no-untyped-call]
+        aexit = getattr(self._transaction, "__aexit__")
+        result = await aexit(exc_type, exc_val, exc_tb)
         self.transaction = None
         return bool(result)

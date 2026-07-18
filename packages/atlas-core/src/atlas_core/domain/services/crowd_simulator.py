@@ -1,11 +1,11 @@
 import random
-import uuid
 from dataclasses import dataclass, field
+from typing import Any
 from uuid import UUID, uuid4
-from typing import List, Dict, Any
 
 from atlas_core.domain.entities.stadium import Stadium
 from atlas_core.domain.services.graph_engine import StadiumGraphEngine
+
 
 @dataclass
 class SpectatorAgent:
@@ -14,7 +14,7 @@ class SpectatorAgent:
     category: str  # "regular", "vip", "media"
     current_node_id: UUID
     destination_node_id: UUID
-    route: List[UUID] = field(default_factory=list)
+    route: list[UUID] = field(default_factory=list)
     route_index: int = 0
     walking_speed: float = 1.2  # meters per second
     patience: float = 1.0       # decodes queue tolerance [0.0, 1.0]
@@ -38,7 +38,7 @@ class CrowdSimulationEngine:
     def __init__(self, stadium: Stadium):
         self.stadium = stadium
         self.graph = StadiumGraphEngine.build_graph(stadium)
-        self.agents: List[SpectatorAgent] = []
+        self.agents: list[SpectatorAgent] = []
 
     def spawn_agents(self, count: int, category: str, start_node_id: UUID, end_node_id: UUID) -> None:
         """Spawns spectator agents at a starting node."""
@@ -54,7 +54,7 @@ class CrowdSimulationEngine:
             agent.calculate_path(self.graph)
             self.agents.append(agent)
 
-    def tick(self, step_duration_minutes: float = 5.0) -> Dict[UUID, int]:
+    def tick(self, step_duration_minutes: float = 5.0) -> dict[UUID, int]:
         """Runs one movement tick, updating agent positions and node queues."""
         step_seconds = step_duration_minutes * 60.0
 

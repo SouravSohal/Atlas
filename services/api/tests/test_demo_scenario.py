@@ -1,25 +1,22 @@
-import pytest
-import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
-from atlas_core.domain.entities.operational_state import OperationalState
-from atlas_core.domain.entities.recommendation import Recommendation
+import pytest
 from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
 from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
+
+from app.application.demo import (
+    DemoScenarioEngine,
+    ScenarioDefinition,
+    ScenarioFactory,
+    ScenarioRegistry,
+    ScenarioRunner,
+    ScenarioState,
+    ScenarioStep,
+)
 from app.application.events import EventPublisher
 from app.application.incidents.use_cases import CreateIncidentUseCase
 
-from app.application.demo import (
-    ScenarioDefinition,
-    ScenarioStep,
-    ScenarioState,
-    ScenarioRegistry,
-    ScenarioFactory,
-    ScenarioRunner,
-    ScenarioScheduler,
-    DemoScenarioEngine,
-)
 
 @pytest.fixture
 def mock_repos() -> tuple[MagicMock, MagicMock, MagicMock, MagicMock]:

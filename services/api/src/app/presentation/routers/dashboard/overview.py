@@ -1,26 +1,26 @@
 from typing import Any
-from fastapi import APIRouter, Depends, Request
-from dependency_injector.wiring import Provide, inject
 
+from atlas_core.domain.entities.incident import Incident
+from atlas_core.domain.entities.operational_state import OperationalState
+from atlas_core.domain.entities.recommendation import Recommendation
+from atlas_core.domain.repositories.incident_repository import IncidentRepository
+from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
+from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
+from atlas_core.domain.repositories.task_repository import TaskRepository
+from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, Depends, Request
+
+from app.application.events import EventPublisher
+from app.application.operational_state.state_manager import OperationalStateManager
 from app.config import Settings
 from app.dependencies.container import ApplicationContainer
-from app.presentation.responses import ApiResponse
 from app.infrastructure.cache.manager import cache_manager, check_cache_bypass
-
-from atlas_core.domain.entities.operational_state import OperationalState
-from atlas_core.domain.entities.incident import Incident
-from atlas_core.domain.entities.recommendation import Recommendation
-from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
-from atlas_core.domain.repositories.incident_repository import IncidentRepository
-from atlas_core.domain.repositories.task_repository import TaskRepository
-from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
-from app.application.operational_state.state_manager import OperationalStateManager
-from app.application.events import EventPublisher
+from app.presentation.responses import ApiResponse
 
 from .models import (
+    DashboardMetricsResponse,
     DashboardOverviewResponse,
     OperationalStateDashboardItem,
-    DashboardMetricsResponse,
 )
 
 router = APIRouter()

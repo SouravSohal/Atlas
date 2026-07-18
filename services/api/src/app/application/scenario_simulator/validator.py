@@ -1,7 +1,7 @@
-from typing import Set
+
 from app.application.scenario_simulator.models import Scenario
 
-SUPPORTED_SCENARIOS: Set[str] = {
+SUPPORTED_SCENARIOS: set[str] = {
     "Gate Closure",
     "Crowd Surge",
     "Medical Emergency",
@@ -14,7 +14,7 @@ SUPPORTED_SCENARIOS: Set[str] = {
     "Evacuation",
 }
 
-VALID_SEVERITIES: Set[str] = {"low", "medium", "high", "critical"}
+VALID_SEVERITIES: set[str] = {"low", "medium", "high", "critical"}
 
 class ScenarioValidator:
     """Validates simulation scenarios before execution."""

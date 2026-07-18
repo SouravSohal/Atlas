@@ -3,9 +3,10 @@ from uuid import UUID
 
 from atlas_core.domain.entities.user import User
 from atlas_core.domain.enums.user_role import UserRole
+
 from app.application.ports.user_repository import UserRepository
 from app.infrastructure.firestore import BaseRepository, CollectionMapper, FirestoreClient
-from google.cloud import firestore
+
 
 class UserMapper(CollectionMapper[User]):
     """Mapper to serialize and deserialize User domain entities to/from Firestore."""

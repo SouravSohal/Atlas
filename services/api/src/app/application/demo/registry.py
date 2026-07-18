@@ -1,11 +1,12 @@
-from typing import Dict, List
+
 from app.application.demo.definition import ScenarioDefinition
+
 
 class ScenarioRegistry:
     """Registry maintaining active demo scenario definitions."""
 
     def __init__(self) -> None:
-        self._scenarios: Dict[str, ScenarioDefinition] = {}
+        self._scenarios: dict[str, ScenarioDefinition] = {}
 
     def register(self, definition: ScenarioDefinition) -> None:
         """Adds a scenario definition to the registry."""
@@ -17,6 +18,6 @@ class ScenarioRegistry:
             raise KeyError(f"Scenario '{name}' is not registered.")
         return self._scenarios[name]
 
-    def list_all(self) -> List[str]:
+    def list_all(self) -> list[str]:
         """Lists all registered scenario names."""
         return list(self._scenarios.keys())

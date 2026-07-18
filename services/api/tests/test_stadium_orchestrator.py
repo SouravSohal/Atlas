@@ -1,9 +1,11 @@
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from app.intelligence.model_gateway import ModelGateway
 from app.intelligence.stadium_orchestrator import StadiumAIOrchestrator, StadiumAIResponse
+
 
 @pytest.mark.asyncio
 async def test_stadium_orchestrator_briefing_generation():

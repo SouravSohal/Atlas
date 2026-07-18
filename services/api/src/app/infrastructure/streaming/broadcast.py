@@ -1,6 +1,8 @@
 import json
-import structlog
 from typing import Any
+
+import structlog
+
 from app.infrastructure.streaming.manager import WebSocketManager
 
 logger = structlog.get_logger()

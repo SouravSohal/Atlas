@@ -1,8 +1,10 @@
 import json
 from typing import Any
+
+from app.application.scenario_simulator.models import Scenario, SimulationReport
 from app.intelligence import AIOrchestrator
 from app.intelligence.prompts.base import BasePrompt, PromptMetadata, PromptVersion
-from app.application.scenario_simulator.models import SimulationReport, Scenario
+
 
 class ScenarioSimulatorPrompt(BasePrompt):
     """Structured prompt template for Scenario Simulator Agent."""

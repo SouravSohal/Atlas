@@ -1,10 +1,13 @@
 from uuid import UUID
-from typing import List, Dict, Any
 
-from atlas_core.domain.entities.stadium import Stadium
 from atlas_core.domain.enums.incident_type import IncidentType
 from atlas_core.domain.enums.severity import Severity
-from atlas_core.domain.services.simulation_engine import SimulationContext, SimulationEvent, SimulationEngine
+from atlas_core.domain.services.simulation_engine import (
+    SimulationContext,
+    SimulationEngine,
+    SimulationEvent,
+)
+
 
 class ScenarioRunner:
     """Configures and injects specific operational scenario events into the Simulation Engine context."""

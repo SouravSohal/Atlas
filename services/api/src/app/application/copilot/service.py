@@ -1,13 +1,12 @@
 import json
 import time
-from typing import List, Any
+from typing import Any
 from uuid import uuid4
-from datetime import datetime, UTC
 
-from app.intelligence import AIOrchestrator
-from app.application.operational_state.state_manager import OperationalStateManager
 from app.application.copilot.models import CopilotChatRequest, CopilotChatResponse
 from app.application.copilot.prompts import CopilotPrompt
+from app.application.operational_state.state_manager import OperationalStateManager
+from app.intelligence import AIOrchestrator
 
 
 class CopilotService:

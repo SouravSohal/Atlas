@@ -1,16 +1,17 @@
 import json
 import uuid
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, UTC
-from typing import Optional, List, Dict, Any
+
 from pydantic import BaseModel, Field
 
+from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.stadium import Stadium
 from atlas_core.domain.entities.stadium_node import StadiumNode
-from atlas_core.domain.entities.operational_state import OperationalState
-from atlas_core.domain.value_objects.stadium_edge import StadiumEdge
 from atlas_core.domain.value_objects.crowd_density import CrowdDensity
 from atlas_core.domain.value_objects.queue_estimate import QueueEstimate
+from atlas_core.domain.value_objects.stadium_edge import StadiumEdge
+
 
 # Pydantic Schemas for validation
 class StadiumMetadataSchema(BaseModel):
@@ -27,7 +28,7 @@ class NodeSchema(BaseModel):
     health: float
     density: float
     queue_waiting_minutes: int
-    resources: Optional[str] = None
+    resources: str | None = None
 
 class EdgeSchema(BaseModel):
     id: str
@@ -53,8 +54,8 @@ class VolunteerSchema(BaseModel):
     team: str
     zone: str
     status: str
-    skills: List[str] = Field(default_factory=list)
-    assignment: Optional[str] = None
+    skills: list[str] = Field(default_factory=list)
+    assignment: str | None = None
     battery: int
 
 class SecurityOfficerSchema(BaseModel):
@@ -73,9 +74,9 @@ class MedicalTeamSchema(BaseModel):
     vehicle_id: str
 
 class WorkforceSchema(BaseModel):
-    volunteers: List[VolunteerSchema] = Field(default_factory=list)
-    security_officers: List[SecurityOfficerSchema] = Field(default_factory=list)
-    medical_teams: List[MedicalTeamSchema] = Field(default_factory=list)
+    volunteers: list[VolunteerSchema] = Field(default_factory=list)
+    security_officers: list[SecurityOfficerSchema] = Field(default_factory=list)
+    medical_teams: list[MedicalTeamSchema] = Field(default_factory=list)
 
 class IncidentSchema(BaseModel):
     id: str
@@ -95,12 +96,12 @@ class RecommendationSchema(BaseModel):
 
 class StadiumSeedDataSchema(BaseModel):
     stadium_metadata: StadiumMetadataSchema
-    nodes: List[NodeSchema]
-    edges: List[EdgeSchema]
-    sensors: List[SensorSchema] = Field(default_factory=list)
-    workforce: Optional[WorkforceSchema] = None
-    incidents: List[IncidentSchema] = Field(default_factory=list)
-    recommendations: List[RecommendationSchema] = Field(default_factory=list)
+    nodes: list[NodeSchema]
+    edges: list[EdgeSchema]
+    sensors: list[SensorSchema] = Field(default_factory=list)
+    workforce: WorkforceSchema | None = None
+    incidents: list[IncidentSchema] = Field(default_factory=list)
+    recommendations: list[RecommendationSchema] = Field(default_factory=list)
 
 class StadiumDataLoader:
     """Service to load and validate stadium JSON configs into Domain aggregates."""
@@ -116,7 +117,7 @@ class StadiumDataLoader:
 
         # 3. Create Stable UUID namespace mapping for Node IDs
         # Node string IDs (e.g. "node-0") are mapped to UUIDs consistently
-        node_id_map: Dict[str, UUID] = {}
+        node_id_map: dict[str, UUID] = {}
         for n in schema.nodes:
             # Generate deterministic UUID based on node string name
             node_id_map[n.id] = uuid.uuid5(uuid.NAMESPACE_DNS, n.id)

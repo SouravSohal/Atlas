@@ -1,8 +1,8 @@
+from collections.abc import Sequence
+
 from atlas_core.domain.entities.base import BaseEntity
 from atlas_core.domain.repositories.base import Repository
 
-
-from collections.abc import Sequence
 
 class IncidentRepository[T: BaseEntity](Repository[T]):
     """Async repository interface for Incident entities."""

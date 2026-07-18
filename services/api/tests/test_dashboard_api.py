@@ -397,7 +397,10 @@ def test_dashboard_predictions_success(
     container.event_repository.override(mock_event_repo)
 
     mock_predictions_agent = MagicMock()
-    from app.application.operational_state.predictions_agent import StadiumPredictionsResponse, PredictionItem
+    from app.application.operational_state.predictions_agent import (
+        PredictionItem,
+        StadiumPredictionsResponse,
+    )
     mock_response = StadiumPredictionsResponse(
         confidence_score=0.9,
         rationale="R",

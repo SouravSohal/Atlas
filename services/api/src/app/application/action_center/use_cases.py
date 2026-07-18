@@ -1,25 +1,26 @@
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
-import structlog
 
+import structlog
 from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
+from atlas_core.domain.value_objects.coordinates import Coordinates
 from atlas_core.domain.value_objects.crowd_density import CrowdDensity
 from atlas_core.domain.value_objects.queue_estimate import QueueEstimate
-from atlas_core.domain.value_objects.coordinates import Coordinates
 
-from app.application.events import EventPublisher
-from app.infrastructure.streaming.broadcast import BroadcastService
-from app.application.action_center.entities import PendingDecision, AuditLog
-from app.application.action_center.repositories import PendingDecisionRepository, AuditLogRepository
-from app.application.action_center.dtos import PendingDecisionResponse, AuditLogResponse
+from app.application.action_center.dtos import AuditLogResponse, PendingDecisionResponse
+from app.application.action_center.entities import AuditLog, PendingDecision
 from app.application.action_center.events import (
     DecisionApproved,
-    DecisionRejected,
-    DecisionExplanationRequested,
-    DecisionSimulated,
     DecisionDelegated,
+    DecisionExplanationRequested,
+    DecisionRejected,
+    DecisionSimulated,
 )
+from app.application.action_center.repositories import AuditLogRepository, PendingDecisionRepository
+from app.application.events import EventPublisher
+from app.infrastructure.streaming.broadcast import BroadcastService
 
 logger = structlog.get_logger()
 
@@ -74,7 +75,7 @@ class AIActionCenterUseCase:
         await self.event_publisher.publish_many([event])
 
         # 4. Update Operational State of the first zone to reflect real-time optimization
-        states = await self.state_repo.get_all()
+        states = await self.state_repo.list()
         if states:
             target_state = states[0]
             new_queue = max(1, target_state.queue_estimate.waiting_minutes - 3)
@@ -150,7 +151,7 @@ class AIActionCenterUseCase:
 
         return self._map_decision_to_response(decision)
 
-    async def simulate_decision(self, decision_id: UUID, operator_id: str, parameters: dict) -> PendingDecisionResponse:
+    async def simulate_decision(self, decision_id: UUID, operator_id: str, parameters: dict[str, Any]) -> PendingDecisionResponse:
         """Performs dynamic local density updates representing simulated forecasts."""
         logger.info("Simulating AI decision", decision_id=str(decision_id), operator_id=operator_id)
         decision = await self._get_decision_or_raise(decision_id)
@@ -175,7 +176,7 @@ class AIActionCenterUseCase:
         )
         await self.event_publisher.publish_many([event])
 
-        states = await self.state_repo.get_all()
+        states = await self.state_repo.list()
         if states:
             target_state = states[0]
             new_density = max(0.1, target_state.density.value - 0.1)

@@ -1,6 +1,6 @@
 import json
+
 import structlog
-from typing import Dict, Set
 from fastapi import WebSocket
 
 logger = structlog.get_logger()
@@ -9,7 +9,7 @@ class ConnectionManager:
     """Manages active WebSocket connections."""
 
     def __init__(self) -> None:
-        self.active_connections: Set[WebSocket] = set()
+        self.active_connections: set[WebSocket] = set()
 
     async def connect(self, websocket: WebSocket) -> None:
         """Accepts and tracks WebSocket connection."""
@@ -28,7 +28,7 @@ class SubscriptionManager:
 
     def __init__(self) -> None:
         # topic -> set of WebSockets
-        self.subscriptions: Dict[str, Set[WebSocket]] = {}
+        self.subscriptions: dict[str, set[WebSocket]] = {}
 
     def subscribe(self, websocket: WebSocket, topic: str) -> None:
         """Subscribes WebSocket connection to a specific topic."""
@@ -50,7 +50,7 @@ class SubscriptionManager:
         for topic in list(self.subscriptions.keys()):
             self.unsubscribe(websocket, topic)
 
-    def get_subscribers(self, topic: str) -> Set[WebSocket]:
+    def get_subscribers(self, topic: str) -> set[WebSocket]:
         """Gets all WebSocket connections subscribed to a topic."""
         return self.subscriptions.get(topic, set())
 

@@ -1,10 +1,11 @@
 import json
-from typing import Any, List
+from typing import Any
 
 from app.intelligence import AIOrchestrator
-from app.intelligence.briefings.models import BriefingReport
 from app.intelligence.briefings.kpi_collector import KPICollector
+from app.intelligence.briefings.models import BriefingReport
 from app.intelligence.briefings.prompts import ExecutiveBriefingPrompt
+
 
 class BriefingGenerator:
     """ATLAS AI Executive Briefing Generator facade orchestrating telemetry aggregation and cognitive generation."""
@@ -27,8 +28,8 @@ class BriefingGenerator:
         self,
         briefing_type: str,
         overview: Any,
-        states: List[Any],
-        incidents: List[Any],
+        states: list[Any],
+        incidents: list[Any],
     ) -> BriefingReport:
         """Collects metrics, formats incident context logs, and executes briefing AI agent."""
         # 1. Collect KPIs

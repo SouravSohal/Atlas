@@ -1,10 +1,10 @@
 import structlog
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, WebSocket, Depends, status
+from fastapi import APIRouter, Depends, WebSocket, status
 
 from app.dependencies.container import ApplicationContainer
-from app.infrastructure.streaming.manager import WebSocketManager
 from app.infrastructure.auth.firebase import FirebaseAuthProvider
+from app.infrastructure.streaming.manager import WebSocketManager
 
 logger = structlog.get_logger()
 router = APIRouter(tags=["Streaming"])

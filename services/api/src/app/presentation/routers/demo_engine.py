@@ -1,25 +1,21 @@
 import asyncio
-import json
-import os
+from typing import Any
+
 import structlog
-from typing import Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from atlas_core.domain.services.data_loader import StadiumDataLoader
+from atlas_core.domain.services.recommendation_engine import StadiumRecommendationEngine
+from atlas_core.domain.services.scenario_runner import ScenarioRunner
+from atlas_core.domain.services.simulation_engine import SimulationClock, SimulationContext
+from atlas_core.shared import resolve_seed_data_path
 from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.dependencies.container import ApplicationContainer
-from app.infrastructure.streaming.broadcast import BroadcastService
-from app.infrastructure.cache.manager import cache_manager
-
-from atlas_core.domain.entities.stadium import Stadium
-from atlas_core.domain.services.data_loader import StadiumDataLoader
-from atlas_core.domain.services.simulation_engine import SimulationContext, SimulationClock
-from atlas_core.domain.services.scenario_runner import ScenarioRunner
-from atlas_core.domain.services.recommendation_engine import StadiumRecommendationEngine
-from atlas_core.shared import resolve_seed_data_path
-
 from app.dependencies.auth import require_commander_or_above
+from app.dependencies.container import ApplicationContainer
+from app.infrastructure.cache.manager import cache_manager
 from app.infrastructure.security.rate_limiter import RateLimiterDependency
+from app.infrastructure.streaming.broadcast import BroadcastService
 
 router = APIRouter(
     prefix="/demo",
@@ -31,13 +27,13 @@ logger = structlog.get_logger()
 class DemoState:
     """Maintains active in-memory state of the judge demo simulation loop."""
     def __init__(self) -> None:
-        self.context: Optional[SimulationContext] = None
-        self.runner: Optional[ScenarioRunner] = None
-        self.active_scenario: Optional[str] = None
+        self.context: SimulationContext | None = None
+        self.runner: ScenarioRunner | None = None
+        self.active_scenario: str | None = None
         self.mode: str = "autoplay"  # "autoplay" or "manual"
         self.speed: float = 1.0
         self.paused: bool = False
-        self.running_task: Optional[asyncio.Task] = None
+        self.running_task: asyncio.Task[None] | None = None
 
 # Global demo state instance
 demo_state = DemoState()
@@ -131,7 +127,7 @@ async def start_demo(
     request: StartDemoRequest,
     background_tasks: BackgroundTasks,
     broadcast_service: BroadcastService = Depends(Provide[ApplicationContainer.broadcast_service])
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Initializes stadium data loader and fires the selected simulation scenario."""
     # 1. Reset state
     if demo_state.running_task:
@@ -144,7 +140,7 @@ async def start_demo(
     except FileNotFoundError as err:
         raise HTTPException(status_code=500, detail=str(err))
 
-    with open(seed_file_path, "r", encoding="utf-8") as f:
+    with open(seed_file_path, encoding="utf-8") as f:
         json_content = f.read()
 
     stadium = StadiumDataLoader.load_from_json(json_content)
@@ -184,7 +180,7 @@ async def start_demo(
 @inject
 async def step_demo(
     broadcast_service: BroadcastService = Depends(Provide[ApplicationContainer.broadcast_service])
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Manually advances the simulation clock by 1 tick."""
     if not demo_state.context or not demo_state.runner:
         raise HTTPException(status_code=400, detail="No active demo session running. Call /start first.")
@@ -238,19 +234,19 @@ async def step_demo(
     return {"status": "stepped", "tick_index": clock.tick_index}
 
 @router.post("/pause")
-async def pause_demo() -> Dict[str, Any]:
+async def pause_demo() -> dict[str, Any]:
     """Pauses autoplay simulation updates."""
     demo_state.paused = True
     return {"status": "paused"}
 
 @router.post("/resume")
-async def resume_demo() -> Dict[str, Any]:
+async def resume_demo() -> dict[str, Any]:
     """Resumes paused autoplay simulation updates."""
     demo_state.paused = False
     return {"status": "resumed"}
 
 @router.post("/speed")
-async def adjust_speed(request: SpeedDemoRequest) -> Dict[str, Any]:
+async def adjust_speed(request: SpeedDemoRequest) -> dict[str, Any]:
     """Adjusts the execution velocity of simulation updates."""
     demo_state.speed = request.speed
     return {"status": "speed_updated", "speed": request.speed}
@@ -259,7 +255,7 @@ async def adjust_speed(request: SpeedDemoRequest) -> Dict[str, Any]:
 @inject
 async def replay_demo(
     broadcast_service: BroadcastService = Depends(Provide[ApplicationContainer.broadcast_service])
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Resets the active scenario clock back to tick index 0 and restarts loop."""
     if not demo_state.active_scenario:
         raise HTTPException(status_code=400, detail="No active scenario to replay.")

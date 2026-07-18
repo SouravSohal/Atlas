@@ -1,29 +1,31 @@
 from typing import Any
-from fastapi import APIRouter, Depends, Query
-from dependency_injector.wiring import Provide, inject
 
-from app.dependencies.container import ApplicationContainer
-from app.presentation.responses import ApiResponse
-from app.infrastructure.security.rate_limiter import RateLimiterDependency
-
-from atlas_core.domain.entities.recommendation import Recommendation
-from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.incident import Incident
-from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
-from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
+from atlas_core.domain.entities.operational_state import OperationalState
+from atlas_core.domain.entities.recommendation import Recommendation
+from atlas_core.domain.enums.severity import Severity
+from atlas_core.domain.enums.recommendation_status import RecommendationStatus
+from atlas_core.domain.value_objects.confidence_score import ConfidenceScore
 from atlas_core.domain.repositories.incident_repository import IncidentRepository
+from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
+from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
 from atlas_core.domain.repositories.task_repository import TaskRepository
-from app.application.operational_state.state_manager import OperationalStateManager
+from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, Depends, Query
 
+from app.application.operational_state.state_manager import OperationalStateManager
 from app.application.recommendations import (
+    AIRecommendationGenerator,
     RecommendationAgent,
     RecommendationAgentResponse,
-    AIRecommendationGenerator,
 )
+from app.dependencies.container import ApplicationContainer
+from app.infrastructure.security.rate_limiter import RateLimiterDependency
+from app.presentation.responses import ApiResponse
 
 from .models import (
-    RecommendationDashboardListResponse,
     RecommendationDashboardItem,
+    RecommendationDashboardListResponse,
 )
 
 router = APIRouter()
@@ -111,20 +113,44 @@ async def explain_recommendations(
     ]
 
     try:
-        explanation = await rec_agent.explain_recommendations(
-            snapshot=snapshot,
-            active_incidents=active_incidents,
-            recommendations=active_recs,
+        # Transform objects to expected dict representations
+        operational_state_summary = {
+            "stadium_health": snapshot.stadium_health,
+            "timestamp": snapshot.timestamp.isoformat(),
+            "zones_count": len(snapshot.crowd_conditions),
+        }
+        incidents_data = [
+            {
+                "id": str(inc.id),
+                "incident_type": inc.incident_type,
+                "severity": inc.severity,
+                "description": inc.description,
+            }
+            for inc in active_incidents
+        ]
+        recs_data = [
+            {
+                "id": str(r.id),
+                "action_type": r.action_type,
+                "priority": r.priority,
+                "details": r.details,
+            }
+            for r in active_recs
+        ]
+        explanation = await rec_agent.analyze_recommendations(
+            operational_state_summary=operational_state_summary,
+            incidents=incidents_data,
+            business_recommendations=recs_data,
         )
         return ApiResponse(success=True, data=explanation)
-    except Exception as e:
+    except Exception:
         fallback = RecommendationAgentResponse(
-            justification="Explainability services are offline. Prioritizing routing guidelines based on default stadium safety protocol rules.",
-            evidence="Stadium capacity limit checks and zone queuing limits.",
-            operational_data_used="Queue length estimates and zone incident counts.",
-            confidence_score=0.9,
+            natural_language_explanation="Explainability services are offline. Prioritizing routing guidelines based on default stadium safety protocol rules.",
+            risk_assessment="Stadium capacity limit checks and zone queuing limits. Queue length estimates and zone incident counts.",
             prioritized_recommendations=[],
-            alternative_strategies=["Deploy auxiliary guides if ingress surges"],
+            alternative_actions=["Deploy auxiliary guides if ingress surges"],
+            confidence_score=0.9,
+            rationale="Fallback default rules applied due to offline explainability services.",
         )
         return ApiResponse(success=True, data=fallback)
 
@@ -156,13 +182,39 @@ async def generate_ai_recommendations(
     ]
 
     try:
-        new_recs = await generator.generate_recommendations(
-            snapshot=snapshot,
-            active_incidents=active_incidents,
+        # Transform objects to expected dict/list representations
+        telemetry = {
+            "crowd_density": snapshot.crowd_conditions,
+            "wait_times": snapshot.queue_information,
+        }
+        incidents_data = [
+            {
+                "id": str(inc.id),
+                "incident_type": inc.incident_type,
+                "severity": inc.severity,
+                "description": inc.description,
+            }
+            for inc in active_incidents
+        ]
+        operational_state = {
+            "stadium_health": snapshot.stadium_health,
+        }
+
+        response = await generator.generate_recommendations(
+            telemetry=telemetry,
+            incidents=incidents_data,
+            operational_state=operational_state,
         )
 
         saved_items = []
-        for rec in new_recs:
+        for item in response.recommendations:
+            rec = Recommendation(
+                action_type=item.action_type,
+                priority=Severity(item.priority.lower()),
+                confidence=ConfidenceScore(value=item.confidence),
+                details=item.explanation,
+                status=RecommendationStatus.PENDING,
+            )
             await recommendation_repo.save(rec)
             saved_items.append(
                 RecommendationDashboardItem(
@@ -182,4 +234,4 @@ async def generate_ai_recommendations(
         return ApiResponse(success=True, data=saved_items)
 
     except Exception as e:
-        return ApiResponse(success=False, error={"code": "AI_ERROR", "message": f"Recommendation generation failed: {str(e)}"})
+        return ApiResponse(success=False, error=f"Recommendation generation failed: {e!s}")

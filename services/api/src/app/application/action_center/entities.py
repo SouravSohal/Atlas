@@ -1,27 +1,27 @@
 from datetime import UTC, datetime
-from typing import List, Optional
 from uuid import UUID, uuid4
+
 
 class PendingDecision:
     """Domain entity representing an AI Decision awaiting human operator action."""
 
     def __init__(
         self,
-        id: Optional[UUID] = None,
-        recommendation_id: Optional[UUID] = None,
+        id: UUID | None = None,
+        recommendation_id: UUID | None = None,
         priority: str = "medium",
         severity: str = "medium",
         confidence: float = 1.0,
         expected_impact: str = "",
         estimated_resolution_time: str = "",
-        required_resources: Optional[List[str]] = None,
+        required_resources: list[str] | None = None,
         human_approval_requirement: bool = True,
         suggested_action: str = "",
         explanation: str = "",
         status: str = "pending",
-        operator_notes: Optional[str] = None,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
+        operator_notes: str | None = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
     ) -> None:
         self.id = id or uuid4()
         self.recommendation_id = recommendation_id
@@ -44,11 +44,11 @@ class AuditLog:
 
     def __init__(
         self,
-        id: Optional[UUID] = None,
-        decision_id: Optional[UUID] = None,
+        id: UUID | None = None,
+        decision_id: UUID | None = None,
         action: str = "",
         operator_id: str = "operator-1",
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
         details: str = "",
     ) -> None:
         self.id = id or uuid4()

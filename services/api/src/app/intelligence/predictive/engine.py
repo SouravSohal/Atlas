@@ -1,15 +1,16 @@
 import json
-from typing import Any, List
+from typing import Any
 
 from app.intelligence import AIOrchestrator
-from app.intelligence.predictive.models import PredictionResult
-from app.intelligence.predictive.congestion import CongestionPredictor
-from app.intelligence.predictive.queue import QueuePredictor
-from app.intelligence.predictive.demand import VolunteerDemandPredictor
-from app.intelligence.predictive.risk import RiskPredictor
 from app.intelligence.predictive.arrival import ArrivalPredictor
+from app.intelligence.predictive.congestion import CongestionPredictor
+from app.intelligence.predictive.demand import VolunteerDemandPredictor
 from app.intelligence.predictive.exit import ExitPredictor
+from app.intelligence.predictive.models import PredictionResult
 from app.intelligence.predictive.prompts import PredictiveIntelligencePrompt
+from app.intelligence.predictive.queue import QueuePredictor
+from app.intelligence.predictive.risk import RiskPredictor
+
 
 class PredictiveIntelligenceEngine:
     """Main facade orchestrating deterministic forecasting rules and cognitive explanations."""
@@ -36,9 +37,9 @@ class PredictiveIntelligenceEngine:
     async def predict(
         self,
         overview: Any,
-        states: List[Any],
-        incidents: List[Any],
-        recommendations: List[Any]
+        states: list[Any],
+        incidents: list[Any],
+        recommendations: list[Any]
     ) -> PredictionResult:
         """Calculates rules-based forecasting metrics and explains trends using the AI Orchestrator."""
         predicted_density = {}

@@ -1,25 +1,26 @@
-import pytest
-from typing import Any
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
-from datetime import datetime, UTC
+
+import pytest
 
 from app.application.operational_state.snapshot import OperationalSnapshot
 from app.application.operational_state.state_manager import OperationalStateManager
 from app.application.recommendations.engine import RecommendationEngine
 from app.application.scenario_simulator import (
-    Scenario,
-    SimulationReport,
-    SimulationRecord,
-    ScenarioBuilder,
-    ScenarioValidator,
-    ScenarioExecutor,
     ImpactAnalyzer,
-    SimulationHistory,
-    SimulationService,
+    Scenario,
+    ScenarioBuilder,
+    ScenarioExecutor,
     ScenarioSimulator,
+    ScenarioValidator,
+    SimulationHistory,
+    SimulationRecord,
+    SimulationReport,
+    SimulationService,
 )
 from app.intelligence import AIOrchestrator, PromptRegistry
+
 
 @pytest.fixture
 def mock_orchestrator() -> MagicMock:

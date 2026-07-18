@@ -1,9 +1,9 @@
-from typing import List
+
 
 class ReasoningBuilder:
     """Helper class to construct logical reasoning chains and business rule lists."""
 
-    def build_business_rules(self, crowd_density: float, queue_wait: int) -> List[str]:
+    def build_business_rules(self, crowd_density: float, queue_wait: int) -> list[str]:
         """Maps operational parameters to triggered security and operations policy codes."""
         rules = ["Rule #DefaultOperations"]
         if crowd_density > 0.8:

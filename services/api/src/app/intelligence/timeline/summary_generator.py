@@ -1,15 +1,16 @@
 from datetime import datetime
-from typing import Any, List
+from typing import Any
+
 
 class SummaryGenerator:
     """Pre-processes and filters events by time ranges or incident focus areas."""
 
     def filter_by_time_range(
         self,
-        events: List[dict[str, Any]],
+        events: list[dict[str, Any]],
         start_time: datetime,
         end_time: datetime,
-    ) -> List[dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Filters events list to fall between start_time and end_time boundaries."""
         filtered = []
         for e in events:
@@ -22,9 +23,9 @@ class SummaryGenerator:
 
     def filter_by_incident(
         self,
-        events: List[dict[str, Any]],
+        events: list[dict[str, Any]],
         incident_id: str,
-    ) -> List[dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Filters events relating to a specific incident ID."""
         filtered = []
         for e in events:

@@ -1,8 +1,9 @@
-import time
 import asyncio
-from typing import Any, Dict, Optional, Callable
+import time
+from typing import Any
+
 import structlog
-from fastapi import Request, Query
+from fastapi import Query, Request
 
 logger = structlog.get_logger()
 
@@ -17,10 +18,10 @@ class CacheEntry:
 class LightweightCacheManager:
     """Lightweight in-memory cache manager supporting TTL, cache invalidation, and manual bypass."""
     def __init__(self) -> None:
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self._lock = asyncio.Lock()
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Retrieves an entry if it exists and has not expired."""
         async with self._lock:
             entry = self._cache.get(key)

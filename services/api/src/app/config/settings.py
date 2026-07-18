@@ -1,7 +1,8 @@
-from functools import lru_cache
 import os
+from functools import lru_cache
 from typing import Any
-from dotenv import load_dotenv, find_dotenv
+
+from dotenv import find_dotenv, load_dotenv
 
 # Load environment variables from .env file into os.environ at startup
 load_dotenv(find_dotenv())
@@ -79,14 +80,17 @@ class ApiSettings(BaseModel):
     @classmethod
     def parse_cors_origins(cls, v: Any) -> list[str]:
         """Parses allowed CORS origins, splitting comma-separated strings and rejecting wildcards."""
+        origins: list[str] = []
         if isinstance(v, str):
-            v = [item.strip() for item in v.split(",") if item.strip()]
-        if not isinstance(v, list):
-            v = [str(v)]
+            origins = [item.strip() for item in v.split(",") if item.strip()]
+        elif isinstance(v, list):
+            origins = [str(item) for item in v]
+        else:
+            origins = [str(v)]
         # Reject "*" wildcard to prevent security vulnerabilities
-        if "*" in v or any(item == "*" for item in v):
+        if "*" in origins or any(item == "*" for item in origins):
             raise ValueError("Wildcard '*' is not allowed in CORS origins. Explicitly configure allowed origins.")
-        return v
+        return origins
 
     @field_validator("port")
     @classmethod
@@ -338,6 +342,20 @@ class Settings(BaseSettings):
     rate_limits: RateLimitSettings = Field(default_factory=RateLimitSettings)
     cache: CacheSettings = Field(default_factory=CacheSettings)
 
+    @classmethod
+    def _map_env_var(cls, data: dict[str, Any], section: str, key: str, env_keys: list[str]) -> None:
+        """Helper to map a list of env var aliases to a nested config dictionary."""
+        val = None
+        for k in env_keys:
+            val = os.environ.get(k)
+            if val is not None:
+                break
+        if val is not None:
+            if section not in data:
+                data[section] = {}
+            if isinstance(data[section], dict) and key not in data[section]:
+                data[section][key] = val
+
     @model_validator(mode="before")
     @classmethod
     def map_flat_env_vars(cls, data: Any) -> Any:
@@ -345,70 +363,17 @@ class Settings(BaseSettings):
         if not isinstance(data, dict):
             data = {}
 
-        # 1. Map JWT_SECRET / SECURITY__SECRET_KEY to security.secret_key
-        jwt_secret = os.environ.get("JWT_SECRET") or os.environ.get("SECURITY__SECRET_KEY")
-        if jwt_secret:
-            if "security" not in data:
-                data["security"] = {}
-            if isinstance(data["security"], dict) and "secret_key" not in data["security"]:
-                data["security"]["secret_key"] = jwt_secret
+        # Map standard environment variables using the classmethod helper
+        cls._map_env_var(data, "security", "secret_key", ["JWT_SECRET", "SECURITY__SECRET_KEY"])
+        cls._map_env_var(data, "demo", "email", ["DEMO_EMAIL"])
+        cls._map_env_var(data, "demo", "password", ["DEMO_PASSWORD"])
+        cls._map_env_var(data, "gemini", "api_key", ["GEMINI_API_KEY", "GEMINI__API_KEY"])
+        cls._map_env_var(data, "firebase", "web_api_key", ["FIREBASE_WEB_API_KEY", "FIREBASE__WEB_API_KEY"])
+        cls._map_env_var(data, "gcp", "project_id", ["GOOGLE_CLOUD_PROJECT", "GCP__PROJECT_ID"])
+        cls._map_env_var(data, "firestore", "database", ["FIRESTORE_DATABASE", "FIRESTORE__DATABASE"])
+        cls._map_env_var(data, "app", "environment", ["ENVIRONMENT", "APP_ENV", "APP__ENVIRONMENT"])
 
-        # 2. Map DEMO_EMAIL & DEMO_PASSWORD to demo config
-        demo_email = os.environ.get("DEMO_EMAIL")
-        if demo_email:
-            if "demo" not in data:
-                data["demo"] = {}
-            if isinstance(data["demo"], dict) and "email" not in data["demo"]:
-                data["demo"]["email"] = demo_email
-
-        demo_password = os.environ.get("DEMO_PASSWORD")
-        if demo_password:
-            if "demo" not in data:
-                data["demo"] = {}
-            if isinstance(data["demo"], dict) and "password" not in data["demo"]:
-                data["demo"]["password"] = demo_password
-
-        # 3. Map GEMINI_API_KEY to gemini.api_key
-        gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GEMINI__API_KEY")
-        if gemini_key:
-            if "gemini" not in data:
-                data["gemini"] = {}
-            if isinstance(data["gemini"], dict) and "api_key" not in data["gemini"]:
-                data["gemini"]["api_key"] = gemini_key
-
-        # 4. Map FIREBASE_WEB_API_KEY to firebase.web_api_key
-        firebase_key = os.environ.get("FIREBASE_WEB_API_KEY") or os.environ.get("FIREBASE__WEB_API_KEY")
-        if firebase_key:
-            if "firebase" not in data:
-                data["firebase"] = {}
-            if isinstance(data["firebase"], dict) and "web_api_key" not in data["firebase"]:
-                data["firebase"]["web_api_key"] = firebase_key
-
-        # 5. Map GOOGLE_CLOUD_PROJECT / GCP__PROJECT_ID to gcp.project_id
-        gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP__PROJECT_ID")
-        if gcp_project:
-            if "gcp" not in data:
-                data["gcp"] = {}
-            if isinstance(data["gcp"], dict) and "project_id" not in data["gcp"]:
-                data["gcp"]["project_id"] = gcp_project
-
-        # 6. Map FIRESTORE_DATABASE / FIRESTORE__DATABASE to firestore.database
-        firestore_db = os.environ.get("FIRESTORE_DATABASE") or os.environ.get("FIRESTORE__DATABASE")
-        if firestore_db:
-            if "firestore" not in data:
-                data["firestore"] = {}
-            if isinstance(data["firestore"], dict) and "database" not in data["firestore"]:
-                data["firestore"]["database"] = firestore_db
-
-        # 7. Map ENVIRONMENT / APP_ENV / APP__ENVIRONMENT to app.environment
-        app_env = os.environ.get("ENVIRONMENT") or os.environ.get("APP_ENV") or os.environ.get("APP__ENVIRONMENT")
-        if app_env:
-            if "app" not in data:
-                data["app"] = {}
-            if isinstance(data["app"], dict) and "environment" not in data["app"]:
-                data["app"]["environment"] = app_env
-
-        # 8. Map APP_DEBUG / APP__DEBUG to app.debug
+        # Special parsing for APP_DEBUG boolean
         app_debug = os.environ.get("APP_DEBUG") or os.environ.get("APP__DEBUG")
         if app_debug is not None:
             if "app" not in data:
@@ -420,7 +385,7 @@ class Settings(BaseSettings):
                     is_debug = bool(app_debug)
                 data["app"]["debug"] = is_debug
 
-        # 9. Map API_CORS_ORIGINS / API__CORS_ORIGINS to api.cors_origins
+        # Special parsing for API_CORS_ORIGINS list
         cors_origins = os.environ.get("API_CORS_ORIGINS") or os.environ.get("API__CORS_ORIGINS")
         if cors_origins:
             if "api" not in data:

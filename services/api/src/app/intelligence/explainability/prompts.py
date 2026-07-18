@@ -1,5 +1,6 @@
 from app.intelligence.prompts.base import BasePrompt, PromptMetadata, PromptVersion
 
+
 class ExplainabilityPrompt(BasePrompt):
     """Structured prompt template for explainability engine."""
 

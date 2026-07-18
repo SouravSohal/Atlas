@@ -1,5 +1,6 @@
 from app.intelligence.prompts.base import BasePrompt, PromptMetadata, PromptVersion
 
+
 class CopilotPrompt(BasePrompt):
     """Structured prompt template for ATLAS Copilot Agent."""
 

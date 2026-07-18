@@ -1,3 +1,6 @@
+from collections.abc import MutableMapping
+from typing import Any
+
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Receive, Scope, Send
 
@@ -27,7 +30,7 @@ class SecurityHeadersMiddleware:
         else:
             csp = "default-src 'self'"
 
-        async def send_wrapper(message: dict) -> None:
+        async def send_wrapper(message: MutableMapping[str, Any]) -> None:
             if message["type"] == "http.response.start":
                 headers_mut = MutableHeaders(raw=message.setdefault("headers", []))
                 headers_mut["X-Frame-Options"] = "DENY"

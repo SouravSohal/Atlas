@@ -3,11 +3,10 @@ from fastapi import APIRouter, Depends
 
 from app.application.copilot.models import CopilotChatRequest, CopilotChatResponse
 from app.application.copilot.service import CopilotService
-from app.dependencies.container import ApplicationContainer
-from app.presentation.responses import ApiResponse
-
 from app.dependencies.auth import get_current_user
+from app.dependencies.container import ApplicationContainer
 from app.infrastructure.security.rate_limiter import RateLimiterDependency
+from app.presentation.responses import ApiResponse
 
 router = APIRouter(
     prefix="/copilot",

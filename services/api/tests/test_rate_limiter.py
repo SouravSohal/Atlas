@@ -1,14 +1,14 @@
+from unittest.mock import MagicMock
+
 import pytest
-import time
-import asyncio
-from unittest.mock import MagicMock, AsyncMock
-from fastapi import Request, HTTPException
+from fastapi import HTTPException, Request
 
 from app.infrastructure.security.rate_limiter import (
-    parse_rate,
     InMemorySlidingWindowLimiter,
     RateLimiterDependency,
+    parse_rate,
 )
+
 
 def test_parse_rate() -> None:
     assert parse_rate("5/second") == (5, 1)

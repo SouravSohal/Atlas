@@ -44,8 +44,10 @@ class RecommendationMapper(CollectionMapper[Recommendation]):
             approved_at=data.get("approved_at"),
         )
 
-from google.cloud import firestore
 from collections.abc import Sequence
+
+from google.cloud import firestore
+
 
 class FirestoreRecommendationRepository(BaseRepository[Recommendation], RecommendationRepository[Recommendation]):
     """Firestore implementation of the RecommendationRepository interface."""
@@ -64,7 +66,9 @@ class FirestoreRecommendationRepository(BaseRepository[Recommendation], Recommen
         order: str = "desc",
     ) -> tuple[Sequence[Recommendation], int]:
         """Retrieves a paginated, filtered, and sorted list of recommendations and total count directly from Firestore."""
-        query = self.collection_ref
+        # Initialize query by applying sorting first so the type is AsyncQuery from the start
+        direction = firestore.Query.DESCENDING if order == "desc" else firestore.Query.ASCENDING
+        query = self.collection_ref.order_by(sort_by, direction=direction)
 
         # Apply filters in Firestore
         if status is not None:
@@ -76,12 +80,9 @@ class FirestoreRecommendationRepository(BaseRepository[Recommendation], Recommen
 
         # Get total count via aggregation query (extremely lightweight/performant)
         count_query = query.count()
-        count_result = await count_query.get()
-        total_count = count_result[0][0].value
-
-        # Apply sort in Firestore
-        direction = firestore.Query.DESCENDING if order == "desc" else firestore.Query.ASCENDING
-        query = query.order_by(sort_by, direction=direction)
+        get_method = getattr(count_query, "get")
+        count_result = await get_method()
+        total_count = int(count_result[0][0].value)
 
         # Apply pagination limit and offset in Firestore
         start = (page - 1) * limit

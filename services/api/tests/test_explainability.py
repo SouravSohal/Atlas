@@ -1,17 +1,17 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
+
+import pytest
 
 from app.intelligence import AIOrchestrator, PromptRegistry
 from app.intelligence.explainability import (
-    RecommendationExplanation,
-    EvidenceCollector,
-    ConfidenceAnalyzer,
-    ReasoningBuilder,
     AlternativeGenerator,
-    RecommendationJustifier,
+    ConfidenceAnalyzer,
+    EvidenceCollector,
     ExplainabilityEngine,
+    ReasoningBuilder,
+    RecommendationExplanation,
 )
+
 
 # Simulated domain objects for testing
 class MockRecommendation:

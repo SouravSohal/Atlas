@@ -1,18 +1,20 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
+import pytest
+
 from app.intelligence import AIOrchestrator, PromptRegistry
 from app.intelligence.resource_optimization import (
-    ResourceOptimizationResult,
     AllocationPlan,
-    VolunteerAllocator,
-    SecurityAllocator,
-    MedicalAllocator,
     GateOptimizer,
+    MedicalAllocator,
     QueueBalancer,
     ResourceOptimizationEngine,
+    ResourceOptimizationResult,
+    SecurityAllocator,
+    VolunteerAllocator,
 )
+
 
 # Simulated domain objects for testing
 class MockState:

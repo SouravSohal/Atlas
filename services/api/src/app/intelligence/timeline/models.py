@@ -1,5 +1,7 @@
 from pydantic import Field
+
 from app.intelligence.structured_output import AIResponse
+
 
 class TimelineNarratorResponse(AIResponse):
     """Structured response containing operational stories across various timelines."""

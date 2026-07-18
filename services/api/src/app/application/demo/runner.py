@@ -1,19 +1,33 @@
+from dataclasses import dataclass
+from typing import Any
 from uuid import UUID, uuid4
-import structlog
-from typing import Any, Dict, List
 
+import structlog
+from atlas_core.domain.events.base import DomainEvent
 from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.recommendation import Recommendation
 from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
 from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
-from app.application.events import EventPublisher
-from app.application.incidents.use_cases import CreateIncidentUseCase
-from app.application.incidents.dtos import CreateIncidentRequest
-from app.application.recommendations.engine import RecommendationEngine
-from app.application.operational_state.factory import OperationalStateFactory
+
 from app.application.demo.definition import ScenarioStep
+from app.application.events import EventPublisher
+from app.application.incidents.dtos import CreateIncidentRequest
+from app.application.incidents.use_cases import CreateIncidentUseCase
+from app.application.operational_state.factory import OperationalStateFactory
+from app.application.recommendations.engine import RecommendationEngine
 
 logger = structlog.get_logger()
+
+@dataclass(frozen=True, kw_only=True)
+class DemoNotificationEvent(DomainEvent):
+    """Event representing a demo notification published during simulation."""
+    message: str
+    tick_index: int
+
+@dataclass(frozen=True, kw_only=True)
+class DemoGenericEvent(DomainEvent):
+    """Generic event wrapper for arbitrary dict payloads in simulation."""
+    event_data: dict[str, Any]
 
 class ScenarioRunner:
     """Executes a single demo scenario step, updating databases and publishing events."""
@@ -65,14 +79,21 @@ class ScenarioRunner:
         for notif in step.notifications_to_publish:
             logger.info("Demo Notification published", message=notif)
             # Publish event matching notification channel
-            await self.event_publisher.publish({
-                "event_type": "NotificationPublished",
-                "message": notif,
-                "tick_index": step.tick_index,
-            })
+            await self.event_publisher.publish(
+                DemoNotificationEvent(
+                    aggregate_id=uuid4(),
+                    message=notif,
+                    tick_index=step.tick_index,
+                )
+            )
 
         for ev in step.events_to_publish:
-            await self.event_publisher.publish(ev)
+            await self.event_publisher.publish(
+                DemoGenericEvent(
+                    aggregate_id=uuid4(),
+                    event_data=ev
+                )
+            )
 
         # 4. Trigger Recommendation Engine & save candidates
         for zone_str, density in step.operational_state_updates.items():

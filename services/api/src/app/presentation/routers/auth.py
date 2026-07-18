@@ -1,18 +1,17 @@
-import httpx
-from datetime import datetime, UTC
-from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from dependency_injector.wiring import Provide, inject
 
+import httpx
 from atlas_core.domain.entities.user import User
 from atlas_core.domain.enums.user_role import UserRole
-from app.dependencies.container import ApplicationContainer
-from app.dependencies.auth import get_current_user
+from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+
 from app.config import Settings
-from app.presentation.responses.standard import ApiResponse
-from app.infrastructure.security.rate_limiter import RateLimiterDependency
+from app.dependencies.auth import get_current_user
+from app.dependencies.container import ApplicationContainer
 from app.infrastructure.auth.firebase import FirebaseAuthProvider
+from app.infrastructure.security.rate_limiter import RateLimiterDependency
+from app.presentation.responses.standard import ApiResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

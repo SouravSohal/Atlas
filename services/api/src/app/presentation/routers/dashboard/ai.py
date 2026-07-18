@@ -1,23 +1,16 @@
 from typing import Any
+
 import structlog
-from fastapi import APIRouter, Depends, Request
-from dependency_injector.wiring import Provide, inject
-
-from app.config import Settings
-from app.dependencies.container import ApplicationContainer
-from app.presentation.responses import ApiResponse
-from app.infrastructure.security.rate_limiter import RateLimiterDependency
-from app.infrastructure.cache.manager import cache_manager, check_cache_bypass
-
-from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.incident import Incident
+from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.recommendation import Recommendation
-from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
-from atlas_core.domain.repositories.incident_repository import IncidentRepository
-from atlas_core.domain.repositories.task_repository import TaskRepository
-from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
 from atlas_core.domain.repositories.event_repository import EventRepository
-from app.application.operational_state.state_manager import OperationalStateManager
+from atlas_core.domain.repositories.incident_repository import IncidentRepository
+from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
+from atlas_core.domain.repositories.recommendation_repository import RecommendationRepository
+from atlas_core.domain.repositories.task_repository import TaskRepository
+from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, Depends, Request
 
 from app.application.operational_state import (
     SituationSummaryAgent,
@@ -25,6 +18,12 @@ from app.application.operational_state import (
     StadiumPredictionsAgent,
     StadiumPredictionsResponse,
 )
+from app.application.operational_state.state_manager import OperationalStateManager
+from app.config import Settings
+from app.dependencies.container import ApplicationContainer
+from app.infrastructure.cache.manager import cache_manager, check_cache_bypass
+from app.infrastructure.security.rate_limiter import RateLimiterDependency
+from app.presentation.responses import ApiResponse
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -39,7 +38,7 @@ async def get_dashboard_briefing(
     task_repo: TaskRepository[Any] = Depends(Provide[ApplicationContainer.task_repository]),
     recommendation_repo: RecommendationRepository[Recommendation] = Depends(Provide[ApplicationContainer.recommendation_repository]),
     event_publisher: Any = Depends(Provide[ApplicationContainer.event_publisher]),
-    event_repo: EventRepository = Depends(Provide[ApplicationContainer.event_repository]),
+    event_repo: EventRepository[Any] = Depends(Provide[ApplicationContainer.event_repository]),
     summary_agent: SituationSummaryAgent = Depends(Provide[ApplicationContainer.situation_summary_agent]),
     settings: Settings = Depends(Provide[ApplicationContainer.config]),
 ) -> ApiResponse[SituationSummaryAgentResponse]:
@@ -178,7 +177,7 @@ async def get_predictions(
     task_repo: TaskRepository[Any] = Depends(Provide[ApplicationContainer.task_repository]),
     recommendation_repo: RecommendationRepository[Recommendation] = Depends(Provide[ApplicationContainer.recommendation_repository]),
     event_publisher: Any = Depends(Provide[ApplicationContainer.event_publisher]),
-    event_repo: EventRepository = Depends(Provide[ApplicationContainer.event_repository]),
+    event_repo: EventRepository[Any] = Depends(Provide[ApplicationContainer.event_repository]),
     predictions_agent: StadiumPredictionsAgent = Depends(Provide[ApplicationContainer.stadium_predictions_agent]),
 ) -> ApiResponse[StadiumPredictionsResponse]:
     """Invokes the StadiumPredictionsAgent to predict crowd, wait times, gate/transport loads using Gemini."""

@@ -1,5 +1,6 @@
 from app.intelligence.prompts.base import BasePrompt, PromptMetadata, PromptVersion
 
+
 class PredictiveIntelligencePrompt(BasePrompt):
     """Structured prompt template for predictive intelligence agent."""
 

@@ -1,5 +1,6 @@
 from app.application.demo.definition import ScenarioDefinition, ScenarioStep
 
+
 class ScenarioFactory:
     """Factory creating configured instances of standard demo scenarios."""
 

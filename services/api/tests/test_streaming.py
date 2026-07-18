@@ -1,15 +1,17 @@
-import pytest
-import json
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+import json
+from unittest.mock import AsyncMock
+
+import pytest
 from fastapi import FastAPI, WebSocket
 from fastapi.testclient import TestClient
 
 from app.infrastructure.streaming import (
-    WebSocketManager,
     BroadcastService,
     HeartbeatService,
+    WebSocketManager,
 )
+
 
 @pytest.fixture
 def test_app() -> FastAPI:

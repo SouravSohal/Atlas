@@ -1,7 +1,10 @@
 from dataclasses import dataclass, field
-from typing import Any, List, Dict
+from typing import Any
+
 from pydantic import Field
+
 from app.intelligence.structured_output import AIResponse
+
 
 class DecisionItem(AIResponse):
     """An enhanced stadium operations decision generated from a business recommendation."""
@@ -30,7 +33,7 @@ class DecisionItem(AIResponse):
         ...,
         description="Estimated time required to execute and resolve (e.g. 10 minutes)."
     )
-    required_resources: List[str] = Field(
+    required_resources: list[str] = Field(
         ...,
         description="List of required staff roles or materials."
     )
@@ -50,7 +53,7 @@ class DecisionItem(AIResponse):
 class DecisionEngineResult(AIResponse):
     """Container holding prioritized enhanced decisions and engine details."""
 
-    decisions: List[DecisionItem] = Field(
+    decisions: list[DecisionItem] = Field(
         ...,
         description="Prioritized list of operations decisions."
     )
@@ -66,6 +69,6 @@ class DecisionEngineResult(AIResponse):
 @dataclass
 class DecisionContext:
     """Holds operational inputs passed to the decision engine."""
-    operational_state: Dict[str, Any] = field(default_factory=dict)
-    incidents: List[Dict[str, Any]] = field(default_factory=list)
-    recommendations: List[Dict[str, Any]] = field(default_factory=list)
+    operational_state: dict[str, Any] = field(default_factory=dict)
+    incidents: list[dict[str, Any]] = field(default_factory=list)
+    recommendations: list[dict[str, Any]] = field(default_factory=list)

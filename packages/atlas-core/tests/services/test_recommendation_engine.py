@@ -1,18 +1,18 @@
-import pytest
 import json
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import uuid4
 
+from atlas_core.domain.entities.incident import Incident
+from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.stadium import Stadium
 from atlas_core.domain.entities.stadium_node import StadiumNode
-from atlas_core.domain.entities.operational_state import OperationalState
-from atlas_core.domain.entities.incident import Incident
-from atlas_core.domain.value_objects.crowd_density import CrowdDensity
-from atlas_core.domain.value_objects.queue_estimate import QueueEstimate
-from atlas_core.domain.value_objects.coordinates import Coordinates
 from atlas_core.domain.enums.incident_type import IncidentType
 from atlas_core.domain.enums.severity import Severity
 from atlas_core.domain.services.recommendation_engine import StadiumRecommendationEngine
+from atlas_core.domain.value_objects.coordinates import Coordinates
+from atlas_core.domain.value_objects.crowd_density import CrowdDensity
+from atlas_core.domain.value_objects.queue_estimate import QueueEstimate
+
 
 def test_stadium_recommendation_engine_generation():
     # 1. Setup Stadium & Nodes

@@ -1,9 +1,10 @@
-from typing import Any, Dict, List
+from typing import Any
+
 
 class KPICollector:
     """Collects and aggregates KPI metrics from stadium operational telemetry databases."""
 
-    def collect(self, overview: Any, states: List[Any], incidents: List[Any]) -> Dict[str, Any]:
+    def collect(self, overview: Any, states: list[Any], incidents: list[Any]) -> dict[str, Any]:
         """Aggregates active incidents, health indexes, densities, and volunteer metrics."""
         active_incidents = [i for i in incidents if not getattr(i, "resolved", False)]
         critical_incidents = [
@@ -18,7 +19,7 @@ class KPICollector:
             for s in states:
                 # Handle snapshots vs entities
                 val = getattr(s, "density", None)
-                if hasattr(val, "value"):
+                if val is not None and hasattr(val, "value"):
                     densities.append(val.value)
                 elif isinstance(val, (int, float)):
                     densities.append(val)

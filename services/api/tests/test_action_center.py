@@ -1,26 +1,23 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
+import pytest
 from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.repositories.operational_state_repository import OperationalStateRepository
 from atlas_core.domain.value_objects.crowd_density import CrowdDensity
 from atlas_core.domain.value_objects.queue_estimate import QueueEstimate
 
+from app.application.action_center import (
+    AIActionCenterUseCase,
+    AuditLog,
+    AuditLogRepository,
+    DecisionApproved,
+    PendingDecision,
+    PendingDecisionRepository,
+)
 from app.application.events import EventPublisher
 from app.infrastructure.streaming.broadcast import BroadcastService
-from app.application.action_center import (
-    PendingDecision,
-    AuditLog,
-    PendingDecisionRepository,
-    AuditLogRepository,
-    AIActionCenterUseCase,
-    DecisionApproved,
-    DecisionRejected,
-    DecisionExplanationRequested,
-    DecisionSimulated,
-    DecisionDelegated,
-)
+
 
 @pytest.mark.asyncio
 async def test_action_center_use_cases() -> None:
@@ -38,7 +35,7 @@ async def test_action_center_use_cases() -> None:
     mock_state.queue_estimate = QueueEstimate(waiting_minutes=10)
     mock_state.density = CrowdDensity(value=0.5)
     mock_state.update_state = MagicMock()
-    state_repo.get_all = AsyncMock(return_value=[mock_state])
+    state_repo.list = AsyncMock(return_value=[mock_state])
     state_repo.save = AsyncMock()
 
     # 3. Create a pending decision
@@ -90,7 +87,7 @@ async def test_action_center_use_cases() -> None:
     assert isinstance(published_events[0], DecisionApproved)
 
     # Assert Operational State updated
-    state_repo.get_all.assert_called_once()
+    state_repo.list.assert_called_once()
     state_repo.save.assert_called_once_with(mock_state)
 
     # Assert Broadcast sent
@@ -127,7 +124,7 @@ async def test_action_center_repositories_firestore() -> None:
     mock_doc = MagicMock()
     mock_doc.exists = True
     
-    from datetime import datetime, UTC
+    from datetime import UTC, datetime
     now_str = datetime.now(UTC).isoformat()
     mock_doc.to_dict = MagicMock(return_value={
         "id": "00000000-0000-0000-0000-000000000000",

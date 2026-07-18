@@ -1,21 +1,19 @@
-from datetime import datetime, UTC
 from uuid import UUID, uuid4
-from typing import List, Dict, Any
 
-from atlas_core.domain.entities.stadium import Stadium
 from atlas_core.domain.entities.incident import Incident
+from atlas_core.domain.entities.stadium import Stadium
 from atlas_core.domain.enums.incident_type import IncidentType
 from atlas_core.domain.enums.severity import Severity
 from atlas_core.domain.value_objects.coordinates import Coordinates
-from atlas_core.domain.value_objects.crowd_density import CrowdDensity
 from atlas_core.domain.value_objects.queue_estimate import QueueEstimate
+
 
 class IncidentEngine:
     """Manages the lifecycle (Detection, Propagation, Mitigation, Resolution, Recovery) of stadium incidents."""
 
     def __init__(self) -> None:
-        self.mitigation_strategies: Dict[UUID, str] = {}
-        self.incident_phases: Dict[UUID, str] = {}  # Maps incident.id -> phase ("detected", "propagated", "mitigated", "resolved", "recovered")
+        self.mitigation_strategies: dict[UUID, str] = {}
+        self.incident_phases: dict[UUID, str] = {}  # Maps incident.id -> phase ("detected", "propagated", "mitigated", "resolved", "recovered")
 
     def detect_incident(
         self,
@@ -42,7 +40,7 @@ class IncidentEngine:
         self.incident_phases[incident.id] = "detected"
         return incident
 
-    def propagate_risks(self, stadium: Stadium, active_incidents: List[Incident], incident_zones: Dict[UUID, UUID]) -> None:
+    def propagate_risks(self, stadium: Stadium, active_incidents: list[Incident], incident_zones: dict[UUID, UUID]) -> None:
         """Simulates the cascading risk propagation tree. Alters neighboring nodes and edges telemetry."""
         node_map = {n.id: n for n in stadium.nodes}
 

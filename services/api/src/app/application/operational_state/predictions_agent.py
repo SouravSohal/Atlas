@@ -1,5 +1,6 @@
 import json
 from typing import Any
+
 from pydantic import BaseModel, Field
 
 from app.intelligence import AIOrchestrator

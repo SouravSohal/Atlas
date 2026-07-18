@@ -1,17 +1,17 @@
-import pytest
-from datetime import datetime, UTC, timedelta
-from typing import Any
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from app.intelligence import AIOrchestrator, PromptRegistry
 from app.intelligence.timeline import (
-    TimelineNarratorResponse,
     EventAggregator,
-    TimelineFormatter,
     SummaryGenerator,
-    TimelineNarratorPrompt,
+    TimelineFormatter,
     TimelineNarrator,
+    TimelineNarratorResponse,
 )
+
 
 # Simulated domain objects for testing
 class MockDomainEvent:

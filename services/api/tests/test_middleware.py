@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
+
 from app.main import create_app
+
 
 def test_security_headers_middleware_api_endpoints() -> None:
     # Arrange

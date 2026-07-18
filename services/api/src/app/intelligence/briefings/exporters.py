@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
+
 from app.intelligence.briefings.models import BriefingReport
+
 
 class BriefingExporter(ABC):
     """Abstract interface for exporting executive briefings to different formats."""
@@ -8,7 +10,6 @@ class BriefingExporter(ABC):
     @abstractmethod
     def export(self, report: BriefingReport) -> Any:
         """Processes a BriefingReport and generates formatted output."""
-        pass
 
 class MarkdownExporter(BriefingExporter):
     """Generates clean, professional markdown strings of the executive briefing."""

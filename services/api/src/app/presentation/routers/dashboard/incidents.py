@@ -1,15 +1,14 @@
-from fastapi import APIRouter, Depends, Query
+from atlas_core.domain.entities.incident import Incident
+from atlas_core.domain.repositories.incident_repository import IncidentRepository
 from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, Depends, Query
 
 from app.dependencies.container import ApplicationContainer
 from app.presentation.responses import ApiResponse
 
-from atlas_core.domain.entities.incident import Incident
-from atlas_core.domain.repositories.incident_repository import IncidentRepository
-
 from .models import (
-    IncidentDashboardListResponse,
     IncidentDashboardItem,
+    IncidentDashboardListResponse,
 )
 
 router = APIRouter()

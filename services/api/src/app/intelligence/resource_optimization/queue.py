@@ -1,9 +1,10 @@
-from typing import Dict, List, Any
+from typing import Any
+
 
 class QueueBalancer:
     """Determines crowd flow redirection rules to balance waiting queues."""
 
-    def balance_queues(self, zones: List[Dict[str, Any]]) -> Dict[str, str]:
+    def balance_queues(self, zones: list[dict[str, Any]]) -> dict[str, str]:
         """Maps zone IDs to crowd flow direction rules (e.g. forward, redirect)."""
         rules = {}
         for zone in zones:

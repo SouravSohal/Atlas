@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
+
 from atlas_core.domain.value_objects.base import ValueObject
+
 
 @dataclass(frozen=True)
 class StadiumEdge(ValueObject):

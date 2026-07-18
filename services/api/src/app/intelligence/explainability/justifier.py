@@ -1,12 +1,13 @@
-from typing import Any, List
+from typing import Any
 
 from app.intelligence import AIOrchestrator
-from app.intelligence.explainability.models import RecommendationExplanation
-from app.intelligence.explainability.evidence_collector import EvidenceCollector
-from app.intelligence.explainability.confidence_analyzer import ConfidenceAnalyzer
-from app.intelligence.explainability.reasoning_builder import ReasoningBuilder
 from app.intelligence.explainability.alternative_generator import AlternativeGenerator
+from app.intelligence.explainability.confidence_analyzer import ConfidenceAnalyzer
+from app.intelligence.explainability.evidence_collector import EvidenceCollector
+from app.intelligence.explainability.models import RecommendationExplanation
 from app.intelligence.explainability.prompts import ExplainabilityPrompt
+from app.intelligence.explainability.reasoning_builder import ReasoningBuilder
+
 
 class RecommendationJustifier:
     """Pre-compiles metrics and generates structured parameters for recommendation explanations."""
@@ -22,8 +23,8 @@ class RecommendationJustifier:
         recommendation: Any,
         overview: Any,
         state: Any,
-        incidents: List[Any]
-    ) -> dict:
+        incidents: list[Any]
+    ) -> dict[str, Any]:
         """Gathers operational states and processes metrics into structured context variables."""
         evidence = self.evidence_collector.collect(overview, state, incidents)
         
@@ -70,7 +71,7 @@ class ExplainabilityEngine:
         recommendation: Any,
         overview: Any,
         state: Any,
-        incidents: List[Any]
+        incidents: list[Any]
     ) -> RecommendationExplanation:
         """Compiles background variables and runs the AI Agent to build a concise operational justification."""
         context_vars = self.justifier.compile_context(

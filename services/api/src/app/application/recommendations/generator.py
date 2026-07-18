@@ -1,5 +1,5 @@
 import json
-from typing import Any, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -16,8 +16,8 @@ class AIRecommendationItem(BaseModel):
     confidence: float = Field(..., description="Confidence score of this recommendation (0.0 to 1.0).")
     why: str = Field(..., description="Concise operator-facing description of why this recommendation is needed.")
     evidence: str = Field(..., description="Specific operational evidence supporting this action.")
-    operational_data_used: List[str] = Field(..., description="Specific operational/telemetry data parameters utilized.")
-    alternative_actions: List[str] = Field(..., description="List of alternative actions available to the operator.")
+    operational_data_used: list[str] = Field(..., description="Specific operational/telemetry data parameters utilized.")
+    alternative_actions: list[str] = Field(..., description="List of alternative actions available to the operator.")
     trade_offs: str = Field(..., description="Operator-facing description of operational trade-offs for this recommendation.")
     explanation: str = Field(..., description="Human-readable explanation of the recommendation details.")
     estimated_impact: str = Field(..., description="Estimated operational impact (e.g. 'Reduce queue bottleneck by 25%').")
@@ -28,7 +28,7 @@ class AIRecommendationItem(BaseModel):
 class AIRecommendationGeneratorResponse(AIResponse):
     """Structured response containing AI generated stadium recommendations."""
 
-    recommendations: List[AIRecommendationItem] = Field(..., description="List of generated recommendations.")
+    recommendations: list[AIRecommendationItem] = Field(..., description="List of generated recommendations.")
 
 
 class AIRecommendationGeneratorPrompt(BasePrompt):

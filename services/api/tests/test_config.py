@@ -5,9 +5,9 @@ from app.config import Environment, Settings, configure_logging, get_settings
 from app.config.settings import (
     ApiSettings,
     ApplicationSettings,
+    DemoSettings,
     LoggingSettings,
     SecuritySettings,
-    DemoSettings,
 )
 
 

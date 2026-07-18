@@ -1,3 +1,5 @@
+from collections.abc import MutableMapping
+from typing import Any
 import uuid
 
 import structlog
@@ -24,7 +26,7 @@ class RequestIdMiddleware:
         # Bind request_id to structlog context
         structlog.contextvars.bind_contextvars(request_id=request_id)
 
-        async def send_wrapper(message: dict) -> None:
+        async def send_wrapper(message: MutableMapping[str, Any]) -> None:
             if message["type"] == "http.response.start":
                 headers_mut = MutableHeaders(raw=message.setdefault("headers", []))
                 headers_mut["X-Request-ID"] = request_id

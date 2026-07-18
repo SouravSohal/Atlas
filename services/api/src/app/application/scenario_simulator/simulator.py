@@ -1,8 +1,9 @@
 from uuid import UUID
-from typing import Optional
+
 from app.application.scenario_simulator.builder import ScenarioBuilder
-from app.application.scenario_simulator.service import SimulationService
 from app.application.scenario_simulator.models import SimulationRecord
+from app.application.scenario_simulator.service import SimulationService
+
 
 class ScenarioSimulator:
     """Facade for the ATLAS Scenario Simulation system."""
@@ -18,7 +19,7 @@ class ScenarioSimulator:
         self,
         scenario_type: str,
         description: str,
-        zone_id: Optional[UUID] = None,
+        zone_id: UUID | None = None,
         severity: str = "medium",
     ) -> SimulationRecord:
         """Helper to quickly run a scenario simulation without manually using the builder."""

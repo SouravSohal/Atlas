@@ -1,6 +1,7 @@
 import structlog
 from dependency_injector import containers, providers
 
+from app.application.copilot.service import CopilotService
 from app.application.events import EventDispatcher, EventPublisher, EventRegistry, InMemoryEventBus
 from app.application.incidents import (
     CreateIncidentUseCase,
@@ -9,16 +10,14 @@ from app.application.incidents import (
     UpdateIncidentUseCase,
 )
 from app.application.operational_state import (
+    OperationalStateManager,
     OperationalStateService,
     SituationSummaryAgent,
-    OperationalStateManager,
     StadiumPredictionsAgent,
 )
-from app.application.recommendations import RecommendationAgent, AIRecommendationGenerator
-from app.application.copilot.service import CopilotService
+from app.application.recommendations import AIRecommendationGenerator, RecommendationAgent
 from app.config import get_settings
 from app.infrastructure.auth import FirebaseAuthProvider
-from app.infrastructure.repositories.user import FirestoreUserRepository
 from app.infrastructure.firestore import FirestoreClient, FirestoreUnitOfWork, TransactionManager
 from app.infrastructure.repositories import (
     FirestoreEventRepository,
@@ -27,8 +26,9 @@ from app.infrastructure.repositories import (
     FirestoreRecommendationRepository,
     FirestoreTaskRepository,
 )
+from app.infrastructure.repositories.user import FirestoreUserRepository
+from app.infrastructure.streaming import BroadcastService, WebSocketManager
 from app.intelligence import AIOrchestrator, ContextRetriever, ModelGateway, PromptRegistry
-from app.infrastructure.streaming import WebSocketManager, BroadcastService
 
 
 class ApplicationContainer(containers.DeclarativeContainer):

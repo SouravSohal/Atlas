@@ -1,15 +1,17 @@
-from typing import Dict, List, Optional
+from typing import Any
 from uuid import UUID
-from app.application.action_center.entities import PendingDecision, AuditLog
+
+from app.application.action_center.entities import AuditLog, PendingDecision
+
 
 class PendingDecisionRepository:
     """Repository managing PendingDecision entities in memory or Firestore."""
 
-    def __init__(self, firestore_client=None) -> None:
+    def __init__(self, firestore_client: Any = None) -> None:
         self.client = firestore_client
-        self._storage: Dict[UUID, PendingDecision] = {}
+        self._storage: dict[UUID, PendingDecision] = {}
 
-    async def get_by_id(self, decision_id: UUID) -> Optional[PendingDecision]:
+    async def get_by_id(self, decision_id: UUID) -> PendingDecision | None:
         if self.client:
             doc = await self.client.collection("pending_decisions").document(str(decision_id)).get()
             if doc.exists:
@@ -26,13 +28,13 @@ class PendingDecisionRepository:
         else:
             self._storage[decision.id] = decision
 
-    async def get_all(self) -> List[PendingDecision]:
+    async def get_all(self) -> list[PendingDecision]:
         if self.client:
             docs = await self.client.collection("pending_decisions").get()
             return [self._map_to_decision(UUID(d.id), d.to_dict()) for d in docs]
         return list(self._storage.values())
 
-    def _map_to_dict(self, d: PendingDecision) -> dict:
+    def _map_to_dict(self, d: PendingDecision) -> dict[str, Any]:
         return {
             "id": str(d.id),
             "recommendation_id": str(d.recommendation_id) if d.recommendation_id else None,
@@ -51,7 +53,7 @@ class PendingDecisionRepository:
             "updated_at": d.updated_at.isoformat(),
         }
 
-    def _map_to_decision(self, uid: UUID, data: dict) -> PendingDecision:
+    def _map_to_decision(self, uid: UUID, data: dict[str, Any]) -> PendingDecision:
         from datetime import datetime
         rec_id = data.get("recommendation_id")
         return PendingDecision(
@@ -75,9 +77,9 @@ class PendingDecisionRepository:
 class AuditLogRepository:
     """Repository managing AuditLog records."""
 
-    def __init__(self, firestore_client=None) -> None:
+    def __init__(self, firestore_client: Any = None) -> None:
         self.client = firestore_client
-        self._storage: Dict[UUID, AuditLog] = {}
+        self._storage: dict[UUID, AuditLog] = {}
 
     async def save(self, log: AuditLog) -> None:
         if self.client:
@@ -87,17 +89,17 @@ class AuditLogRepository:
         else:
             self._storage[log.id] = log
 
-    async def get_by_decision_id(self, decision_id: UUID) -> List[AuditLog]:
+    async def get_by_decision_id(self, decision_id: UUID) -> list[AuditLog]:
         all_logs = await self.get_all()
         return [l for l in all_logs if l.decision_id == decision_id]
 
-    async def get_all(self) -> List[AuditLog]:
+    async def get_all(self) -> list[AuditLog]:
         if self.client:
             docs = await self.client.collection("decision_audit_logs").get()
             return [self._map_to_log(UUID(d.id), d.to_dict()) for d in docs]
         return list(self._storage.values())
 
-    def _map_to_dict(self, l: AuditLog) -> dict:
+    def _map_to_dict(self, l: AuditLog) -> dict[str, Any]:
         return {
             "id": str(l.id),
             "decision_id": str(l.decision_id) if l.decision_id else None,
@@ -107,7 +109,7 @@ class AuditLogRepository:
             "details": l.details,
         }
 
-    def _map_to_log(self, uid: UUID, data: dict) -> AuditLog:
+    def _map_to_log(self, uid: UUID, data: dict[str, Any]) -> AuditLog:
         from datetime import datetime
         dec_id = data.get("decision_id")
         return AuditLog(

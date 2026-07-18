@@ -10,14 +10,14 @@ from app.config import Environment, Settings, configure_logging, get_settings
 from app.dependencies import ApplicationContainer
 from app.presentation.exception_handlers import register_exception_handlers
 from app.presentation.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
+from app.presentation.routers.auth import router as auth_router
+from app.presentation.routers.copilot import router as copilot_router
 from app.presentation.routers.dashboard import router as dashboard_router
+from app.presentation.routers.demo_engine import router as demo_router
 from app.presentation.routers.health import router as health_router
 from app.presentation.routers.incidents import router as incidents_router
-from app.presentation.routers.version import router as version_router
-from app.presentation.routers.copilot import router as copilot_router
 from app.presentation.routers.streaming import router as streaming_router
-from app.presentation.routers.demo_engine import router as demo_router
-from app.presentation.routers.auth import router as auth_router
+from app.presentation.routers.version import router as version_router
 
 logger = structlog.get_logger()
 
@@ -80,8 +80,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Seed Demo User if demo mode is enabled or app is in development env
     if settings.demo.mode or settings.app.environment == Environment.DEVELOPMENT:
         try:
-            import uuid
-            from datetime import datetime, UTC
             from atlas_core.domain.enums.user_role import UserRole
             from firebase_admin import auth
 

@@ -1,13 +1,14 @@
-import pytest
-import time
 import asyncio
 from unittest.mock import MagicMock
+
+import pytest
 from fastapi import Request
 
 from app.infrastructure.cache.manager import (
     cache_manager,
     check_cache_bypass,
 )
+
 
 @pytest.mark.asyncio
 async def test_cache_set_get_ttl() -> None:

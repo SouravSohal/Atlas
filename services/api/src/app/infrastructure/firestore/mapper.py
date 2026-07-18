@@ -42,7 +42,9 @@ class TimestampMapper:
                 return val.replace(tzinfo=UTC)
             return val.astimezone(UTC)
         if hasattr(val, "to_datetime") and callable(val.to_datetime):
-            return val.to_datetime().replace(tzinfo=UTC)  # type: ignore[no-any-return]
+            dt = val.to_datetime()
+            if isinstance(dt, datetime):
+                return dt.replace(tzinfo=UTC)
         if isinstance(val, str):
             try:
                 return datetime.fromisoformat(val.replace("Z", "+00:00")).astimezone(UTC)

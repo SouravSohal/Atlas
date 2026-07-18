@@ -1,16 +1,16 @@
-import pytest
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import uuid4
 
+from atlas_core.domain.entities.operational_state import OperationalState
 from atlas_core.domain.entities.stadium import Stadium
 from atlas_core.domain.entities.stadium_node import StadiumNode
-from atlas_core.domain.entities.operational_state import OperationalState
-from atlas_core.domain.value_objects.stadium_edge import StadiumEdge
-from atlas_core.domain.value_objects.crowd_density import CrowdDensity
-from atlas_core.domain.value_objects.queue_estimate import QueueEstimate
 from atlas_core.domain.enums.incident_type import IncidentType
 from atlas_core.domain.enums.severity import Severity
 from atlas_core.domain.services.incident_engine import IncidentEngine
+from atlas_core.domain.value_objects.crowd_density import CrowdDensity
+from atlas_core.domain.value_objects.queue_estimate import QueueEstimate
+from atlas_core.domain.value_objects.stadium_edge import StadiumEdge
+
 
 def test_incident_engine_lifecycle_and_propagation():
     # 1. Setup Stadium, Nodes and Edges

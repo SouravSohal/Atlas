@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+
 import structlog
 
 from app.application.demo.definition import ScenarioDefinition, ScenarioState
@@ -12,11 +12,11 @@ class ScenarioScheduler:
 
     def __init__(self, runner: ScenarioRunner) -> None:
         self.runner = runner
-        self.current_scenario: Optional[ScenarioDefinition] = None
+        self.current_scenario: ScenarioDefinition | None = None
         self.state = ScenarioState.STOPPED
         self.current_step_idx = 0
         self.speed_multiplier = 1.0
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task[None] | None = None
 
     async def play(self, scenario: ScenarioDefinition) -> None:
         """Starts background loop playing a scenario from step 0."""

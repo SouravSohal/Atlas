@@ -1,18 +1,20 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
+import pytest
+
 from app.intelligence import AIOrchestrator, PromptRegistry
 from app.intelligence.predictive import (
-    PredictionResult,
-    CongestionPredictor,
-    QueuePredictor,
-    VolunteerDemandPredictor,
-    RiskPredictor,
     ArrivalPredictor,
+    CongestionPredictor,
     ExitPredictor,
+    PredictionResult,
     PredictiveIntelligenceEngine,
+    QueuePredictor,
+    RiskPredictor,
+    VolunteerDemandPredictor,
 )
+
 
 # Simulated domain objects for testing
 class MockOverview:
