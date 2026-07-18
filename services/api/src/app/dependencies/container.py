@@ -46,6 +46,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
             "app.presentation.routers.copilot",
             "app.presentation.routers.streaming",
             "app.presentation.routers.demo_engine",
+            "app.presentation.routers.auth",
             "app.dependencies.auth",
             "app.main",
         ]

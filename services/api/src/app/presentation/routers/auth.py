@@ -6,7 +6,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.config import Settings
+from app.config import Environment, Settings
 from app.dependencies.auth import get_current_user
 from app.dependencies.container import ApplicationContainer
 from app.infrastructure.auth.firebase import FirebaseAuthProvider
@@ -197,3 +197,63 @@ async def me(user: User = Depends(get_current_user)) -> ApiResponse[UserResponse
 async def validate_session(user: User = Depends(get_current_user)) -> ApiResponse[bool]:
     """Validates the current session and Firebase ID token statelessly."""
     return ApiResponse(success=True, data=True)
+
+
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+security = HTTPBearer()
+
+@router.post("/elevate", response_model=ApiResponse[UserResponse])
+@inject
+async def elevate_demo_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    settings: Settings = Depends(Provide[ApplicationContainer.config]),
+    auth_provider: FirebaseAuthProvider = Depends(Provide[ApplicationContainer.auth_provider]),
+) -> ApiResponse[UserResponse]:
+    """Elevates the current user to Administrator role via Firebase custom claims."""
+    # 1. Only allow role elevation in demo/dev mode to protect production environments
+    if not settings.demo.mode and settings.app.environment == Environment.PRODUCTION:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Role elevation is disabled in the production environment.",
+        )
+
+    # 2. Decode current bearer token
+    token = credentials.credentials
+    try:
+        decoded_token = auth_provider.verify_token(token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        ) from e
+
+    uid = decoded_token.get("uid")
+    if not uid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Firebase UID not found in token",
+        )
+
+    # 3. Assign the administrator role using the Firebase Admin SDK custom claims
+    from firebase_admin import auth as firebase_auth
+    try:
+        firebase_auth.set_custom_user_claims(uid, {"role": "administrator"})
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to assign admin custom claims: {e}",
+        )
+
+    # 4. Construct response representation of the elevated user
+    name = decoded_token.get("name", "") or decoded_token.get("email", "").split("@")[0] or "Firebase User"
+    email = decoded_token.get("email", "")
+    import uuid as py_uuid
+    user_uuid = py_uuid.uuid5(py_uuid.NAMESPACE_DNS, f"firebase:{uid}")
+    
+    user_resp = UserResponse(
+        id=str(user_uuid),
+        name=name,
+        role="administrator",
+        email=email,
+    )
+    return ApiResponse(success=True, data=user_resp)

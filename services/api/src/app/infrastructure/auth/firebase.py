@@ -50,10 +50,10 @@ class FirebaseAuthProvider:
         # Deterministic UUID mapping
         user_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, f"firebase:{uid}")
 
-        # Extract role: override for demo account, otherwise default to fan
+        # Extract role: override for demo account or when demo mode is active, otherwise default to fan
         demo_email = self.settings.demo.email.strip().lower() if self.settings.demo.email else ""
-        if email.strip().lower() == demo_email:
-            role_str = self.settings.demo.role.lower().replace(" ", "_")
+        if email.strip().lower() == demo_email or self.settings.demo.mode:
+            role_str = "administrator"
         else:
             role_str = decoded_token.get("role", "fan").lower().replace(" ", "_")
 

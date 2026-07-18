@@ -201,3 +201,51 @@ def test_extract_user_invalid_role(auth_provider: FirebaseAuthProvider) -> None:
     # Assert
     assert user.role == UserRole.FAN
 
+@pytest.mark.asyncio
+async def test_elevate_demo_user_success() -> None:
+    from app.presentation.routers.auth import elevate_demo_user
+    from fastapi.security import HTTPAuthorizationCredentials
+
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="valid_token")
+    settings = Settings()
+    settings.demo.mode = True
+    settings.app.environment = "development"
+
+    auth_provider = MagicMock()
+    auth_provider.verify_token.return_value = {
+        "uid": "firebase_uid_123",
+        "email": "google_user@example.com",
+        "name": "Google User",
+    }
+
+    with patch("firebase_admin.auth.set_custom_user_claims") as mock_set_claims:
+        response = await elevate_demo_user(
+            credentials=credentials,
+            settings=settings,
+            auth_provider=auth_provider,
+        )
+        assert response.success is True
+        assert response.data.role == "administrator"
+        mock_set_claims.assert_called_once_with("firebase_uid_123", {"role": "administrator"})
+
+@pytest.mark.asyncio
+async def test_elevate_demo_user_disabled_in_production() -> None:
+    from app.presentation.routers.auth import elevate_demo_user
+    from fastapi.security import HTTPAuthorizationCredentials
+
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="valid_token")
+    settings = Settings()
+    settings.demo.mode = False
+    settings.app.environment = "production"
+
+    auth_provider = MagicMock()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await elevate_demo_user(
+            credentials=credentials,
+            settings=settings,
+            auth_provider=auth_provider,
+        )
+    assert exc_info.value.status_code == 403
+    assert "Role elevation is disabled in the production environment" in exc_info.value.detail
+

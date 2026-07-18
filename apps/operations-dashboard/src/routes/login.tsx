@@ -33,6 +33,13 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+  
+  const [showGoogleDemoModal, setShowGoogleDemoModal] = useState(false);
+  const [pendingSession, setPendingSession] = useState<{
+    idToken: string;
+    userCredential: any;
+    isDemo: boolean;
+  } | null>(null);
 
   const showDemoAccess =
     envConfig.defaultDemoMode || envConfig.environment === "development";
@@ -115,12 +122,50 @@ function LoginPage() {
       const emailVal = userCredential.user.email || "";
       const isDemo = emailVal.trim().toLowerCase() === envConfig.demoEmail.trim().toLowerCase();
 
-      // 2. Fetch profile from Backend
-      await handleFetchUserProfile(idToken, userCredential, isDemo);
+      // 2. Open role elevation modal instead of immediate redirect
+      setPendingSession({ idToken, userCredential, isDemo });
+      setShowGoogleDemoModal(true);
     } catch (err: any) {
       setError(err.message || "Google Sign-In failed or cancelled.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleConfirmGoogleDemo = async () => {
+    if (!pendingSession) return;
+    setIsLoading(true);
+    try {
+      const { idToken, userCredential } = pendingSession;
+
+      // 1. Call backend /auth/elevate endpoint to assign the custom claim role to "administrator"
+      const elevateRes = await fetch(`${envConfig.apiUrl}/auth/elevate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      if (!elevateRes.ok) {
+        const errorPayload = await elevateRes.json().catch(() => ({}));
+        throw new Error(errorPayload.error || "Backend failed to elevate role custom claims.");
+      }
+
+      // 2. Force refresh the Firebase ID Token to retrieve the newly assigned custom claims
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        throw new Error("No active Firebase user found to elevate.");
+      }
+      const refreshedIdToken = await firebaseUser.getIdToken(true);
+
+      // 3. Fetch profile and redirect using the updated token
+      await handleFetchUserProfile(refreshedIdToken, userCredential, true);
+    } catch (err: any) {
+      setError(err.message || "Failed to establish elevated demo session.");
+    } finally {
+      setIsLoading(false);
+      setShowGoogleDemoModal(false);
+      setPendingSession(null);
     }
   };
 
@@ -345,6 +390,45 @@ function LoginPage() {
           )}
         </div>
       </div>
+
+      {showGoogleDemoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-purple-500/30 bg-[#0c0a17] p-6 shadow-2xl relative">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-500/10 text-purple-400">
+              <Shield className="h-6 w-6 animate-pulse" />
+            </div>
+            <h2 className="mt-4 text-lg font-black uppercase tracking-tight text-center text-foreground">
+              Welcome to Demo Mode
+            </h2>
+            <div className="mt-4 space-y-3 text-xs text-muted-foreground leading-relaxed text-left border-y border-border/20 py-4">
+              <p className="font-bold text-foreground">
+                Authentication Successful.
+              </p>
+              <p>
+                You have successfully signed in using your Google account.
+              </p>
+              <p>
+                In the production platform, newly authenticated users are assigned the Fan role, which grants access only to fan-facing functionality and does not permit access to the Stadium Operations Command Center.
+              </p>
+              <p>
+                For the purposes of this demonstration, your account has been temporarily elevated to the Administrator role so you can explore the complete Smart Stadium & Tournament Operations platform.
+              </p>
+              <p>
+                This elevation applies only to the demonstration environment and does not represent production access policies.
+              </p>
+              <p className="italic text-purple-400 font-semibold">
+                Happy exploring!
+              </p>
+            </div>
+            <button
+              onClick={handleConfirmGoogleDemo}
+              className="mt-6 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-purple-950/20 transition-all"
+            >
+              Continue to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
