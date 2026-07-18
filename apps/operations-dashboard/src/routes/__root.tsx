@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createRootRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { ThemeProvider } from "../providers/ThemeProvider";
 import { AppShell } from "../layouts/AppShell";
@@ -20,6 +20,8 @@ function RootComponent() {
   const location = useLocation();
   const navigate = useNavigate();
   const { accessToken } = useGlobalStore();
+  const pathnameRef = useRef(location.pathname);
+  pathnameRef.current = location.pathname;
 
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -60,7 +62,7 @@ function RootComponent() {
               isDemoSession: isDemo,
             });
 
-            if (location.pathname === "/login") {
+            if (pathnameRef.current === "/login") {
               navigate({ to: "/" });
             }
           }
@@ -79,7 +81,7 @@ function RootComponent() {
           userRole: "Administrator",
           isDemoSession: false,
         });
-        if (location.pathname !== "/login") {
+        if (pathnameRef.current !== "/login") {
           navigate({ to: "/login" });
         }
       }
@@ -95,7 +97,7 @@ function RootComponent() {
     } else if (storedAccess && location.pathname === "/login") {
       navigate({ to: "/" });
     }
-  }, [location.pathname]);
+  }, [location.pathname, navigate, accessToken]);
 
   // 2. Welcome Experience Trigger on First Login
   useEffect(() => {

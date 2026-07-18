@@ -1,6 +1,6 @@
 interface AboutTabProps {}
 
-export function AboutTab({}: AboutTabProps) {
+export function AboutTab(_props: AboutTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">

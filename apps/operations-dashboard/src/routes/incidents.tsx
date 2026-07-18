@@ -94,7 +94,7 @@ function IncidentsPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [setSelectedIncident]);
 
   if (isLoading) {
     return (

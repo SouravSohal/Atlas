@@ -28,6 +28,8 @@ export const Route = createFileRoute("/executive-situation-room")({
   component: ExecutiveSituationRoomPage,
 });
 
+const EMPTY_ARRAY: any[] = [];
+
 function ExecutiveSituationRoomPage() {
   const { subscribe, unsubscribe } = useWebSocket();
   const {
@@ -78,9 +80,9 @@ function ExecutiveSituationRoomPage() {
   });
 
   const overview = playbackActive && simulatedOverview ? simulatedOverview : overviewQuery.data;
-  const states = playbackActive && simulatedZones ? simulatedZones : (stateQuery.data || []);
-  const incidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || []);
-  const rawRecs = playbackActive && simulatedRecommendations ? simulatedRecommendations : (recommendationsQuery.data?.items || []);
+  const states = playbackActive && simulatedZones ? simulatedZones : (stateQuery.data || EMPTY_ARRAY);
+  const incidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || EMPTY_ARRAY);
+  const rawRecs = playbackActive && simulatedRecommendations ? simulatedRecommendations : (recommendationsQuery.data?.items || EMPTY_ARRAY);
 
   const recs = useMemo(() => {
     return rawRecs.map((item) => ({

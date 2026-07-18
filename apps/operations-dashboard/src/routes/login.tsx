@@ -5,17 +5,13 @@ import { envConfig } from "../config/env";
 import {
   auth,
   googleProvider,
-  signInWithEmailAndPassword,
   signInWithPopup,
 } from "../services/firebase";
 import {
   Shield,
   Activity,
   Cloud,
-  Lock,
-  Mail,
   ArrowRight,
-  Terminal,
   Info,
 } from "lucide-react";
 
@@ -26,12 +22,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
   
   const [showGoogleDemoModal, setShowGoogleDemoModal] = useState(false);
@@ -40,9 +32,6 @@ function LoginPage() {
     userCredential: any;
     isDemo: boolean;
   } | null>(null);
-
-  const showDemoAccess =
-    envConfig.defaultDemoMode || envConfig.environment === "development";
 
   // Check backend status on page load
   useEffect(() => {
@@ -83,31 +72,6 @@ function LoginPage() {
     });
 
     navigate({ to: "/" });
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    setError(null);
-    setIsLoading(true);
-
-    try {
-      // 1. Authenticate with Firebase Web SDK
-      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password.trim());
-      const idToken = await userCredential.user.getIdToken();
-
-      const isDemo = email.trim().toLowerCase() === envConfig.demoEmail.trim().toLowerCase();
-
-      // 2. Fetch profile from Backend
-      await handleFetchUserProfile(idToken, userCredential, isDemo);
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in. Please verify credentials.");
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -166,27 +130,6 @@ function LoginPage() {
       setIsLoading(false);
       setShowGoogleDemoModal(false);
       setPendingSession(null);
-    }
-  };
-
-  const handleLaunchDemo = async () => {
-    setError(null);
-    setIsDemoLoading(true);
-
-    try {
-      const demoEmail = envConfig.demoEmail.trim();
-      const demoPassword = envConfig.demoPassword.trim();
-
-      // 1. Authenticate demo user with Firebase Web SDK using environment variables
-      const userCredential = await signInWithEmailAndPassword(auth, demoEmail, demoPassword);
-      const idToken = await userCredential.user.getIdToken();
-
-      // 2. Fetch profile from Backend
-      await handleFetchUserProfile(idToken, userCredential, true);
-    } catch (err: any) {
-      setError(err.message || "Failed to authenticate demo environment.");
-    } finally {
-      setIsDemoLoading(false);
     }
   };
 
@@ -265,14 +208,14 @@ function LoginPage() {
         </div>
       </div>
 
-      {/* RIGHT PANEL: CREDENTIALS & DEMO ACCESS */}
+      {/* RIGHT PANEL: GOOGLE SIGN-IN */}
       <div className="w-full md:w-1/2 h-2/3 md:h-full bg-[#08070d] p-8 md:p-16 flex flex-col justify-center overflow-y-auto">
         <div className="w-full max-w-sm mx-auto space-y-6 text-left">
-          {/* Welcome back */}
+          {/* Welcome/Header */}
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tight">Welcome Back</h2>
+            <h2 className="text-2xl font-black uppercase tracking-tight">Sign In</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Enter operations credentials to access the command console.
+              Access the ATLAS Stadium Operations Command Center.
             </p>
           </div>
 
@@ -283,111 +226,22 @@ function LoginPage() {
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="name@atlas.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading || isDemoLoading}
-                  className="w-full rounded-xl border border-border bg-card/45 pl-10 pr-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="pass" className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-                Security Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  id="pass"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading || isDemoLoading}
-                  className="w-full rounded-xl border border-border bg-card/45 pl-10 pr-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] font-medium">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={isLoading || isDemoLoading}
-                  className="rounded border-border accent-purple-500"
-                />
-                <span className="text-muted-foreground">Remember Me</span>
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="submit"
-                disabled={isLoading || isDemoLoading}
-                className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-purple-950/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent animate-spin rounded-full" />
-                ) : (
-                  <>
-                    Sign In
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                disabled={isLoading || isDemoLoading}
-                className="w-full rounded-xl border border-border bg-card hover:bg-muted py-3 text-xs font-black uppercase tracking-wider text-foreground flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-              >
+          {/* Action button */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+            className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-purple-950/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            {isLoading ? (
+              <div className="h-4 w-4 border-2 border-white border-t-transparent animate-spin rounded-full" />
+            ) : (
+              <>
                 Sign In with Google
-              </button>
-            </div>
-          </form>
-
-          {/* Demo Mode section */}
-          {showDemoAccess && (
-            <div className="space-y-4 pt-4 border-t border-border/25">
-              <div className="flex items-start gap-2.5 p-3 rounded-xl border border-purple-500/10 bg-purple-500/5 text-[10px] leading-relaxed text-purple-300">
-                <Terminal className="h-4 w-4 shrink-0 text-purple-400 mt-0.5 animate-pulse" />
-                <p>
-                  For hackathon evaluation and testing purposes, ATLAS includes a preconfigured demonstration environment. This authenticates using a dedicated Firebase demo account with full role capabilities.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleLaunchDemo}
-                disabled={isLoading || isDemoLoading}
-                className="w-full rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 py-3 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-              >
-                {isDemoLoading ? (
-                  <div className="h-4 w-4 border-2 border-purple-400 border-t-transparent animate-spin rounded-full" />
-                ) : (
-                  <>
-                    Launch Demo Mode
-                    <Shield className="h-4 w-4 animate-pulse" />
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </button>
         </div>
       </div>
 

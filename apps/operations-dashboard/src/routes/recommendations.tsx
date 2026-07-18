@@ -19,6 +19,8 @@ export const Route = createFileRoute("/recommendations")({
   component: RecommendationsPage,
 });
 
+const EMPTY_ARRAY: any[] = [];
+
 function RecommendationsPage() {
   const { subscribe, unsubscribe } = useWebSocket();
 
@@ -77,7 +79,7 @@ function RecommendationsPage() {
     refetchInterval: 10000,
   });
 
-  const rawItems = playbackActive && simulatedRecommendations ? simulatedRecommendations : (data?.items || []);
+  const rawItems = playbackActive && simulatedRecommendations ? simulatedRecommendations : (data?.items || EMPTY_ARRAY);
 
   // Real-time WebSocket connection to subscribe to topic updates
   useEffect(() => {

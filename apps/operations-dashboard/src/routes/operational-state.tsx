@@ -178,6 +178,8 @@ const ZONE_METADATA_TEMPLATES = [
   { label: "Volunteer Depot Command", type: "Volunteer Stations" as const, x: 550, y: 50 },
 ];
 
+const EMPTY_ARRAY: any[] = [];
+
 function OperationalStateDashboardPage() {
   const { subscribe, unsubscribe } = useWebSocket();
   const {
@@ -218,22 +220,27 @@ function OperationalStateDashboardPage() {
     };
   }, [subscribe, unsubscribe]);
 
-  const zones = playbackActive && simulatedZones ? simulatedZones : (stateQuery.data || []);
-  const rawIncidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || []);
-  const rawRecs = playbackActive && simulatedRecommendations ? simulatedRecommendations : (recommendationsQuery.data?.items || []);
+  const zones = useMemo(() => {
+    return playbackActive && simulatedZones ? simulatedZones : (stateQuery.data || EMPTY_ARRAY);
+  }, [playbackActive, simulatedZones, stateQuery.data]);
 
-  // Map incidents to zones deterministically if not already mapped
-  const incidents = rawIncidents.map((inc) => {
-    if (inc.zoneId) return inc;
-    const index = parseInt(inc.id.replace(/-/g, "").slice(0, 4), 16) % Math.max(1, zones.length);
-    return { ...inc, zoneId: zones[index]?.zone_id || "" };
-  });
+  const incidents = useMemo(() => {
+    const rawIncidents = playbackActive && simulatedIncidents ? simulatedIncidents : (incidentsQuery.data?.items || EMPTY_ARRAY);
+    return rawIncidents.map((inc) => {
+      if (inc.zoneId) return inc;
+      const index = parseInt(inc.id.replace(/-/g, "").slice(0, 4), 16) % Math.max(1, zones.length);
+      return { ...inc, zoneId: zones[index]?.zone_id || "" };
+    });
+  }, [playbackActive, simulatedIncidents, incidentsQuery.data?.items, zones]);
 
-  const recs = rawRecs.map((rec) => {
-    if (rec.zoneId) return rec;
-    const index = parseInt(rec.id.replace(/-/g, "").slice(0, 4), 16) % Math.max(1, zones.length);
-    return { ...rec, zoneId: zones[index]?.zone_id || "" };
-  });
+  const recs = useMemo(() => {
+    const rawRecs = playbackActive && simulatedRecommendations ? simulatedRecommendations : (recommendationsQuery.data?.items || EMPTY_ARRAY);
+    return rawRecs.map((rec) => {
+      if (rec.zoneId) return rec;
+      const index = parseInt(rec.id.replace(/-/g, "").slice(0, 4), 16) % Math.max(1, zones.length);
+      return { ...rec, zoneId: zones[index]?.zone_id || "" };
+    });
+  }, [playbackActive, simulatedRecommendations, recommendationsQuery.data?.items, zones]);
 
   // Compute auto-layouted elements using Dagre
   const { flowNodes, flowEdges } = useMemo(() => {

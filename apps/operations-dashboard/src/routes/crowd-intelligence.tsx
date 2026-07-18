@@ -24,6 +24,14 @@ export const Route = createFileRoute("/crowd-intelligence")({
   component: CrowdIntelligencePage,
 });
 
+const thinkingStages = [
+  "Retrieving live operational state and zone metrics...",
+  "Scanning active incident logs and volunteer locations...",
+  "Invoking Gemini 2.5 Flash model orchestrator...",
+  "Running deterministic risk evaluation policy...",
+  "Compiling structured situation report...",
+];
+
 function CrowdIntelligencePage() {
   const {
     playbackActive,
@@ -72,14 +80,6 @@ function CrowdIntelligencePage() {
 
   const finalSummaryText = rawSummaryText || fallbackSummaryText;
 
-  const thinkingStages = [
-    "Retrieving live operational state and zone metrics...",
-    "Scanning active incident logs and volunteer locations...",
-    "Invoking Gemini 2.5 Flash model orchestrator...",
-    "Running deterministic risk evaluation policy...",
-    "Compiling structured situation report...",
-  ];
-
   // Start analysis trigger
   const startAiAnalysis = () => {
     setIsThinking(true);
@@ -123,7 +123,7 @@ function CrowdIntelligencePage() {
 
       return () => clearInterval(interval);
     }
-  }, [isThinking, thinkingStage]);
+  }, [isThinking, thinkingStage, finalSummaryText]);
 
   if (overviewQuery.isLoading || incidentsQuery.isLoading || recommendationsQuery.isLoading) {
     return <LoadingScreen />;

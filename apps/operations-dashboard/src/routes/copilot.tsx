@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useWebSocket } from "../providers/WebSocketProvider";
 import {
@@ -55,6 +55,16 @@ function CopilotChatPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isThinking]);
 
+  const handleClearChat = useCallback(() => {
+    setMessages([
+      {
+        role: "assistant",
+        text: "Conversation cleared. Ready for new operational inquiries.",
+        timestamp: new Date().toLocaleTimeString(),
+      },
+    ]);
+  }, [setMessages]);
+
   // Keyboard Shortcuts (Ctrl+L to clear chat)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -65,17 +75,7 @@ function CopilotChatPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const handleClearChat = () => {
-    setMessages([
-      {
-        role: "assistant",
-        text: "Conversation cleared. Ready for new operational inquiries.",
-        timestamp: new Date().toLocaleTimeString(),
-      },
-    ]);
-  };
+  }, [handleClearChat]);
 
   const handleSendMessage = (textToSend: string) => {
     if (!textToSend.trim()) return;
