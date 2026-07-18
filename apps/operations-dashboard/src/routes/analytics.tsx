@@ -137,9 +137,9 @@ function AnalyticsPage() {
             <TrendingUp className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight uppercase">Operational Analytics</h1>
+            <h1 className="text-2xl font-black tracking-tight uppercase">Stadium Operational Intelligence</h1>
             <p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider font-semibold">
-              Stadium Operational Metrics, Performance Analytics & AI Accuracy Audits
+              Stadium Operational Metrics, Performance Intelligence & AI Accuracy Audits
             </p>
           </div>
         </div>

@@ -126,3 +126,36 @@ def test_stadium_digital_twin_lifecycle():
     assert len(stadium.history_ticks) == 1
     assert stadium.history_ticks[0].time_offset == "T-30m"
     assert stadium.history_ticks[0].telemetry.power_draw_mw == 6.5
+
+def test_stadium_phase_transitions():
+    # Arrange
+    from atlas_core.domain.enums.stadium_phase import StadiumPhase
+    stadium = Stadium(
+        name="Aurelia Arena",
+        capacity=65000
+    )
+
+    # Assert Default
+    assert stadium.phase == StadiumPhase.CLOSED
+
+    # Act & Assert Transitions
+    stadium.transition_to_phase(StadiumPhase.PRE_MATCH_INGRESS)
+    assert stadium.phase == StadiumPhase.PRE_MATCH_INGRESS
+
+    stadium.transition_to_phase(StadiumPhase.MATCH_ACTIVE)
+    assert stadium.phase == StadiumPhase.MATCH_ACTIVE
+
+    stadium.transition_to_phase(StadiumPhase.POST_MATCH_EGRESS)
+    assert stadium.phase == StadiumPhase.POST_MATCH_EGRESS
+
+    # Reset to closed
+    stadium.transition_to_phase(StadiumPhase.CLOSED)
+    assert stadium.phase == StadiumPhase.CLOSED
+
+    # Try invalid direct transitions
+    with pytest.raises(ValueError, match="Cannot transition directly from Closed to Post-Match Egress"):
+        stadium.transition_to_phase(StadiumPhase.POST_MATCH_EGRESS)
+
+    stadium.transition_to_phase(StadiumPhase.EMERGENCY_EVACUATION)
+    with pytest.raises(ValueError, match="Cannot transition directly from Emergency Evacuation to Match Active"):
+        stadium.transition_to_phase(StadiumPhase.MATCH_ACTIVE)

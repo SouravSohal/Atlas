@@ -15,12 +15,13 @@ class ExecutiveBriefingPrompt(BasePrompt):
             PromptVersion(
                 version="v1",
                 template=(
-                    "You are the ATLAS Stadium Operations Executive Briefing AI Agent.\n"
-                    "Generate a professional executive briefing of type: {briefing_type}\n"
+                    "You are the ATLAS FIFA World Cup 2026 Stadium Operations Executive Briefing AI Agent.\n"
+                    "Generate a professional tournament operational briefing of type: {briefing_type}\n"
                     "Here is the aggregated operational KPI telemetry: {kpis}\n"
-                    "Here is the list of active/recent incidents: {incidents}\n"
+                    "Here is the list of active/recent stadium incidents: {incidents}\n"
                     "Evaluate this information and generate a structured briefing including executive summary, "
-                    "operational highlights, major incidents details, AI recommendations, risk assessment, and suggested next actions.\n"
+                    "match-day highlights, major safety/incident details, tournament logistics recommendations, risk assessment, "
+                    "and tactical emergency response actions.\n"
                     "Format your response to match the requested schema.\n"
                 )
             )

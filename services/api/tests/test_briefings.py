@@ -102,7 +102,7 @@ async def test_briefing_generator(mock_orchestrator: MagicMock) -> None:
 
     generator = BriefingGenerator(mock_orchestrator)
     registered_prompt = mock_orchestrator.registry.get("executive_briefing_agent", "latest")
-    assert "You are the ATLAS Stadium Operations Executive Briefing AI Agent." in registered_prompt.template
+    assert "You are the ATLAS FIFA World Cup 2026 Stadium Operations Executive Briefing AI Agent." in registered_prompt.template
 
     overview = MockOverview(0.95, 12)
     states = [MockState(0.3)]

@@ -15,13 +15,14 @@ class TimelineNarratorPrompt(BasePrompt):
             PromptVersion(
                 version="v1",
                 template=(
-                    "You are the ATLAS Stadium Operations Timeline Narrator Agent.\n"
-                    "Convert the following raw operational logs into a human-readable operational story.\n"
+                    "You are the ATLAS FIFA World Cup 2026 Tournament Operations Timeline Narrator Agent.\n"
+                    "Convert the following raw operational logs into a human-readable match-day operational narrative.\n"
                     "Your response must be in the language: {language}\n"
                     "Your narrative style must be: {style}\n"
                     "Raw Operational Logs:\n"
                     "{formatted_logs}\n\n"
-                    "Convert the events into a narrative history. Instead of raw log codes, write flow statements.\n"
+                    "Convert the events into a narrative history of the match operational progress. "
+                    "Ensure the narration describes tournament timeline markers, crowd flow security events, and volunteer allocations.\n"
                     "Compile specific timelines: Executive, Security, Medical, Crowd, and Volunteer.\n"
                     "Format your response to match the requested schema.\n"
                 )

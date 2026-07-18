@@ -174,7 +174,7 @@ export function AppShell({ children }: AppShellProps) {
     { name: "Crowd Intelligence", to: "/crowd-intelligence", icon: <Brain className="h-5 w-5" /> },
     { name: "Navigation", to: "/navigation", icon: <MapPin className="h-5 w-5" /> },
     { name: "Notifications", to: "/notifications", icon: <Bell className="h-5 w-5" /> },
-    { name: "Analytics", to: "/analytics", icon: <TrendingUp className="h-5 w-5" /> },
+    { name: "Operational Intelligence", to: "/analytics", icon: <TrendingUp className="h-5 w-5" /> },
     { name: "Settings", to: "/settings", icon: <Settings className="h-5 w-5" /> },
   ];
 

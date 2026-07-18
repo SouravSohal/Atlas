@@ -23,3 +23,20 @@ class User(BaseEntity):
     def update_role(self, new_role: UserRole) -> None:
         """Update the user's operational role."""
         self.role = new_role
+
+    def can_access_security_zone(self, zone_category: str) -> bool:
+        """Determines if the user's role grants access to a specific FIFA stadium security zone."""
+        category_lower = zone_category.lower().strip()
+        # Public access
+        if category_lower in ("general_stands", "fan_zone", "concourse", "restroom", "parking"):
+            return True
+        # Staff and security access
+        if self.role.is_staff():
+            return True
+        # Athlete access
+        if self.role == UserRole.ATHLETE:
+            return category_lower in ("pitch", "locker_room", "athlete_tunnel", "medical")
+        # Volunteer access
+        if self.role == UserRole.VOLUNTEER:
+            return category_lower not in ("pitch", "locker_room", "vip_lounge")
+        return False

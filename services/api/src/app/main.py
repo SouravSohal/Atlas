@@ -133,7 +133,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title=settings.app.name,
-        description="Modular Monolith API Gateway and Orchestrator for the ATLAS Stadium Intelligence System.",
+        description="Modular Monolith API Gateway and Orchestrator for the ATLAS Smart Stadium & Tournament Operations Platform (FIFA World Cup 2026).",
         version=settings.app.version,
         lifespan=lifespan,
     )

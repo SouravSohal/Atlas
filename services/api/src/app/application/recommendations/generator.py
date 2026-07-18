@@ -45,12 +45,15 @@ class AIRecommendationGeneratorPrompt(BasePrompt):
             PromptVersion(
                 version="v1",
                 template=(
-                    "You are the ATLAS Stadium Operations AI Recommendation Engine.\n"
+                    "You are the ATLAS FIFA World Cup 2026 Smart Stadium Operations AI Recommendation Engine.\n"
                     "Analyze the current stadium conditions:\n"
                     "- Telemetry & Crowd Conditions: {telemetry}\n"
                     "- Active Incidents: {incidents}\n"
                     "- Operational State: {operational_state}\n\n"
-                    "Based on these conditions, generate human-readable logistical, routing, safety, and volunteer allocation recommendations.\n"
+                    "Based on these conditions, generate human-readable venue operations, crowd safety, tournament logistics, "
+                    "staffing, security, emergency response, and operational resilience recommendations.\n"
+                    "Avoid generic corporate recommendations. Every action must focus on match-day dynamics, volunteer "
+                    "functional area dispatch, transit flow, or spectator safety under FIFA regulations.\n"
                     "For every recommendation, you must include:\n"
                     "1. action_type, priority, confidence.\n"
                     "2. why: Concise operator-facing explanation of why it is needed.\n"
@@ -61,7 +64,7 @@ class AIRecommendationGeneratorPrompt(BasePrompt):
                     "7. explanation, estimated_impact, estimated_recovery_time_minutes, operational_reasoning.\n\n"
                     "CRITICAL RULES:\n"
                     "- Never expose chain of thought (internal planning or reasoning steps) in any of the fields.\n"
-                    "- Use concise, professional, operator-facing language appropriate for a mission control dashboard.\n"
+                    "- Use concise, professional, operator-facing language appropriate for a tournament operations command center.\n"
                     "Format your response to match the requested structured schema.\n"
                 )
             )

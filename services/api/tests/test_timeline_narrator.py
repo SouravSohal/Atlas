@@ -119,7 +119,7 @@ async def test_timeline_narrator(mock_orchestrator: MagicMock) -> None:
     
     # Verify registry
     registered_prompt = mock_orchestrator.registry.get("timeline_narrator_agent", "latest")
-    assert "You are the ATLAS Stadium Operations Timeline Narrator Agent." in registered_prompt.template
+    assert "You are the ATLAS FIFA World Cup 2026 Tournament Operations Timeline Narrator Agent." in registered_prompt.template
 
     ts_base = datetime.now(UTC)
     

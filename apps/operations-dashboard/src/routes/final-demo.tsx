@@ -32,73 +32,73 @@ interface DemoStep {
 const DEMO_STEPS: DemoStep[] = [
   {
     title: "1. Welcome & Project Pitch",
-    narratorText: "Welcome to ATLAS, the AI-first stadium operations copilot. ATLAS synchronizes sensor feeds, predicts crowd flows, and recommends verified operational actions using LLMs. Click Start to begin the guided judging sequence.",
+    narratorText: "Welcome to ATLAS, the AI-First Venue Management Platform purpose-built for the FIFA World Cup 2026. ATLAS addresses the critical challenge of managing multi-lingual crowds, transport bottlenecks, and emergency dispatches across 16 host cities. We utilize Gemini to synchronize telemetry, run predictive crowd modeling, and deliver verified operations decision support. Click Start to begin the guided sequence.",
     highlightPanel: "pitch",
     screenTitle: "ATLAS Operations Intelligence",
     subtitle: "AI-First Stadium Command & Control Platform"
   },
   {
-    title: "2. Mission Control Central Overview",
-    narratorText: "This is the primary Mission Control interface. We see real-time stadium metrics on the top, live incident lists on the right, and the AI Copilot briefing panel on the left. Everything updates dynamically via WebSockets.",
+    title: "2. Command Center Overview",
+    narratorText: "This is the main Command Center for FIFA Match-Day Operations. The upper panel displays real-time telemetry (crowd density, wait times, gate health), while the left-hand panel hosts our Gemini-powered Operational Briefing and Copilot Assistant. The right-hand panel streams live security and logistical incidents via WebSockets.",
     highlightPanel: "mission_control",
-    screenTitle: "Operations Dashboard",
+    screenTitle: "Operations Command Center",
     subtitle: "Real-time Stadium Telemetry"
   },
   {
     title: "3. Interactive Digital Twin",
-    narratorText: "Our live Digital Twin mapping renders stadium gateways, restrooms, parking lots, and medical zones. When an incident occurs, the camera auto-focuses on the target region and triggers pulsing highlights.",
+    narratorText: "The interactive Stadium Digital Twin maps exact venue nodes (ingress gates, pitch perimeter, VIP lounges, volunteer zones). Upon triggering a security or medical incident, the system executes camera auto-focus tracking, visually highlighting the zone to accelerate dispatch times.",
     highlightPanel: "digital_twin",
     screenTitle: "Stadium Digital Twin",
     subtitle: "Interactive Facility Network & Flow Topology"
   },
   {
     title: "4. Stress Scenario Selection",
-    narratorText: "We support deterministic stress test playbooks: Crowd Surge, Medical Emergency, Gate Closures, and Lost Child. Triggering a scenario dispatch mutations to our Firestore database.",
+    narratorText: "We support pre-configured FIFA operational playbooks: Post-Match Egress Surge at Estadio Azteca, Medical Emergency in General Stands, Ticket Scanner Network Failures, and VIP Delegation Arrivals. Triggering a scenario dispatches database updates and activates AI response workflows.",
     highlightPanel: "scenario_selector",
     screenTitle: "Demo Playbook Selector",
     subtitle: "Stadium Operations Stress-Testing"
   },
   {
     title: "5. Real-time AI Copilot Briefings",
-    narratorText: "The Copilot reads incident inputs and renders streaming markdown analyses explaining the event. Operators can issue commands like 'assign nearest volunteers' to coordinate response plans.",
+    narratorText: "The Gemini Copilot streams context-aware operational analyses for incoming incidents. The operator can converse naturally with the Copilot (e.g. 'Is there congestion?' or 'List nearest volunteers') to generate instant localized solutions.",
     highlightPanel: "copilot",
     screenTitle: "ATLAS Copilot AI Assistant",
     subtitle: "Context-Aware Operations Conversation"
   },
   {
     title: "6. Structured Decision Engine",
-    narratorText: "Every AI recommendation is routed through our Decision Engine to assign risk scores, priority weights, expected operational impact, and volunteer staffing requirements before operator approval.",
+    narratorText: "Every action is evaluated by our structured Decision Engine. Gemini assesses security risks, calculates expected operational impact on spectator safety, estimates recovery time, and isolates staffing constraints against FIFA standard rules.",
     highlightPanel: "decision_engine",
     screenTitle: "ATLAS AI Decision Engine",
     subtitle: "Verified Operations Risk Analyzer"
   },
   {
     title: "7. AI Action Center (Human-in-the-Loop)",
-    narratorText: "To guarantee safety, operators must approve, reject, or simulate decisions in the Action Center. Approving actions publishes domain events, updates operational states, and records auditable logs.",
+    narratorText: "To ensure absolute safety, the Action Center enforces a 'Human-in-the-Loop' workflow. Stadium operators can simulate, reject, or approve recommendations. Approval fires domain events, updates digital twin states, and logs auditable action records.",
     highlightPanel: "action_center",
     screenTitle: "AI Action Review Center",
     subtitle: "Human Operator Oversight Console"
   },
   {
     title: "8. Executive Situation Room",
-    narratorText: "Executives can review strategic metrics, overall stadium health, transportation status feeds (Metro/shuttles), weather alerts, and high-level summaries generated by the AI narrator.",
+    narratorText: "The Executive Situation Room delivers high-level tournament operational intelligence. It integrates transit status feeds (shuttles/metro), weather telemetry, and a Gemini-summarized briefing of match-day highlights for FIFA directors.",
     highlightPanel: "executive_room",
     screenTitle: "Executive Situation Room",
     subtitle: "Strategic Leadership Overview Panel"
   },
   {
     title: "9. Match Operations Timeline Replay",
-    narratorText: "Our timeline replay scrubber allows operators to drag and replay historical match logs, inspecting how density changed and review corresponding decisions.",
+    narratorText: "The Match Operations Timeline allows operators to scrub through match-day history, reviewing chronological security incident logs, crowd density fluctuations, and the corresponding operator decisions.",
     highlightPanel: "timeline_scrubber",
     screenTitle: "Match Operations Timeline",
     subtitle: "Historical Event Scrubber & Playback"
   },
   {
     title: "10. Mission Success Summary",
-    narratorText: "All critical parameters stabilized. Staff dispatched, gateways balanced, and crowd density returns to normal. ATLAS has successfully guided stadium operations to a safe outcome.",
+    narratorText: "Operational intelligence confirms all stadium zones are stabilized. Crowds are balanced, ticket queues have resolved, and volunteer FAs are back to nominal standby. ATLAS has successfully guided tournament operations to a secure outcome.",
     highlightPanel: "success",
     screenTitle: "Operations Successfully Stabilized",
-    subtitle: "ATLAS Guided Mission Complete"
+    subtitle: "ATLAS Guided Match Complete"
   }
 ];
 

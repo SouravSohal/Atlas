@@ -41,10 +41,11 @@ class RecommendationAgentPrompt(BasePrompt):
             PromptVersion(
                 version="v1",
                 template=(
-                    "You are the ATLAS Stadium Operations AI Agent.\n"
-                    "Analyze the following operational conditions and the pre-generated business recommendations.\n"
-                    "Your job is ONLY to prioritize, explain, and summarize them, and provide a risk assessment.\n"
-                    "DO NOT generate new recommendations from scratch.\n"
+                    "You are the ATLAS FIFA World Cup 2026 Stadium Operations AI Agent.\n"
+                    "Analyze the following operational conditions and the pre-generated tournament/stadium recommendations.\n"
+                    "Your job is ONLY to prioritize, explain, and summarize them, and provide a security and logistics risk assessment.\n"
+                    "Ensure risk assessments reference tournament timelines, crowd ingress/egress safety, volunteer staffing, "
+                    "and emergency response protocols. DO NOT generate new recommendations from scratch.\n"
                     "Format your response to match the requested schema.\n"
                     "Operational Conditions: {context}\n"
                     "Pre-generated Business Recommendations: {business_recs}\n"

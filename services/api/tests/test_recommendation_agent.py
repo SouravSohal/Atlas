@@ -41,7 +41,7 @@ async def test_recommendation_agent_analysis() -> None:
 
     # Verify prompt was registered during agent initialization
     registered_prompt = registry.get("recommendation_agent", "latest")
-    assert "You are the ATLAS Stadium Operations AI Agent." in registered_prompt.template
+    assert "You are the ATLAS FIFA World Cup 2026 Stadium Operations AI Agent." in registered_prompt.template
 
     operational_state = {"zone_id": str(uuid4()), "density": 0.85, "queue_waiting_minutes": 25}
     incidents = [{"id": str(uuid4()), "type": "security", "severity": "high", "resolved": False}]

@@ -35,7 +35,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             </div>
             <h2 className="mt-4 text-lg font-semibold">Something went wrong</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              An unexpected error occurred in the Operations Dashboard. Please reload the page or contact operations support.
+              An unexpected error occurred in the Operations Command Center. Please reload the page or contact operations support.
             </p>
             {this.state.error && (
               <pre className="mt-4 max-h-40 overflow-auto rounded-lg bg-muted p-3 text-left text-xs font-mono text-muted-foreground">
@@ -46,7 +46,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
               onClick={() => window.location.reload()}
               className="mt-6 w-full rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
             >
-              Reload Dashboard
+              Reload Operations Command Center
             </button>
           </div>
         </div>

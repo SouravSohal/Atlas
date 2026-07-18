@@ -33,3 +33,26 @@ def test_user_update_role() -> None:
 
     # Assert
     assert user.role == UserRole.OPERATOR
+
+def test_user_can_access_security_zone() -> None:
+    # Arrange
+    fan = User(name="Fan User", role=UserRole.FAN, email="fan@example.com")
+    athlete = User(name="Athlete User", role=UserRole.ATHLETE, email="athlete@example.com")
+    volunteer = User(name="Volunteer User", role=UserRole.VOLUNTEER, email="vol@example.com")
+    commander = User(name="Commander User", role=UserRole.OPERATIONS_COMMANDER, email="commander@example.com")
+
+    # Act & Assert
+    assert fan.can_access_security_zone("general_stands") is True
+    assert fan.can_access_security_zone("pitch") is False
+
+    assert athlete.can_access_security_zone("pitch") is True
+    assert athlete.can_access_security_zone("locker_room") is True
+    assert athlete.can_access_security_zone("vip_lounge") is False
+
+    assert volunteer.can_access_security_zone("general_stands") is True
+    assert volunteer.can_access_security_zone("pitch") is False
+    assert volunteer.can_access_security_zone("vip_lounge") is False
+
+    assert commander.can_access_security_zone("pitch") is True
+    assert commander.can_access_security_zone("vip_lounge") is True
+    assert commander.can_access_security_zone("locker_room") is True

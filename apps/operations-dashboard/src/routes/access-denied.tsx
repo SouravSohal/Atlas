@@ -38,7 +38,7 @@ export function AccessDeniedPage() {
             to="/"
             className="inline-block w-full text-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
           >
-            Return to Dashboard
+            Return to Operations Command Center
           </Link>
           <Link
             to="/login"

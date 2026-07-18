@@ -44,7 +44,7 @@ async def test_recommendation_generator() -> None:
 
     # Verify prompt registry has it
     registered_prompt = registry.get("ai_recommendation_generator", "latest")
-    assert "You are the ATLAS Stadium Operations AI Recommendation Engine." in registered_prompt.template
+    assert "You are the ATLAS FIFA World Cup 2026 Smart Stadium Operations AI Recommendation Engine." in registered_prompt.template
 
     telemetry = {"average_crowd_density": 0.45, "average_queue_wait_minutes": 15.0}
     incidents: list[dict[str, Any]] = []
